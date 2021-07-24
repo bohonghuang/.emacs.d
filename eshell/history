@@ -1,0 +1,8 @@
+zsh 
+exit
+ls
+vim
+exit
+bloop compile desktop
+platformio project init --ide emacs --board lpmsp430f5529
+platformio project init --ide emacs --board lpmsp430f5529

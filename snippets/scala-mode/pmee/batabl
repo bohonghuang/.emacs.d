@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: Battle Ability
+# key: batabl
+# --
+object $1 extends Ability(num = $2) with BattleAbility {
+  override def activate(proxy: AbilityProxy[this.type])(using system: BattleSystem): Future[Try[Unit]] = new BattleAbilityEffect[BattleSystem](proxy) {
+    $0
+  }.tryApply()
+}

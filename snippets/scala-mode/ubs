@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: Using BattleSystem
+# key: ubs
+# --
+(using system: BattleSystem)$0

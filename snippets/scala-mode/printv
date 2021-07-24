@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: Print Value
+# key: printv
+# --
+println(s"$1 = \$\{$1\}")$0

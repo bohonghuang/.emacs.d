@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: Status Move
+# key: stsmove
+# --
+object $1 extends Move(num = $2, types = ${3:Normal} :: Nil, maxPp = $4) $0 with TargetMove.${5:TargetPokemon()}
