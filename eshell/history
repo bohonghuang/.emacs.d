@@ -6,3 +6,9 @@ exit
 bloop compile desktop
 platformio project init --ide emacs --board lpmsp430f5529
 platformio project init --ide emacs --board lpmsp430f5529
+pio device monitor -b 115200
+ffmpeg 
+pio project init --ide clion --board lpmsp430f5529
+pio project init --ide emacs --board lpmsp430f5529
+exit
+ pio project init --ide emacs --board lpmsp430f5529
