@@ -1,14 +1,128 @@
-zsh 
+bash run.sh 
+bash run.sh 
+pip install opencv-python
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+pip list
+pip list | grep opencv*
+python2 
+python
+pip install opencv-python
 exit
-ls
-vim
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+make 
+make 
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+make 
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+make 
+make .
+make .
+maek
+make
+maek
+make
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+make
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+make
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+make
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+make
+./QJoysticksTest 
+make
+./QJoysticksTest 
+make
+./QJoysticksTest 
+make
+./QJoysticksTest 
+./QJoysticksTest 
+make
+./QJoysticksTest 
+make
+./QJoysticksTest 
+make
+make
+make
+./QJoysticksTest 
+make
+./QJoysticksTest 
+./QJoysticksTest 
+make
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+make
+./QJoysticksTest 
+make
+./QJoysticksTest 
+make
+./QJoysticksTest 
+make
+make
+make
+./QJoysticksTest 
+make
+./QJoysticksTest 
+make
+make
+./QJoysticksTest 
+make
+./QJoysticksTest 
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+make
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+make
+./QJoysticksTest 
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+gradle bloopInstall
+cmake --build "./cmake-build-debug/" -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 --build "./cmake-build-debug/" 
+cmake --build "./cmake-build-debug/"
+bash ./run.sh 
+bash ./run.sh 
+python 
+pip install pyserial
+python3
+pip3 install pyserial
+ls /dev
+sudo apt-get install minicom
+minicom -b 9600 -o -D /dev/ttyAMA0
+minicom -b 9600 -o -D /dev/ttyAMA
+minicom -b 9600 -o -D /dev/ttyAMA0
+minicom -b 9600 -o -D /dev/ttyAMA1
+sudo raspi-config
+khk
+ls /dev
+python ./serial_test.py
 exit
-bloop compile desktop
-platformio project init --ide emacs --board lpmsp430f5529
-platformio project init --ide emacs --board lpmsp430f5529
-pio device monitor -b 115200
-ffmpeg 
-pio project init --ide clion --board lpmsp430f5529
-pio project init --ide emacs --board lpmsp430f5529
-exit
- pio project init --ide emacs --board lpmsp430f5529
+sudo apt-get install vterm
+sudo apt-get update
+sudo apt-get install libvterm
+sudo apt-get install vterm*
+sudo apt-get install libvterm-bin
+cd rovmaster-embedded/
+cd ..
+cd rovmaster-embedded
+chmod +x build.sh 
+./build.sh 
+make
+sudo ./rovmaster
+sudo npi-config
+sudo ./rovmaster
+sudo npi-config
+fd
+asdf
+sudo ./rovmaster
+nmap 10.42.0.1/24
+nmap 10.42.0.1/24
+curl https://www.emacswiki.org/emacs/sticky-windows.el
+touch name1
+touch name2
+touch name3
+touch name4
+pip install pandas

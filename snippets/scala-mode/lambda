@@ -1,6 +1,6 @@
 # -*- mode: snippet -*-
 # name: Lambda
-# key: lmbd
+# key: lambda
 # --
 { ${1:_} =>
   $0

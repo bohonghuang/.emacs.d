@@ -1,10 +1,15 @@
-;;;; Emacs Bookmark Format Version 1 ;;;; -*- coding: utf-8-emacs -*-
+;;;; Emacs Bookmark Format Version 1;;;; -*- coding: utf-8-emacs; mode: lisp-data -*-
 ;;; This format is meant to be slightly human-readable;
 ;;; nevertheless, you probably don't want to edit it.
 ;;; -*- End Of Bookmark File Format Version Stamp -*-
-(("org-capture-last-stored"
- (filename . "~/文档/org-mode/org-roam/20210721161441-最佳匹配算法.org")
+(("org-mode-dir"
+ (filename . "~/文档/org-mode/")
+ (front-context-string . ".\n  drwxr-xr-x 1")
+ (rear-context-string . "24  7月 20 16:31 ")
+ (position . 83))
+("org-capture-last-stored"
+ (filename . "~/文档/org-mode/org-roam/20210814223324-最小二乘法.org")
  (front-context-string)
- (rear-context-string . "#+title: 最佳匹配算法\n")
- (position . 84))
+ (rear-context-string . "\n#+title: 最小二乘法\n")
+ (position . 83))
 )

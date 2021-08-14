@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: Property Alias
+# key: alias
+# --
+property alias $1: $2

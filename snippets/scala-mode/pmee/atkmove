@@ -2,4 +2,4 @@
 # name: AttackMove
 # key: atkmove
 # --
-object $1 extends Move(num = $2, types = ${3:Normal} :: Nil, maxPp = $4) with AccurateMove(accuracy = ${5:100}) with AttackMove(power = $6)  with TargetMove.TargetPokemon($7)
+object $1 extends Move(num = $2, types = ${3:Normal} :: Nil, maxPp = $4) with AccurateMove(accuracy = ${5:100}) with AttackMove(power = $6, category = ${7:Physical})  with TargetMove.TargetPokemon($8)
