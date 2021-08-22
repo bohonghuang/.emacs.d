@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: Future(Failure(Exception))
+# key: ffe
+# --
+Future(Failure(Exception("$1")))$0

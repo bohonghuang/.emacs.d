@@ -1,0 +1,16 @@
+# -*- mode: snippet -*-
+# name: Battle Move Test
+# key: testbatmove
+# --
+
+class $1 extends AnyFlatSpec with GivenWhenThen {
+  "${2:$1}" should "$3" in {
+    given system: NormalBattleSystem = NormalBattleSystem(1)
+    val pokemon1 = pokemon(moves = moves.$1)
+    val pokemon2 = pokemon(moves = moves.${4:Pound})
+    val client1 :: client2 :: Nil = clients(trainer(pokemon1) :: trainer(pokemon2) :: Nil)
+    client1.makeChoice(pokemon1.proxy.useMove(0) :: Nil)
+    client2.makeChoice(${5:pokemon2.proxy.useMove(0) :: Nil})
+    assert(${6:true})$0
+  }
+}

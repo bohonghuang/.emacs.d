@@ -2,7 +2,12 @@
 ;;; This format is meant to be slightly human-readable;
 ;;; nevertheless, you probably don't want to edit it.
 ;;; -*- End Of Bookmark File Format Version Stamp -*-
-(("org-mode-dir"
+(("pmee"
+ (filename . "~/工程/Scala/PokemonEonianEmerald/")
+ (front-context-string . "..\n  drwxrwxrwx ")
+ (rear-context-string . "40  7月 16 22:25 ")
+ (position . 152))
+("org-mode-dir"
  (filename . "~/文档/org-mode/")
  (front-context-string . ".\n  drwxr-xr-x 1")
  (rear-context-string . "24  7月 20 16:31 ")

@@ -1,19 +1,3 @@
-bash run.sh 
-bash run.sh 
-pip install opencv-python
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-pip list
-pip list | grep opencv*
-python2 
-python
-pip install opencv-python
-exit
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-make 
 make 
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
@@ -126,3 +110,19 @@ touch name2
 touch name3
 touch name4
 pip install pandas
+ping google.com
+git config --global core.autocrlf input 
+git config --list
+bloop test logic
+bloop test logic
+pip install spline
+pip uninstall spline
+pip install scipy
+python
+pip3 install simple-pid
+bash
+arp -a -i eth0
+arp -a -i eth0
+sudo pkill python*
+sudo pkill python*
+sudo pkill python*

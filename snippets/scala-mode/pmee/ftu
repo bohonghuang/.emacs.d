@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: Future[Try[Unit]]
+# key: ftu
+# --
+Future[Try[Unit]]

@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: Future(Success(()))
+# key: fs
+# --
+Future(Success(()))
