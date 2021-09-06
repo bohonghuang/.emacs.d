@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: Mermaid Source Code
+# key: <merm
+# --
+#+BEGIN_SRC mermaid :file ${1:/tmp/`(random)`.png}
+$0
+#+END_SRC

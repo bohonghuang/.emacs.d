@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: Iterate Array
+# key: iterarr
+# --
+for(${1:i} = [0 : len(${2:arr}) - 1]) {
+  $0
+}

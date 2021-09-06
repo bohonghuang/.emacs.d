@@ -1,38 +1,3 @@
-make 
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-make 
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-make 
-make .
-make .
-maek
-make
-maek
-make
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-make
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-make
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-make
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-make
-./QJoysticksTest 
-make
-./QJoysticksTest 
-make
-./QJoysticksTest 
-make
-./QJoysticksTest 
-./QJoysticksTest 
-make
-./QJoysticksTest 
-make
-./QJoysticksTest 
-make
-make
 make
 ./QJoysticksTest 
 make
@@ -126,3 +91,38 @@ arp -a -i eth0
 sudo pkill python*
 sudo pkill python*
 sudo pkill python*
+bloop test logic
+bloop test logic
+bloop test logic
+bloop test logic
+bloop test logic
+bloop test logic
+bloop test logic
+bloop test logic
+bloop test logic
+bloop test logic
+bloop test logic
+bloop test logic
+bloop compile desktop
+bloop compile desktop
+bloop compile desktop
+bloop compile desktop
+bloop compile desktop
+bloop compile desktop
+bloop compile desktop
+bloop compile desktop
+bloop compile desktop
+bloop compile desktop
+bloop compile desktop
+bloop compile desktop
+bloop compile desktop
+bloop compile desktop
+cargo new hello_rust
+bloop test logic
+bloop test logic
+bloop test logic
+bloop compile desktop
+sudo grub update
+sudo compsize
+sudo compsize -x ./
+sudo compsize -x ./

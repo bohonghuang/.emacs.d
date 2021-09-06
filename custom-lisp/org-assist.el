@@ -31,9 +31,33 @@
                (if first-loop (org-metaright))
                (insert (concat "~" arg "~ ："))
                (setq first-loop nil)
-               ))
-    )
-  )
+               ))))
 
+(defun org-subtree-content-at-point ()
+  "Get the content text of the subtree at point and add it to the `kill-ring'.
+Excludes the heading and any child subtrees."
+  (interactive)
+  (if (org-before-first-heading-p)
+      (message "Not in or on an org heading")
+    (save-excursion
+      ;; If inside heading contents, move the point back to the heading
+      ;; otherwise `org-agenda-get-some-entry-text' won't work.
+      (unless (org-on-heading-p) (org-previous-visible-heading 1))
+      (substring-no-properties
+           (org-agenda-get-some-entry-text
+            (point-marker)
+            most-positive-fixnum)))))
 
+(require 'cal-iso)
 
+(defun iso-week-to-time (year week day)
+  (pcase-let ((`(,m ,d ,y)
+               (calendar-gregorian-from-absolute
+                (calendar-iso-to-absolute (list week day year)))))
+    (encode-time 0 0 0 d m y)))
+(defun iso-week-to-date (week day year)
+  (calendar-gregorian-from-absolute
+   (calendar-iso-to-absolute (list week day year))))
+(defun iso-week-from-date (month day year)
+  (calendar-iso-from-absolute
+   (calendar-absolute-from-gregorian (list month day year))))
