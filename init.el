@@ -45,7 +45,7 @@
      ("a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm" "geometry" nil nil)
      ("" "ctex" nil nil)))
  '(package-selected-packages
-   '(doom-themes ob-mermaid mermaid-mode elmacro command-log-mode bar-cursor right-click-context htmlize ox-reveal org-reveal scad-preview scad-mode org-gtd yasnippet which-key vterm use-package smartparens sis sbt-mode rustic quickrun qml-mode pretty-hydra platformio-mode org-roam org-download nyan-mode multiple-cursors mpv magit lsp-ui lsp-pyright lsp-metals jetbrains-darcula-theme groovy-mode expand-region ein dashboard crux company cnfonts benchmark-init))
+   '(lsp-mode scala-mode projectile doom-themes ob-mermaid mermaid-mode elmacro command-log-mode bar-cursor right-click-context htmlize ox-reveal org-reveal scad-preview scad-mode org-gtd yasnippet which-key vterm use-package smartparens sis sbt-mode rustic quickrun qml-mode pretty-hydra platformio-mode org-roam org-download nyan-mode multiple-cursors mpv magit lsp-ui lsp-pyright lsp-metals jetbrains-darcula-theme groovy-mode expand-region ein dashboard crux company cnfonts benchmark-init))
  '(safe-local-variable-values
    '((eval progn
            (org-babel-goto-named-src-block "startup")
