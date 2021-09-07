@@ -45,7 +45,7 @@
      ("a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm" "geometry" nil nil)
      ("" "ctex" nil nil)))
  '(package-selected-packages
-   '(lsp-mode scala-mode projectile doom-themes ob-mermaid mermaid-mode elmacro command-log-mode bar-cursor right-click-context htmlize ox-reveal org-reveal scad-preview scad-mode org-gtd yasnippet which-key vterm use-package smartparens sis sbt-mode rustic quickrun qml-mode pretty-hydra platformio-mode org-roam org-download nyan-mode multiple-cursors mpv magit lsp-ui lsp-pyright lsp-metals jetbrains-darcula-theme groovy-mode expand-region ein dashboard crux company cnfonts benchmark-init))
+   '(pyim-basedict pyim lsp-mode scala-mode projectile doom-themes ob-mermaid mermaid-mode elmacro command-log-mode bar-cursor right-click-context htmlize ox-reveal org-reveal scad-preview scad-mode org-gtd yasnippet which-key vterm use-package smartparens sis sbt-mode rustic quickrun qml-mode pretty-hydra platformio-mode org-roam org-download nyan-mode multiple-cursors mpv magit lsp-ui lsp-pyright lsp-metals jetbrains-darcula-theme groovy-mode expand-region ein dashboard crux company cnfonts benchmark-init))
  '(safe-local-variable-values
    '((eval progn
            (org-babel-goto-named-src-block "startup")
@@ -720,6 +720,53 @@
 (use-package ob-mermaid
   :ensure t)
 
+(use-package pyim
+  :ensure t
+  :config
+  ;; 金手指设置，可以将光标处的编码，比如：拼音字符串，转换为中文。
+  (global-set-key (kbd "M-j") 'pyim-convert-string-at-point)
+
+  ;; 按 "C-<return>" 将光标前的 regexp 转换为可以搜索中文的 regexp.
+  (define-key minibuffer-local-map (kbd "C-<return>") 'pyim-cregexp-convert-at-point)
+
+  ;; 我使用全拼
+  (pyim-default-scheme 'quanpin)
+  ;; (pyim-default-scheme 'wubi)
+  ;; (pyim-default-scheme 'cangjie)
+
+  ;; pyim 探针设置
+  ;; 设置 pyim 探针设置，这是 pyim 高级功能设置，可以实现 *无痛* 中英文切换 :-)
+  ;; 我自己使用的中英文动态切换规则是：
+  ;; 1. 光标只有在注释里面时，才可以输入中文。
+  ;; 2. 光标前是汉字字符时，才能输入中文。
+  ;; 3. 使用 M-j 快捷键，强制将光标前的拼音字符串转换为中文。
+  ;; (setq-default pyim-english-input-switch-functions
+  ;;               '(pyim-probe-dynamic-english
+  ;;                 pyim-probe-isearch-mode
+  ;;                 pyim-probe-program-mode
+  ;;                 pyim-probe-org-structure-template))
+
+  ;; (setq-default pyim-punctuation-half-width-functions
+  ;;               '(pyim-probe-punctuation-line-beginning
+  ;;                 pyim-probe-punctuation-after-punctuation))
+
+  ;; 开启代码搜索中文功能（比如拼音，五笔码等）
+  (pyim-isearch-mode 1)
+
+  ;; 设置选词框的绘制方式
+  (if (posframe-workable-p)
+      (setq pyim-page-tooltip 'posframe)
+    (setq pyim-page-tooltip 'popup))
+
+  ;; 显示5个候选词。
+  (setq pyim-page-length 5)
+  (setq default-input-method "pyim"))
+
+(use-package pyim-basedict
+  :ensure t
+  :config
+  (pyim-basedict-enable))
+
 (when (daemonp)
   (menu-bar-mode +1)
   (global-tab-line-mode +1)
@@ -732,8 +779,6 @@
   (use-package bar-cursor
   :ensure t
   :config (bar-cursor-mode +1)))
-
-
 
 (provide 'init)
 ;;;
