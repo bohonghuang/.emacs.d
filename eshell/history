@@ -2,26 +2,6 @@ make
 ./QJoysticksTest 
 make
 ./QJoysticksTest 
-./QJoysticksTest 
-make
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-make
-./QJoysticksTest 
-make
-./QJoysticksTest 
-make
-./QJoysticksTest 
-make
-make
-make
-./QJoysticksTest 
-make
-./QJoysticksTest 
-make
-make
-./QJoysticksTest 
-make
-./QJoysticksTest 
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 make
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1
@@ -126,3 +106,23 @@ sudo grub update
 sudo compsize
 sudo compsize -x ./
 sudo compsize -x ./
+sudo ./rovmaster 
+sudo ./rovmaster 
+k
+sa
+sudo ./rovmaster
+sdfas
+asdfasd
+sadfasd
+asdfasdf
+123
+123
+ls
+ls
+ls
+rovmaster
+make rovmaster 
+make
+sudo ./rovmaster 
+sudo ./rovmaster 
+exit

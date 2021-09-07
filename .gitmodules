@@ -1,0 +1,12 @@
+[submodule "site-lisp/org-link-edit"]
+	path = site-lisp/org-link-edit
+	url = git@github.com:kyleam/org-link-edit.git
+[submodule "site-lisp/org-transclusion"]
+	path = site-lisp/org-transclusion
+	url = git@github.com:nobiot/org-transclusion.git
+[submodule "site-lisp/org-sketch"]
+	path = site-lisp/org-sketch
+	url = git@github.com:HuangBoHong/org-sketch.git
+[submodule "site-lisp/org-media-note"]
+	path = site-lisp/org-media-note
+	url = git@github.com:yuchen-lea/org-media-note.git

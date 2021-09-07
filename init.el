@@ -47,7 +47,12 @@
  '(package-selected-packages
    '(doom-themes ob-mermaid mermaid-mode elmacro command-log-mode bar-cursor right-click-context htmlize ox-reveal org-reveal scad-preview scad-mode org-gtd yasnippet which-key vterm use-package smartparens sis sbt-mode rustic quickrun qml-mode pretty-hydra platformio-mode org-roam org-download nyan-mode multiple-cursors mpv magit lsp-ui lsp-pyright lsp-metals jetbrains-darcula-theme groovy-mode expand-region ein dashboard crux company cnfonts benchmark-init))
  '(safe-local-variable-values
-   '((org-download-heading-lvl)
+   '((eval progn
+           (org-babel-goto-named-src-block "startup")
+           (org-babel-execute-src-block)
+           (outline-hide-sublevels 1))
+     (org-confirm-babel-evaluate)
+     (org-download-heading-lvl)
      (org-download-method quote directory)
      (download-heading-lvl)
      (org-download-method quote dir)))
@@ -487,14 +492,12 @@
   (sis-global-inline-mode t)
   )
 
-(setq org-directory "~/文档/org-mode")
+(setq org-directory "~/文档/org")
 
 (org-babel-do-load-languages
  'org-babel-load-languages '((python . t)))
 
 (setq org-attach-id-dir (expand-file-name "org-attach/data" org-directory))
-(setq org-agenda-files (list (expand-file-name "org-agenda" org-directory) (expand-file-name "org-gtd" org-directory)))
-(setq recentf-exclude (org-agenda-files))
 
 ;(global-set-key (kbd "C-c c") 'org-capture)
 (setq org-default-notes-file (expand-file-name "org-capture/captures.org" org-directory))
@@ -537,9 +540,12 @@
   :custom
   ;; use as-is if you don't have an existing org-agenda setup
   ;; otherwise push the directory to the existing list
-  (org-agenda-files `(,org-gtd-directory))
+  (org-agenda-files (list (expand-file-name "org-agenda" org-directory) org-gtd-directory))
+  ;; (org-agenda-files `(,org-gtd-directory))
   ;; a useful view to see what can be accomplished today
   (org-agenda-custom-commands '(("g" "Scheduled today and all NEXT items" ((agenda "" ((org-agenda-span 1))) (todo "NEXT"))))))
+
+(setq recentf-exclude (org-agenda-files))
 
 (use-package org-capture
   :ensure nil
