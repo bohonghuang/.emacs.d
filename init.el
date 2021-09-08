@@ -45,7 +45,7 @@
      ("a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm" "geometry" nil nil)
      ("" "ctex" nil nil)))
  '(package-selected-packages
-   '(pyim-basedict pyim lsp-mode scala-mode projectile doom-themes ob-mermaid mermaid-mode elmacro command-log-mode bar-cursor right-click-context htmlize ox-reveal org-reveal scad-preview scad-mode org-gtd yasnippet which-key vterm use-package smartparens sis sbt-mode rustic quickrun qml-mode pretty-hydra platformio-mode org-roam org-download nyan-mode multiple-cursors mpv magit lsp-ui lsp-pyright lsp-metals jetbrains-darcula-theme groovy-mode expand-region ein dashboard crux company cnfonts benchmark-init))
+   '(dim pyim-basedict pyim lsp-mode scala-mode projectile doom-themes ob-mermaid mermaid-mode elmacro command-log-mode bar-cursor right-click-context htmlize ox-reveal org-reveal scad-preview scad-mode org-gtd yasnippet which-key vterm use-package smartparens sis sbt-mode rustic quickrun qml-mode pretty-hydra platformio-mode org-roam org-download nyan-mode multiple-cursors mpv magit lsp-ui lsp-pyright lsp-metals jetbrains-darcula-theme groovy-mode expand-region ein dashboard crux company cnfonts benchmark-init))
  '(safe-local-variable-values
    '((eval progn
            (org-babel-goto-named-src-block "startup")
@@ -62,7 +62,6 @@
  '(visible-bell t)
  '(warning-suppress-log-types '((comp)))
  '(winner-mode t))
-
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 
@@ -494,6 +493,8 @@
 
 (setq org-directory "~/文档/org")
 
+(if (file-exists-p "~/.emacs.d/local.el") (load-file "~/.emacs.d/local.el"))
+
 (org-babel-do-load-languages
  'org-babel-load-languages '((python . t)))
 
@@ -648,13 +649,13 @@
 ;; (setq symon-delay 1)
 ;; (symon-mode)
 
-(use-package nyan-mode
-  :ensure t
-  :config
-  (setq nyan-animate-nyancat t)
-  (setq nyan-wavy-trail t)
-  (setq nyan-bar-length 20)
-  (nyan-mode 1))
+;; (use-package nyan-mode
+;;   :ensure t
+;;   :config
+;;   (setq nyan-animate-nyancat t)
+;;   (setq nyan-wavy-trail t)
+;;   (setq nyan-bar-length 20)
+;;   (nyan-mode 1))
 
 
 ;; (use-package webkit
@@ -766,6 +767,19 @@
   :ensure t
   :config
   (pyim-basedict-enable))
+
+(use-package dim
+  :ensure t
+  :config
+  (dim-major-names
+   '((emacs-lisp-mode    "elisp")))
+  (dim-minor-names
+   '((auto-fill-function " ↵")
+     (whitespace-mode    " _"  whitespace)
+     (paredit-mode       " ()" paredit)
+     (eldoc-mode         ""    eldoc)
+     (projectile-mode " Prjtl")
+     (pyim-isearch-mode ""))))
 
 (when (daemonp)
   (menu-bar-mode +1)

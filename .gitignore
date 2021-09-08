@@ -23,3 +23,5 @@ projects
 projectile-bookmarks.eld
 bookmarks
 eshell
+local.el
+cnfonts
