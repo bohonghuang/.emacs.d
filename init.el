@@ -229,11 +229,13 @@
   :ensure t
   :hook (prog-mode . company-mode)
   :config
-  (setq lsp-completion-provider :capf))
+  (setq lsp-completion-provider :capf)
+  (setq company-dabbrev-downcase nil)
+  (setq company-dabbrev-ignore-case t))
 
 (use-package posframe
-  :ensure t
-  )
+  :ensure t)
+
 (use-package dap-mode
   :ensure t
   :hook
@@ -422,7 +424,6 @@
 ;; (use-package company-box
 ;;   :ensure t
 ;;   :hook (company-mode . company-box-mode))
-;; (setq company-dabbrev-downcase nil)
 
 ;;  (defvar company-mode/enable-yas t "Enable yasnippet for all backends.")
 
@@ -637,10 +638,11 @@
 
 
 ;; (use-package webkit
-;;   :load-path "site-lisp/emacs-webkit")
-;; ;;  :bind ("s-b" 'webkit)) ;; Bind to whatever global key binding you want if you want
-;; (require 'webkit-ace)
-;; (require 'webkit-dark)
+;;   :load-path "site-lisp/emacs-webkit"
+;;   :config
+;;   (require 'webkit-ace)
+;;   (require 'webkit-dark))
+;;  :bind ("s-b" 'webkit)) ;; Bind to whatever global key binding you want if you want
 
 ;; (use-package svg-clock)
 
