@@ -1,8 +1,7 @@
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(if (file-exists-p custom-file) (load-file custom-file))
+
 (custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
  '(avy-single-candidate-jump nil)
  '(column-number-mode t)
  '(company-minimum-prefix-length 1)
@@ -16,7 +15,6 @@
  '(lsp-metals-install-version "0.10.6-M1+29-22f5a4b1-SNAPSHOT")
  '(make-backup-files nil)
  '(menu-bar-mode nil)
- '(native-comp-deferred-compilation-deny-list '("symon"))
  '(org-attach-use-inheritance t)
  '(org-download-display-inline-images nil)
  '(org-download-method 'attach)
@@ -44,18 +42,6 @@
      ("" "hyperref" nil nil)
      ("a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm" "geometry" nil nil)
      ("" "ctex" nil nil)))
- '(package-selected-packages
-   '(dim pyim-basedict pyim lsp-mode scala-mode projectile doom-themes ob-mermaid mermaid-mode elmacro command-log-mode bar-cursor right-click-context htmlize ox-reveal org-reveal scad-preview scad-mode org-gtd yasnippet which-key vterm use-package smartparens sis sbt-mode rustic quickrun qml-mode pretty-hydra platformio-mode org-roam org-download nyan-mode multiple-cursors mpv magit lsp-ui lsp-pyright lsp-metals jetbrains-darcula-theme groovy-mode expand-region ein dashboard crux company cnfonts benchmark-init))
- '(safe-local-variable-values
-   '((eval progn
-           (org-babel-goto-named-src-block "startup")
-           (org-babel-execute-src-block)
-           (outline-hide-sublevels 1))
-     (org-confirm-babel-evaluate)
-     (org-download-heading-lvl)
-     (org-download-method quote directory)
-     (download-heading-lvl)
-     (org-download-method quote dir)))
  '(scroll-bar-mode nil)
  '(show-paren-mode t)
  '(tool-bar-mode nil)
@@ -65,12 +51,6 @@
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
 ;; load emacs 24's package system. Add MELPA repository.
 (when (>= emacs-major-version 24)
   (require 'package)
@@ -81,8 +61,6 @@
    'package-archives
    '("melpa" . "https://melpa.org/packages/")
    t))
-
-
 
 ;; Install use-package if not already installed
 (unless (package-installed-p 'use-package)
@@ -170,15 +148,6 @@
 (defun dedicate-window ()
   (interactive)
   (set-window-dedicated-p (selected-window) t))
-
-(fset 'split-windows-213-kbd-macro
-   (kmacro-lambda-form [?\M-x ?o ?r ?g ?- ?a ?g ?e ?n ?d ?a ?- ?l ?i ?s ?t return ?\C-x ?o ?\C-x ?3 ?\C-u ?2 ?0 ?\C-x ?\} ?\C-x ?o ?2 ?\C-u ?\C-x ?o ?3 ?\C-x ?o ?2 ?\M-: ?\( ?s ?e ?t ?- ?w ?i ?n ?d ?o ?w ?- ?d ?e ?d ?i ?c ?a ?t ?e ?d ?- ?p ?  ?\( ?s ?e ?l ?e ?c ?t ?e ?d ?- ?w ?i ?n ?d ?o ?w ?\C-f ?  ?t return ?\C-x ?o ?1] 0 "%d"))
-
-(defun split-windows-213 ()
-  (interactive)
-  (org-agenda-list)
-  (split-windows-213-kbd-macro))
-
 
 (use-package smartparens
   :ensure t
@@ -370,6 +339,9 @@
 ;;   :hook ((c-mode c++-mode objc-mode cuda-mode) .
 ;;          (lambda () (require 'ccls) (lsp))))
 
+(use-package cmake-mode
+  :ensure t)
+
 (use-package qml-mode
   :ensure t)
 ;; (use-package company-qml
@@ -406,6 +378,10 @@
   :ensure t
   :bind(:map scad-mode-map
              ("C-c C-c" . scad-preview-mode)))
+
+;; ======================================= VHDL =======================================
+
+;; ====================================================================================
 
 (use-package magit
   :ensure t)
@@ -612,8 +588,10 @@
 
 (use-package pretty-hydra
   :ensure t)
+
 (use-package mpv
   :ensure t)
+
 (use-package org-media-note
   :load-path "site-lisp/org-media-note"
   :hook (org-mode . org-media-note-mode)
@@ -778,8 +756,22 @@
      (whitespace-mode    " _"  whitespace)
      (paredit-mode       " ()" paredit)
      (eldoc-mode         ""    eldoc)
-     (projectile-mode " Prjtl")
+     (projectile-mode " Proj")
      (pyim-isearch-mode ""))))
+
+(use-package emms
+  :ensure t
+  :config
+  (require 'emms-setup)
+  (emms-all)
+  (emms-default-players)
+  (setq emms-player-list '(emms-player-mpv))
+  (setq emms-playlist-buffer-name "*Music*")
+  (setq emms-info-asynchronously t)
+  (emms-mode-line-disable)
+  (emms-playing-time-disable-display)
+  (require 'emms-info-libtag) ;;; load functions that will talk to emms-print-metadata which in turn talks to libtag and gets metadata
+  (setq emms-info-functions '(emms-info-libtag))) ;;; make sure libtag is the only thing delivering metadata
 
 (when (daemonp)
   (menu-bar-mode +1)

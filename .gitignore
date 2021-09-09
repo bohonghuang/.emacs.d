@@ -24,4 +24,6 @@ projectile-bookmarks.eld
 bookmarks
 eshell
 local.el
+custom.el
 cnfonts
+emms
