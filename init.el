@@ -383,6 +383,20 @@
 
 ;; ======================================= VHDL =======================================
 
+(use-package lsp-vhdl
+  :load-path "site-lisp"
+  :defer nil
+  :hook
+  (vhdl-mode . lsp)
+  (vhdl-mode . (lambda () (ligature-mode -1)))
+  :config
+  (setq lsp-vhdl-server 'ghdl-ls))
+
+(use-package vhdl-capf
+  :ensure t
+  :config (vhdl-capf-enable))
+
+(defun vhdl-capf-flatten (l) (-flatten l))
 ;; ====================================================================================
 
 (use-package magit
@@ -463,10 +477,9 @@
   ;; enable the /respect/ mode
   (sis-global-respect-mode t)
   ;; enable the /context/ mode for all buffers
-  (sis-global-context-mode t)
+  (sis-global-context-mode t))
   ;; enable the /inline english/ mode for all buffers
-  (sis-global-inline-mode t)
-  )
+  ;; (sis-global-inline-mode t)
 
 (setq org-directory "~/文档/org")
 
@@ -709,6 +722,8 @@
 
   ;; 按 "C-<return>" 将光标前的 regexp 转换为可以搜索中文的 regexp.
   (define-key minibuffer-local-map (kbd "C-<return>") 'pyim-cregexp-convert-at-point)
+  (setq-default pyim-english-input-switch-functions
+              '(pyim-probe-program-mode))
 
   ;; 我使用全拼
   (pyim-default-scheme 'quanpin)
@@ -787,6 +802,9 @@
   (use-package bar-cursor
   :ensure t
   :config (bar-cursor-mode +1)))
+
+(when (not window-system)
+  (global-set-key (kbd "M-=") 'er/expand-region))
 
 (provide 'init)
 ;;;
