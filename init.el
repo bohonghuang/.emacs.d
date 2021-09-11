@@ -399,6 +399,12 @@
 (defun vhdl-capf-flatten (l) (-flatten l))
 ;; ====================================================================================
 
+(use-package yaml-mode
+  :ensure t)
+
+(use-package toml-mode
+  :ensure t)
+
 (use-package magit
   :ensure t)
 
@@ -726,10 +732,9 @@
               '(pyim-probe-program-mode))
 
   ;; 我使用全拼
-  (pyim-default-scheme 'quanpin)
+  ;; (pyim-default-scheme 'quanpin)
   ;; (pyim-default-scheme 'wubi)
   ;; (pyim-default-scheme 'cangjie)
-
   ;; pyim 探针设置
   ;; 设置 pyim 探针设置，这是 pyim 高级功能设置，可以实现 *无痛* 中英文切换 :-)
   ;; 我自己使用的中英文动态切换规则是：
@@ -762,6 +767,14 @@
   :ensure t
   :config
   (pyim-basedict-enable))
+
+(use-package liberime
+  :ensure t
+  :init (liberime-build)
+  :config
+  (require 'pyim-liberime)
+  (liberime-try-select-schema "luna_pinyin_simp")
+  (setq pyim-default-scheme 'rime-quanpin))
 
 (use-package dim
   :ensure t
