@@ -6,10 +6,7 @@
  '(column-number-mode t)
  '(company-minimum-prefix-length 1)
  '(compilation-scroll-output t)
- '(display-line-numbers t)
  '(display-line-numbers-type 'relative)
- '(global-display-line-numbers-mode t)
- '(global-hl-line-mode t)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(lsp-metals-install-version "0.10.6-M1+29-22f5a4b1-SNAPSHOT")
@@ -48,6 +45,9 @@
  '(visible-bell t)
  '(warning-suppress-log-types '((comp)))
  '(winner-mode t))
+
+(add-hook 'prog-mode-hook #'display-line-numbers-mode)
+(add-hook 'prog-mode-hook #'hl-line-mode)
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 
