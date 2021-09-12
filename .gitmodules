@@ -10,3 +10,6 @@
 [submodule "site-lisp/org-media-note"]
 	path = site-lisp/org-media-note
 	url = git@github.com:yuchen-lea/org-media-note.git
+[submodule "rime"]
+	path = rime
+	url = git@github.com:HuangBoHong/rime-config.git
