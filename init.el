@@ -7,6 +7,9 @@
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (if (file-exists-p custom-file) (load-file custom-file))
 
+(setq local-file (expand-file-name "local.el" user-emacs-directory))
+(if (file-exists-p local-file) (load-file local-file))
+
 (custom-set-variables
  '(avy-single-candidate-jump nil)
  '(column-number-mode t)
@@ -15,36 +18,10 @@
  '(display-line-numbers-type 'relative)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
- '(lsp-metals-install-version "0.10.6-M1+29-22f5a4b1-SNAPSHOT")
+ '(initial-major-mode 'fundamental-mode)
+ '(initial-scratch-message "")
  '(make-backup-files nil)
  '(menu-bar-mode nil)
- '(org-attach-use-inheritance t)
- '(org-download-display-inline-images nil)
- '(org-download-method 'attach)
- '(org-export-with-tags nil)
- '(org-format-latex-options
-   '(:foreground default :background default :scale 1.5 :html-foreground "Black" :html-background "Transparent" :html-scale 1.0 :matchers
-                 ("begin" "$1" "$" "$$" "\\(" "\\[")))
- '(org-latex-compiler "xelatex")
- '(org-latex-custom-lang-environments '((Chinese "")))
- '(org-latex-default-packages-alist
-   '(("AUTO" "inputenc" t
-      ("pdflatex"))
-     ("T1" "fontenc" t
-      ("pdflatex"))
-     ("" "graphicx" t nil)
-     ("" "grffile" t nil)
-     ("" "longtable" nil nil)
-     ("" "wrapfig" nil nil)
-     ("" "rotating" nil nil)
-     ("normalem" "ulem" t nil)
-     ("" "amsmath" t nil)
-     ("" "textcomp" t nil)
-     ("" "amssymb" t nil)
-     ("" "capt-of" nil nil)
-     ("" "hyperref" nil nil)
-     ("a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm" "geometry" nil nil)
-     ("" "ctex" nil nil)))
  '(scroll-bar-mode nil)
  '(show-paren-mode t)
  '(tool-bar-mode nil)
@@ -55,15 +32,16 @@
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 (add-hook 'prog-mode-hook #'hl-line-mode)
 (add-hook 'prog-mode-hook #'visual-line-mode)
+(global-set-key (kbd "C-?") 'undo-redo)
+(global-set-key (kbd "C-S-d") 'delete-region)
+(global-set-key (kbd "C-;") 'avy-goto-char-timer)
+(global-set-key (kbd "C-x o") 'ace-window)
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 
 ;; load emacs 24's package system. Add MELPA repository.
 (when (>= emacs-major-version 24)
   (require 'package)
-  ;; (setq package-archives
-  ;;     '(("gnu"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-  ;;       ("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
   (add-to-list
    'package-archives
    '("melpa" . "https://melpa.org/packages/")
@@ -77,32 +55,21 @@
 (require 'use-package)
 
 ;; (setq use-package-verbose t)
-;; Enable defer and ensure by default for use-package
-;; (setq use-package-always-defer t
-;;       use-package-always-ensure t)
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-(defun load-only-theme ()
+(defun change-theme ()
   "Disable all themes and then load a single theme interactively."
   (interactive)
   (while custom-enabled-themes
     (disable-theme (car custom-enabled-themes)))
   (call-interactively 'load-theme))
 (use-package jetbrains-darcula-theme
-  :ensure t)
-(load-theme 'jetbrains-darcula t)
-;; (use-package benchmark-init
-;;   :ensure t
-;;   :config
-;;   ;; To disable collection of benchmark data after init is done.
-;;   (add-hook 'after-init-hook 'benchmark-init/deactivate))
-
-(global-set-key (kbd "C-?") 'undo-redo)
+  :ensure t
+  :config (load-theme 'jetbrains-darcula t))
 
 (use-package crux
   :ensure t
   :defer t)
-
 
 (defun my-new-file-hook ()
   (unless (file-exists-p (file-truename buffer-file-name))
@@ -116,14 +83,17 @@
          ("C-M-+" . cnfonts-increase-fontsize))
   :init
   (cnfonts-enable)
-  :config
-  (setq cnfonts-personal-fontnames '(("JetBrains Mono") nil nil))
-  (setq cnfonts-use-face-font-rescale t))
+  :custom
+  (cnfonts-personal-fontnames '(("JetBrains Mono") nil nil))
+  (cnfonts-use-face-font-rescale t))
+
 ;; 让 cnfonts 随着 Emacs 自动生效。
 ;; 让 spacemacs mode-line 中的 Unicode 图标正确显示。
 ;; (cnfonts-set-spacemacs-fallback-fonts)
 
 (use-package ligature
+  :defer t
+  :hook (prog-mode . ligature-mode)
   :load-path "site-lisp/"
   :config
   ;; Enable all JetBrains Mono ligatures in programming modes
@@ -137,26 +107,7 @@
                                       "|}" "|=>" "|->" "|=" "||-" "|-" "||=" "||" ".." ".?" ".=" ".-" "..<"
                                       "..." "+++" "+>" "++" "[||]" "[<" "[|" "{|" "??" "?." "?=" "?:" "##"
                                       "###" "####" "#[" "#{" "#=" "#!" "#:" "#_(" "#_" "#?" "#(" ";;" "_|_"
-                                      "__" "~~" "~~>" "~>" "~-" "~@" "$>" "^=" "]#"))
-  ;; Enables ligature checks globally in all buffers. You can also do it
-  ;; per mode with `ligature-mode'.
-  (global-ligature-mode t))
-
-
-(global-set-key (kbd "C-x o") 'ace-window)
-
-;; (use-package gcmh
-;;   :ensure t
-;;   :init
-;;   (gcmh-mode 1)
-;;   :config
-;;   (setq garbage-collection-messages t))
-
-;; (use-package sticky-windows
-;;   :load-path "site-lisp/"
-;;   :bind(("C-x 1" . 'sticky-window-delete-other-windows)
-;;         ("C-x 0" . 'sticky-window-delete-window)
-;;         ("C-x 9" . 'sticky-window-keep-window-visible)))
+                                      "__" "~~" "~~>" "~>" "~-" "~@" "$>" "^=" "]#")))
 
 (defun dedicate-window ()
   (interactive)
@@ -164,7 +115,9 @@
 
 (use-package smartparens
   :ensure t
-  :hook (prog-mode . smartparens-mode)
+  :defer t
+  :hook
+  (prog-mode . smartparens-mode)
   (text-mode . smartparens-mode)
   (minibuffer-mode . smartparens-mode)
   :bind (:map smartparens-mode-map
@@ -181,7 +134,10 @@
   :defer t
   :hook (prog-mode . projectile-mode)
   :config
-  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+  (put 'projectile-project-run-cmd 'safe-local-variable #'stringp)
+  (put 'projectile-project-compilation-cmd 'safe-local-variable #'stringp)
+  (put 'compilation-read-command 'safe-local-variable #'booleanp))
 
 ;; ======================================== Scala ========================================
 
@@ -209,6 +165,7 @@
 )
 
 (use-package flymake
+  :ensure nil
   :defer t
   :bind (("C-c f" . flymake-show-diagnostics-buffer)))
 
@@ -249,10 +206,10 @@
 (use-package company
   :ensure t
   :hook (prog-mode . company-mode)
-  :config
-  (setq lsp-completion-provider :capf)
-  (setq company-dabbrev-downcase nil)
-  (setq company-dabbrev-ignore-case t))
+  :custom
+  (lsp-completion-provider :capf)
+  (company-dabbrev-downcase nil)
+  (company-dabbrev-ignore-case t))
 
 (use-package posframe
   :ensure t
@@ -260,10 +217,10 @@
 
 (use-package dap-mode
   :ensure t
+  :defer t
   :hook
   (lsp-mode . dap-mode)
-  (lsp-mode . dap-ui-mode)
-  )
+  (lsp-mode . dap-ui-mode))
 
 ;; ================================================================================
 
@@ -285,28 +242,7 @@
   ;; (setq rustic-format-on-save t)
   ;; (add-hook 'rustic-mode-hook 'rk/rustic-mode-hook)
 )
-
-;; (defun rk/rustic-mode-hook ()
-;;   ;; so that run C-c C-c C-r works without having to confirm, but don't try to
-;;   ;; save rust buffers that are not file visiting. Once
-;;   ;; https://github.com/brotzeit/rustic/issues/253 has been resolved this should
-;;   ;; no longer be necessary.
-;;   (when buffer-file-name
-;;    (setq-local buffer-save-without-query t)))
-
-;; (use-package lsp-mode
-;;   :ensure
-;;   :commands lsp
-;;   :custom
-;;   ;; what to use when checking on-save. "check" is default, I prefer clippy
-;;   (lsp-rust-analyzer-cargo-watch-command "clippy")
-;;   (lsp-eldoc-render-all t)
-;;   (lsp-idle-delay 0.6)
-;;   (lsp-rust-analyzer-server-display-inlay-hints t)
-;;   :config
-;;   (add-hook 'lsp-mode-hook 'lsp-ui-mode))
-
-;; ================================================================================
+ ;; ================================================================================
 
 
 ;; ======================================== Groovy ========================================
@@ -380,20 +316,6 @@
 ;; )
 
 
-(put 'projectile-project-run-cmd 'safe-local-variable #'stringp)
-(put 'projectile-project-compilation-cmd 'safe-local-variable #'stringp)
-(put 'compilation-read-command 'safe-local-variable #'booleanp)
-
-
-;; (add-hook 'prog-mode-hook (lambda ()
-;;                            (local-set-key (kbd "C-c p r") (lambda () (interactive)
-;;                                                             (projectile-run-project nil)
-;;                                                             ))
-;;                            (local-set-key (kbd "C-c p c") (lambda () (interactive)
-;;                                                             (projectile-compile-project nil)
-;;                                                             ))
-;;                            ))
-
 ;; ================================================================================
 
 ;; ======================================== PlatformIO ========================================
@@ -427,9 +349,11 @@
 
 (use-package vhdl-capf
   :ensure t
-  :config (vhdl-capf-enable))
+  :defer t
+  :hook (vhdl-mode . vhdl-capf-enable)
+  :config
+  (defun vhdl-capf-flatten (l) (-flatten l)))
 
-(defun vhdl-capf-flatten (l) (-flatten l))
 ;; ====================================================================================
 
 (use-package yaml-mode
@@ -451,13 +375,6 @@
   (prog-mode . yas-minor-mode)
   (org-mode . yas-minor-mode))
 
-
-(global-set-key (kbd "C-S-d") 'delete-region)
-
-(global-set-key (kbd "C-;") 'avy-goto-char-timer)
-;; (global-set-key (kbd "C-.") 'avy-goto-char-2-below)
-;; (global-set-key (kbd "C-,") 'avy-goto-char-2-above)
-
 (use-package expand-region
   :ensure t
   :defer t
@@ -465,6 +382,7 @@
 
 (use-package multiple-cursors
   :ensure t
+  :defer t
   :bind (("C-S-c C-S-c" . mc/edit-lines)
          ("C->" . mc/mark-next-like-this)
          ("C-<" . mc/mark-previous-like-this)
@@ -506,6 +424,7 @@
 
 (use-package sis
   :ensure t
+  :defer t
   ;; :hook
   ;; enable the /follow context/ and /inline region/ mode for specific buffers
   ;; (((text-mode prog-mode) . sis-context-mode)
@@ -523,22 +442,47 @@
   ;; enable the /inline english/ mode for all buffers
   ;; (sis-global-inline-mode t)
 
-(setq org-directory "~/文档/org")
+;; (org-babel-do-load-languages
+;;  'org-babel-load-languages '((python . t)))
 
-(if (file-exists-p "~/.emacs.d/local.el") (load-file "~/.emacs.d/local.el"))
-
-(org-babel-do-load-languages
- 'org-babel-load-languages '((python . t)))
-
-(setq org-attach-id-dir (expand-file-name "org-attach/data" org-directory))
-
-;(global-set-key (kbd "C-c c") 'org-capture)
-(setq org-default-notes-file (expand-file-name "org-capture/captures.org" org-directory))
 
 ;; (use-package pdf-tools
 ;;   :ensure t
 ;;   :init (pdf-loader-install))
+(use-package org
+  :ensure nil
+  :defer t
+  :custom
+  (org-directory "~/文档/org")
+  (org-attach-use-inheritance t)
+  (org-export-with-tags nil)
+  (org-format-latex-options
+   '(:foreground default :background default :scale 1.5 :html-foreground "Black" :html-background "Transparent" :html-scale 1.0 :matchers
+                 ("begin" "$1" "$" "$$" "\\(" "\\[")))
+  (org-attach-id-dir (expand-file-name "org-attach/data" org-directory))
 
+  (org-default-notes-file (expand-file-name "org-capture/captures.org" org-directory))
+  (org-latex-compiler "xelatex")
+  (org-latex-custom-lang-environments '((Chinese "")))
+  (org-latex-default-packages-alist
+   '(("AUTO" "inputenc" t
+      ("pdflatex"))
+     ("T1" "fontenc" t
+      ("pdflatex"))
+     ("" "graphicx" t nil)
+     ("" "grffile" t nil)
+     ("" "longtable" nil nil)
+     ("" "wrapfig" nil nil)
+     ("" "rotating" nil nil)
+     ("normalem" "ulem" t nil)
+     ("" "amsmath" t nil)
+     ("" "textcomp" t nil)
+     ("" "amssymb" t nil)
+     ("" "capt-of" nil nil)
+     ("" "hyperref" nil nil)
+     ("a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm" "geometry" nil nil)
+     ("" "ctex" nil nil)))
+  :config (message "Org"))
 (use-package org-gtd
   :ensure t
   :defer t
@@ -577,30 +521,34 @@
   (org-agenda-files (list (expand-file-name "org-agenda" org-directory) org-gtd-directory))
   ;; (org-agenda-files `(,org-gtd-directory))
   ;; a useful view to see what can be accomplished today
-  (org-agenda-custom-commands '(("g" "Scheduled today and all NEXT items" ((agenda "" ((org-agenda-span 1))) (todo "NEXT"))))))
+  (org-agenda-custom-commands '(("g" "Scheduled today and all NEXT items" ((agenda "" ((org-agenda-span 1))) (todo "NEXT")))))
+  :config (setq recentf-exclude (org-agenda-files)))
 
-(setq recentf-exclude (org-agenda-files))
 
 (use-package org-capture
   :ensure nil
   ;; note that org-gtd has to be loaded before this
   :after org-gtd
+  :custom (org-capture-templates `(("i" "Inbox"
+                                    entry (file ,(org-gtd--path org-gtd-inbox-file-basename))
+                                    "* %?\n%U\n\n  %i"
+                                    :kill-buffer t)
+                                   ("l" "Todo with link"
+                                    entry (file ,(org-gtd--path org-gtd-inbox-file-basename))
+                                    "* %?\n%U\n\n  %i\n  %a"
+                                    :kill-buffer t)))
   :config
   ;; use as-is if you don't have an existing set of org-capture templates
   ;; otherwise add to existing setup
   ;; you can of course change the letters, too
-  (setq org-capture-templates `(("i" "Inbox"
-                                 entry (file ,(org-gtd--path org-gtd-inbox-file-basename))
-                                 "* %?\n%U\n\n  %i"
-                                 :kill-buffer t)
-                                ("l" "Todo with link"
-                                 entry (file ,(org-gtd--path org-gtd-inbox-file-basename))
-                                 "* %?\n%U\n\n  %i\n  %a"
-                                 :kill-buffer t))))
+  )
 
 (use-package org-download
   :defer t
   :ensure t
+  :custom
+  (org-download-display-inline-images nil)
+  (org-download-method 'attach)
   :commands
   org-download-image
   org-download-clipboard
@@ -666,9 +614,9 @@
   :hook (org-mode . org-media-note-mode)
   :bind(:map org-mode-map
              ("C-c m" . org-media-note-hydra/body-with-sis-set-english))
-  :config
-  (setq org-media-note-screenshot-image-dir (expand-file-name "org-media-note" org-directory)
-        org-media-note-display-inline-images nil))
+  :custom
+  (org-media-note-display-inline-images nil)
+  (org-media-note-screenshot-image-dir (expand-file-name "org-media-note" org-directory)))
 
 ;; (use-package org-krita
 ;;   :load-path "site-lisp/org-krita"
@@ -687,11 +635,10 @@
   :hook (org-mode . org-sketch-mode)
   :bind(:map org-mode-map
              ("C-c s s" . org-sketch-insert))
-  :init
-  (setq org-sketch-xournal-template-dir "~/.emacs.d/site-lisp/org-sketch/template"  ;; xournal 模板存储目录
-        org-sketch-xournal-default-template-name "template.xopp" ;; 默认笔记模版名称，应该位于 org-sketch-xournal-template-dir
-        org-sketch-apps '("xournal" "drawio")  ;; 设置使用的sketch应用
-        ))
+  :custom
+  (org-sketch-xournal-template-dir "~/.emacs.d/site-lisp/org-sketch/template")  ;; xournal 模板存储目录
+  (org-sketch-xournal-default-template-name "template.xopp") ;; 默认笔记模版名称，应该位于 org-sketch-xournal-template-dir
+  (org-sketch-apps '("xournal" "drawio")))
 
 
 ;; (use-package symon)
@@ -735,7 +682,7 @@
 ;;   :preface (setq imbot--im-config 'imbot--fcitx5))
 
 
-(load-file "~/.emacs.d/custom-lisp/advance-words-count.el")
+;; (load-file "~/.emacs.d/custom-lisp/advance-words-count.el")
 
 ;; (use-package dashboard
 ;;   :ensure t
@@ -778,6 +725,9 @@
 (use-package pyim
   :ensure t
   :defer t
+  :custom
+  (default-input-method "pyim")
+  (pyim-page-length 5)
   :config
   ;; 金手指设置，可以将光标处的编码，比如：拼音字符串，转换为中文。
   (global-set-key (kbd "M-j") 'pyim-convert-string-at-point)
@@ -808,7 +758,7 @@
   ;;                 pyim-probe-punctuation-after-punctuation))
 
   ;; 开启代码搜索中文功能（比如拼音，五笔码等）
-  (pyim-isearch-mode 1)
+  ;; (pyim-isearch-mode 1)
 
   ;; 设置选词框的绘制方式
   (if (posframe-workable-p)
@@ -816,8 +766,7 @@
     (setq pyim-page-tooltip 'popup))
 
   ;; 显示5个候选词。
-  (setq pyim-page-length 5)
-  (setq default-input-method "pyim"))
+  )
 
 (use-package pyim-basedict
   :ensure t
@@ -838,34 +787,36 @@
     (require 'liberime nil t))
   (liberime-sync))
 
-(use-package dim
-  :ensure t
-  :config
-  (dim-major-names
-   '((emacs-lisp-mode    "elisp")))
-  (dim-minor-names
-   '((auto-fill-function " ↵")
-     (whitespace-mode    " _"  whitespace)
-     (paredit-mode       " ()" paredit)
-     (eldoc-mode         ""    eldoc)
-     (projectile-mode " Proj")
-     (pyim-isearch-mode ""))))
+;; (use-package dim
+;;   :ensure t
+;;   :defer t
+;;   :config
+;;   (dim-major-names
+;;    '((emacs-lisp-mode    "elisp")))
+;;   (dim-minor-names
+;;    '((auto-fill-function " ↵")
+;;      (whitespace-mode    " _"  whitespace)
+;;      (paredit-mode       " ()" paredit)
+;;      (company-mode       "comp")
+;;      (eldoc-mode         ""    eldoc))))
 
 (use-package emms
   :ensure t
   :defer t
   :commands emms
+  :custom
+  (emms-player-list '(emms-player-mpv))
+  (emms-playlist-buffer-name "*Music*")
+  (emms-info-asynchronously t)
+  (emms-info-functions '(emms-info-libtag))
   :config
   (require 'emms-setup)
+  (require 'emms-info-libtag)
   (emms-all)
   (emms-default-players)
-  (setq emms-player-list '(emms-player-mpv))
-  (setq emms-playlist-buffer-name "*Music*")
-  (setq emms-info-asynchronously t)
   (emms-mode-line-disable)
-  (emms-playing-time-disable-display)
-  (require 'emms-info-libtag) ;;; load functions that will talk to emms-print-metadata which in turn talks to libtag and gets metadata
-  (setq emms-info-functions '(emms-info-libtag))) ;;; make sure libtag is the only thing delivering metadata
+  (emms-playing-time-disable-display)) ;;; load functions that will talk to emms-print-metadata which in turn talks to libtag and gets metadata
+   ;;; make sure libtag is the only thing delivering metadata
 
 (when (daemonp)
   (menu-bar-mode +1)
