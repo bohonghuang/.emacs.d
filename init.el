@@ -820,7 +820,7 @@
   :config
   (pyim-basedict-enable))
 
-(defun pyim-use-liberime ()
+(defun pyim-enable-liberime ()
   (interactive)
   (use-package liberime
     :ensure t
@@ -828,8 +828,9 @@
     (require 'pyim-liberime)
     (liberime-try-select-schema "luna_pinyin_simp")
     (setq pyim-default-scheme 'rime-quanpin))
-  (require 'liberime)
-  (liberime-auto-build))
+  (let ((liberime-auto-build t))
+    (require 'liberime nil t))
+  (liberime-sync))
 
 (use-package dim
   :ensure t
