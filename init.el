@@ -1,4 +1,9 @@
 ;;; Package -- Summary
+(progn
+  (setq original-gc-cons-threshold gc-cons-threshold)
+  (setq gc-cons-threshold 50000000)
+  (add-hook 'emacs-startup-hook (lambda () (setq gc-cons-threshold original-gc-cons-threshold))))
+
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (if (file-exists-p custom-file) (load-file custom-file))
 
@@ -71,7 +76,7 @@
 
 (require 'use-package)
 
-(setq use-package-verbose t)
+;; (setq use-package-verbose t)
 ;; Enable defer and ensure by default for use-package
 ;; (setq use-package-always-defer t
 ;;       use-package-always-ensure t)
@@ -534,10 +539,11 @@
 ;;   :ensure t
 ;;   :init (pdf-loader-install))
 
-
 (use-package org-gtd
   :ensure t
-  :demand t ;; without this, the package won't be loaded, so org-agenda won't be configured
+  :defer t
+  :hook (org-agenda-mode . (lambda () (require 'org-gtd)))
+  ;; :demand t ;; without this, the package won't be loaded, so org-agenda won't be configured
   :custom
   ;; where org-gtd will put its files. This value is also the default one.
   (org-gtd-directory (expand-file-name "org-gtd" org-directory))
@@ -551,6 +557,7 @@
   ;; the next TODO is automatically changed to NEXT.
   (org-edna-use-inheritance t)
   :config
+  (load-file "~/.emacs.d/custom-lisp/org-assist.el")
   (org-edna-load)
   :bind
   (("C-c g c" . org-gtd-capture) ;; add item to inbox
@@ -728,30 +735,29 @@
 ;;   :preface (setq imbot--im-config 'imbot--fcitx5))
 
 
-(load-file "~/.emacs.d/custom-lisp/org-assist.el")
 (load-file "~/.emacs.d/custom-lisp/advance-words-count.el")
 
-(use-package dashboard
-  :ensure t
-  :config
-  (dashboard-setup-startup-hook)
-;; Set the title
-  ;; (setq dashboard-banner-logo-title "Welcome to Emacs Dashboard")
-  ;; Set the banner
-  (setq dashboard-startup-banner 3)
-  (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
-  ;; Value can be
-  ;; 'official which displays the official emacs logo
-  ;; 'logo which displays an alternative emacs logo
-  ;; 1, 2 or 3 which displays one of the text banners
-  ;; "path/to/your/image.png" or "path/to/your/text.txt" which displays whatever image/text you would prefer
+;; (use-package dashboard
+;;   :ensure t
+;;   :config
+;;   (dashboard-setup-startup-hook)
+;; ;; Set the title
+;;   ;; (setq dashboard-banner-logo-title "Welcome to Emacs Dashboard")
+;;   ;; Set the banner
+;;   (setq dashboard-startup-banner 3)
+;;   (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
+;;   ;; Value can be
+;;   ;; 'official which displays the official emacs logo
+;;   ;; 'logo which displays an alternative emacs logo
+;;   ;; 1, 2 or 3 which displays one of the text banners
+;;   ;; "path/to/your/image.png" or "path/to/your/text.txt" which displays whatever image/text you would prefer
 
-  ;; Content is not centered by default. To center, set
-  ;; (setq dashboard-center-content t)
+;;   ;; Content is not centered by default. To center, set
+;;   ;; (setq dashboard-center-content t)
 
-  ;; To disable shortcut "jump" indicators for each section, set
-  ;; (setq dashboard-show-shortcuts nil)
-)
+;;   ;; To disable shortcut "jump" indicators for each section, set
+;;   ;; (setq dashboard-show-shortcuts nil)
+;; )
 
 (use-package command-log-mode
   :ensure t
