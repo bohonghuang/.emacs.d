@@ -3,12 +3,14 @@
 
 (setq mc/cmds-to-run-for-all
       '(
+        backward-sexp
         c-electric-delete-forward
         c-electric-semi&comma
         c-electric-slash
         c-indent-line-or-region
         comment-line
         delete-horizontal-space
+        forward-sexp
         ignore
         indent-for-tab-command
         kill-region

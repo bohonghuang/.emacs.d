@@ -1,3 +1,4 @@
+;;; Package -- Summary
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (if (file-exists-p custom-file) (load-file custom-file))
 
@@ -48,6 +49,7 @@
 
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 (add-hook 'prog-mode-hook #'hl-line-mode)
+(add-hook 'prog-mode-hook #'visual-line-mode)
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 
@@ -69,15 +71,21 @@
 
 (require 'use-package)
 
+(setq use-package-verbose t)
 ;; Enable defer and ensure by default for use-package
 ;; (setq use-package-always-defer t
 ;;       use-package-always-ensure t)
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+(defun load-only-theme ()
+  "Disable all themes and then load a single theme interactively."
+  (interactive)
+  (while custom-enabled-themes
+    (disable-theme (car custom-enabled-themes)))
+  (call-interactively 'load-theme))
 (use-package jetbrains-darcula-theme
   :ensure t)
 (load-theme 'jetbrains-darcula t)
-
 ;; (use-package benchmark-init
 ;;   :ensure t
 ;;   :config
@@ -87,7 +95,8 @@
 (global-set-key (kbd "C-?") 'undo-redo)
 
 (use-package crux
-  :ensure t)
+  :ensure t
+  :defer t)
 
 
 (defun my-new-file-hook ()
@@ -128,7 +137,6 @@
   ;; per mode with `ligature-mode'.
   (global-ligature-mode t))
 
-(add-hook 'prog-mode-hook (lambda () (visual-line-mode t)))
 
 (global-set-key (kbd "C-x o") 'ace-window)
 
@@ -165,6 +173,7 @@
 
 (use-package projectile
   :ensure t
+  :defer t
   :hook (prog-mode . projectile-mode)
   :config
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map))
@@ -174,12 +183,14 @@
 ;; Enable scala-mode for highlighting, indentation and motion commands
 (use-package scala-mode
   :ensure t
+  :defer t
   :interpreter
     ("scala" . scala-mode))
 
 ;; Enable sbt mode for executing sbt commands
 (use-package sbt-mode
   :ensure t
+  :defer t
   :commands sbt-start sbt-command
   :config
   ;; WORKAROUND: https://github.com/ensime/emacs-sbt-mode/issues/31
@@ -192,6 +203,9 @@
    (setq sbt:program-options '("-Dsbt.supershell=false"))
 )
 
+(use-package flymake
+  :defer t
+  :bind (("C-c f" . flymake-show-diagnostics-buffer)))
 
 ;; (use-package flycheck
 ;;   :ensure t
@@ -200,12 +214,12 @@
 (use-package lsp-mode
   ;; Optional - enable lsp-mode automatically in scala files
   :ensure t
+  :defer t
   :init
   (setq lsp-keymap-prefix "C-c l")
   (setq lsp-eldoc-hook nil)
   (setq lsp-eldoc-enable-hover nil)
-  :hook  (scala-mode . lsp)
-  (lsp-mode . lsp-lens-mode)
+  :hook (lsp-mode . lsp-lens-mode)
   :bind(:map prog-mode-map
         ("C-c d d" . dap-debug)
         ("C-c d t". dap-breakpoint-toggle))
@@ -213,17 +227,19 @@
   (setq read-process-output-max (* 1024 1024 16)) ;; 1mb
   (setq lsp-ui-doc-position 'at-point)
   (setq lsp-idle-delay 0.500)
-  (setq lsp-log-io nil)
-)
+  (setq lsp-log-io nil))
 
 (use-package lsp-metals
   :ensure t
+  :defer t
   :custom
   (lsp-metals-server-args '("-J-Dmetals.allow-multiline-string-formatting=off -Xmx8192m"))
   :hook (scala-mode . lsp))
 
 (use-package lsp-ui
-  :ensure t)
+  :ensure t
+  :defer t
+  :after lsp)
 
 (use-package company
   :ensure t
@@ -234,7 +250,8 @@
   (setq company-dabbrev-ignore-case t))
 
 (use-package posframe
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package dap-mode
   :ensure t
@@ -249,6 +266,7 @@
 
 (use-package rustic
   :ensure t
+  :defer t
   ;; :bind(:map rustic-mode-map
               ;; ("C-c p u" . rustic-cargo-run)
               ;; ("C-c p c" . rustic-compile))
@@ -289,7 +307,8 @@
 ;; ======================================== Groovy ========================================
 
 (use-package groovy-mode
-  :ensure t)
+  :ensure t
+  :defer t)
 
 ;; ================================================================================
 
@@ -297,25 +316,28 @@
 ;; ====================================== Python ==========================================
 (use-package lsp-pyright
   :ensure t
+  :defer t
   :hook (python-mode . (lambda ()
-                          (require 'lsp-pyright)
-                          (lsp))))  ; or lsp-deferred
-
-;; (use-package jupyter
-;;   :ensure t)
-
-(use-package ein
-  :ensure t)
-
-(require 'dap-python)
-(dap-register-debug-template "Python Program"
+                         (require 'lsp-pyright)
+                         (lsp)))
+  :config
+  (require 'dap-python)
+  (dap-register-debug-template "Python Program"
   (list :type "python"
         :args "-i"
         :cwd nil
         :env '(("DEBUG" . "1"))
         :target-module (expand-file-name "~/工程/Python")
         :request "launch"
-        :name "Python Program"))
+        :name "Python Program")))  ; or lsp-deferred
+
+;; (use-package jupyter
+;;   :ensure t)
+
+(use-package ein
+  :ensure t
+  :defer t)
+
 ;; ================================================================================
 
 ;; ======================================== C++ ========================================
@@ -323,8 +345,8 @@
 ;; Clangd
 
 (use-package which-key
-  :ensure t)
-(which-key-mode t)
+  :ensure t
+  :config (which-key-mode t))
 
 ;; 
 (add-hook 'c-mode-hook 'lsp)
@@ -342,10 +364,12 @@
 ;;          (lambda () (require 'ccls) (lsp))))
 
 (use-package cmake-mode
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package qml-mode
-  :ensure t)
+  :ensure t
+  :defer t)
 ;; (use-package company-qml
 ;;   :config (add-to-list 'company-backends 'company-qml)
 ;; )
@@ -370,14 +394,18 @@
 ;; ======================================== PlatformIO ========================================
 
 (use-package platformio-mode
-  :ensure t)
+  :ensure t
+  :defer t)
 
 ;; ================================================================================
 
 (use-package scad-mode
-  :ensure t)
+  :ensure t
+  :defer t)
+
 (use-package scad-preview
   :ensure t
+  :defer t
   :bind(:map scad-mode-map
              ("C-c C-c" . scad-preview-mode)))
 
@@ -400,12 +428,15 @@
 ;; ====================================================================================
 
 (use-package yaml-mode
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package toml-mode
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package magit
+  :defer t
   :ensure t)
 
 (use-package yasnippet
@@ -423,16 +454,16 @@
 ;; (global-set-key (kbd "C-,") 'avy-goto-char-2-above)
 
 (use-package expand-region
-  :ensure t)
-
-(global-set-key (kbd "C-=") 'er/expand-region)
+  :ensure t
+  :defer t
+  :bind (( "C-=" . er/expand-region)))
 
 (use-package multiple-cursors
-  :ensure t)
-(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-(global-set-key (kbd "C->") 'mc/mark-next-like-this)
-(global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-(global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+  :ensure t
+  :bind (("C-S-c C-S-c" . mc/edit-lines)
+         ("C->" . mc/mark-next-like-this)
+         ("C-<" . mc/mark-previous-like-this)
+         ("C-c C-<" . mc/mark-all-like-this)))
 
 ;; (setq recentf-max-menu-items 10)
 
@@ -506,7 +537,6 @@
 
 (use-package org-gtd
   :ensure t
-  :after org
   :demand t ;; without this, the package won't be loaded, so org-agenda won't be configured
   :custom
   ;; where org-gtd will put its files. This value is also the default one.
@@ -562,16 +592,22 @@
                                  :kill-buffer t))))
 
 (use-package org-download
-  :ensure t)
-(add-hook 'dired-mode-hook 'org-download-enable)
+  :defer t
+  :ensure t
+  :commands
+  org-download-image
+  org-download-clipboard
+  org-download-screenshot
+  org-download-yank)
+
 (setq org-noter-default-notes-file-names '("notes.org")
       org-noter-notes-search-path '((expand-file-name "org-noter" org-directory)))
-
 
 (use-package org-roam
   :init
   (setq org-roam-v2-ack t)
   :ensure t
+  :defer t
   :custom
   (org-roam-directory (expand-file-name "org-roam" org-directory))
   (org-roam-graph-link-hidden-types '("file" "attachment"))
@@ -588,15 +624,18 @@
 
 (use-package org-transclusion
   :load-path "site-lisp/org-transclusion"
+  :defer t
   :bind (:map org-mode-map
          ("C-c t a" . org-transclusion-add)
          ("C-c t t" . org-transclusion-mode)))
 
 (use-package htmlize
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package ox-reveal
   :ensure t
+  :defer t
   ;; :custom
   ;; (org-reveal-root (concat "file://" (expand-file-name "~/.config/yarn/global/node_modules/reveal.js")))
   )
@@ -607,13 +646,16 @@
   (org-media-note-hydra/body))
 
 (use-package pretty-hydra
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package mpv
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package org-media-note
   :load-path "site-lisp/org-media-note"
+  :defer t
   :hook (org-mode . org-media-note-mode)
   :bind(:map org-mode-map
              ("C-c m" . org-media-note-hydra/body-with-sis-set-english))
@@ -629,10 +671,12 @@
 ;; (setq org-media-note-save-screenshot-p t)
 
 (use-package org-link-edit
-  :load-path "site-lisp/org-link-edit")
+  :load-path "site-lisp/org-link-edit"
+  :defer t)
 
 (use-package org-sketch
   :load-path "site-lisp/org-sketch"
+  :defer t
   :hook (org-mode . org-sketch-mode)
   :bind(:map org-mode-map
              ("C-c s s" . org-sketch-insert))
@@ -666,11 +710,12 @@
 ;; (use-package svg-clock)
 
 (use-package vterm
-  :commands (vterm)
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package quickrun
-  :ensure t)
+  :ensure t
+  :defer t)
 
 
 
@@ -709,19 +754,24 @@
 )
 
 (use-package command-log-mode
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package elmacro
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package mermaid-mode
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package ob-mermaid
-  :ensure t)
+  :ensure t
+  :defer t)
 
 (use-package pyim
   :ensure t
+  :defer t
   :config
   ;; 金手指设置，可以将光标处的编码，比如：拼音字符串，转换为中文。
   (global-set-key (kbd "M-j") 'pyim-convert-string-at-point)
@@ -765,16 +815,21 @@
 
 (use-package pyim-basedict
   :ensure t
+  :defer t
+  :after pyim
   :config
   (pyim-basedict-enable))
 
-(use-package liberime
-  :ensure t
-  :init (liberime-build)
-  :config
-  (require 'pyim-liberime)
-  (liberime-try-select-schema "luna_pinyin_simp")
-  (setq pyim-default-scheme 'rime-quanpin))
+(defun pyim-use-liberime ()
+  (interactive)
+  (use-package liberime
+    :ensure t
+    :config
+    (require 'pyim-liberime)
+    (liberime-try-select-schema "luna_pinyin_simp")
+    (setq pyim-default-scheme 'rime-quanpin))
+  (require 'liberime)
+  (liberime-auto-build))
 
 (use-package dim
   :ensure t
@@ -791,6 +846,8 @@
 
 (use-package emms
   :ensure t
+  :defer t
+  :commands emms
   :config
   (require 'emms-setup)
   (emms-all)
