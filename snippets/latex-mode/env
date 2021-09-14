@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: Environment
+# key: env
+# --
+\begin{${1:aligned}}$0\end{$1}

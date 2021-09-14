@@ -7,9 +7,6 @@
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (if (file-exists-p custom-file) (load-file custom-file))
 
-(setq local-file (expand-file-name "local.el" user-emacs-directory))
-(if (file-exists-p local-file) (load-file local-file))
-
 (custom-set-variables
  '(avy-single-candidate-jump nil)
  '(column-number-mode t)
@@ -34,10 +31,11 @@
 (add-hook 'prog-mode-hook #'visual-line-mode)
 (global-set-key (kbd "C-?") 'undo-redo)
 (global-set-key (kbd "C-S-d") 'delete-region)
-(global-set-key (kbd "C-;") 'avy-goto-char-timer)
+;; (global-set-key (kbd "C-;") 'avy-goto-char-timer)
 (global-set-key (kbd "C-x o") 'ace-window)
 
 (defalias 'yes-or-no-p 'y-or-n-p)
+(defalias 'list-buffers 'ibuffer)
 
 ;; load emacs 24's package system. Add MELPA repository.
 (when (>= emacs-major-version 24)
@@ -67,9 +65,24 @@
   :ensure t
   :config (load-theme 'jetbrains-darcula t))
 
+(setq local-file (expand-file-name "local.el" user-emacs-directory))
+(if (file-exists-p local-file) (load-file local-file))
+
+(use-package recentf
+  :init (defalias 'reopf 'recentf-open-files)
+  :defer t
+  :hook (find-file . (lambda () (require 'recentf)))
+  :commands recentf-open-files
+  :config
+  (recentf-mode +1)
+  (let ((file-name (buffer-file-name)))
+    (if (and file-name (file-exists-p file-name))
+      (recentf-add-file buffer-file-name))))
+
 (use-package crux
   :ensure t
-  :defer t)
+  :defer t
+  :bind (("C-x C-S-e" . crux-eval-and-replace)))
 
 (defun my-new-file-hook ()
   (unless (file-exists-p (file-truename buffer-file-name))
@@ -129,6 +142,13 @@
         sp-highlight-wrap-overlay nil
         sp-highlight-wrap-tag-overlay nil))
 
+(use-package rainbow-delimiters
+  :ensure t
+  :defer t
+  :hook
+  (lisp-mode . rainbow-delimiters-mode)
+  (emacs-lisp-mode . rainbow-delimiters-mode))
+
 (use-package projectile
   :ensure t
   :defer t
@@ -146,7 +166,8 @@
   :ensure t
   :defer t
   :interpreter
-    ("scala" . scala-mode))
+  ("scala" . scala-mode)
+  )
 
 ;; Enable sbt mode for executing sbt commands
 (use-package sbt-mode
@@ -205,7 +226,10 @@
 
 (use-package company
   :ensure t
-  :hook (prog-mode . company-mode)
+  :defer t
+  :hook
+  (prog-mode . company-mode)
+  (latex-mode . company-mode)
   :custom
   (lsp-completion-provider :capf)
   (company-dabbrev-downcase nil)
@@ -373,7 +397,8 @@
   :defer t
   :hook
   (prog-mode . yas-minor-mode)
-  (org-mode . yas-minor-mode))
+  (org-mode . yas-minor-mode)
+  (latex-mode . yas-minor-mode))
 
 (use-package expand-region
   :ensure t
@@ -424,7 +449,7 @@
 
 (use-package sis
   :ensure t
-  :defer t
+  :defer 1
   ;; :hook
   ;; enable the /follow context/ and /inline region/ mode for specific buffers
   ;; (((text-mode prog-mode) . sis-context-mode)
