@@ -12,4 +12,4 @@
 	url = git@github.com:yuchen-lea/org-media-note.git
 [submodule "rime"]
 	path = rime
-	url = git@github.com:HuangBoHong/rime-config.git
+	url = git@github.com:HuangBoHong/my-rime.git

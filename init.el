@@ -69,7 +69,7 @@
 (if (file-exists-p local-file) (load-file local-file))
 
 (use-package recentf
-  :init (defalias 'reopf 'recentf-open-files)
+  :init (defalias 'reopfs 'recentf-open-files)
   :defer t
   :hook (find-file . (lambda () (require 'recentf)))
   :commands recentf-open-files
@@ -82,7 +82,8 @@
 (use-package crux
   :ensure t
   :defer t
-  :bind (("C-x C-S-e" . crux-eval-and-replace)))
+  :bind (("C-x C-S-e" . crux-eval-and-replace)
+         ("C-x C-S-f" . crux-open-with)))
 
 (defun my-new-file-hook ()
   (unless (file-exists-p (file-truename buffer-file-name))
@@ -152,7 +153,9 @@
 (use-package projectile
   :ensure t
   :defer t
-  :hook (prog-mode . projectile-mode)
+  :hook
+  (find-file . projectile-mode)
+  (dired-mode . (lambda () (require 'projectile)))
   :config
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (put 'projectile-project-run-cmd 'safe-local-variable #'stringp)
@@ -489,6 +492,7 @@
   (org-default-notes-file (expand-file-name "org-capture/captures.org" org-directory))
   (org-latex-compiler "xelatex")
   (org-latex-custom-lang-environments '((Chinese "")))
+  (org-latex-pdf-process '("%latex -shell-escape -interaction nonstopmode -output-directory %o %f" "%latex -shell-escape -interaction nonstopmode -output-directory %o %f" "%latex -shell-escape -interaction nonstopmode -output-directory %o %f"))
   (org-latex-default-packages-alist
    '(("AUTO" "inputenc" t
       ("pdflatex"))
@@ -506,7 +510,8 @@
      ("" "capt-of" nil nil)
      ("" "hyperref" nil nil)
      ("a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm" "geometry" nil nil)
-     ("" "ctex" nil nil)))
+     ("" "ctex" nil nil)
+     ("" "svg" nil nil)))
   :config (message "Org"))
 (use-package org-gtd
   :ensure t
@@ -571,14 +576,10 @@
 (use-package org-download
   :defer t
   :ensure t
+  :hook (org-mode . (lambda () (require 'org-download)))
   :custom
   (org-download-display-inline-images nil)
-  (org-download-method 'attach)
-  :commands
-  org-download-image
-  org-download-clipboard
-  org-download-screenshot
-  org-download-yank)
+  (org-download-method 'attach))
 
 (setq org-noter-default-notes-file-names '("notes.org")
       org-noter-notes-search-path '((expand-file-name "org-noter" org-directory)))
@@ -747,70 +748,12 @@
   :ensure t
   :defer t)
 
-(use-package pyim
+(use-package rime
   :ensure t
   :defer t
   :custom
-  (default-input-method "pyim")
-  (pyim-page-length 5)
-  :config
-  ;; 金手指设置，可以将光标处的编码，比如：拼音字符串，转换为中文。
-  (global-set-key (kbd "M-j") 'pyim-convert-string-at-point)
-
-  ;; 按 "C-<return>" 将光标前的 regexp 转换为可以搜索中文的 regexp.
-  (define-key minibuffer-local-map (kbd "C-<return>") 'pyim-cregexp-convert-at-point)
-  (setq-default pyim-english-input-switch-functions
-              '(pyim-probe-program-mode))
-
-  ;; 我使用全拼
-  ;; (pyim-default-scheme 'quanpin)
-  ;; (pyim-default-scheme 'wubi)
-  ;; (pyim-default-scheme 'cangjie)
-  ;; pyim 探针设置
-  ;; 设置 pyim 探针设置，这是 pyim 高级功能设置，可以实现 *无痛* 中英文切换 :-)
-  ;; 我自己使用的中英文动态切换规则是：
-  ;; 1. 光标只有在注释里面时，才可以输入中文。
-  ;; 2. 光标前是汉字字符时，才能输入中文。
-  ;; 3. 使用 M-j 快捷键，强制将光标前的拼音字符串转换为中文。
-  ;; (setq-default pyim-english-input-switch-functions
-  ;;               '(pyim-probe-dynamic-english
-  ;;                 pyim-probe-isearch-mode
-  ;;                 pyim-probe-program-mode
-  ;;                 pyim-probe-org-structure-template))
-
-  ;; (setq-default pyim-punctuation-half-width-functions
-  ;;               '(pyim-probe-punctuation-line-beginning
-  ;;                 pyim-probe-punctuation-after-punctuation))
-
-  ;; 开启代码搜索中文功能（比如拼音，五笔码等）
-  ;; (pyim-isearch-mode 1)
-
-  ;; 设置选词框的绘制方式
-  (if (posframe-workable-p)
-      (setq pyim-page-tooltip 'posframe)
-    (setq pyim-page-tooltip 'popup))
-
-  ;; 显示5个候选词。
-  )
-
-(use-package pyim-basedict
-  :ensure t
-  :defer t
-  :after pyim
-  :config
-  (pyim-basedict-enable))
-
-(defun pyim-enable-liberime ()
-  (interactive)
-  (use-package liberime
-    :ensure t
-    :config
-    (require 'pyim-liberime)
-    (liberime-try-select-schema "luna_pinyin_simp")
-    (setq pyim-default-scheme 'rime-quanpin))
-  (let ((liberime-auto-build t))
-    (require 'liberime nil t))
-  (liberime-sync))
+  (default-input-method "rime")
+  (rime-show-candidate 'posframe))
 
 ;; (use-package dim
 ;;   :ensure t
