@@ -220,7 +220,13 @@
   :defer t
   :custom
   (lsp-metals-server-args '("-J-Dmetals.allow-multiline-string-formatting=off -Xmx8192m"))
-  :hook (scala-mode . lsp))
+  :hook (scala-mode . lsp)
+  :config
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-tramp-connection "metals")
+                    :major-modes '(scala-mode)
+                    :remote? t
+                    :server-id 'metals-remote)))
 
 (use-package lsp-ui
   :ensure t
@@ -256,18 +262,13 @@
 (use-package rustic
   :ensure t
   :defer t
-  ;; :bind(:map rustic-mode-map
-              ;; ("C-c p u" . rustic-cargo-run)
-              ;; ("C-c p c" . rustic-compile))
   :config
-  ;; uncomment for less flashiness
-  ;; (setq lsp-eldoc-hook nil)
-  ;; (setq lsp-enable-symbol-highlighting nil)
-  ;; (setq lsp-signature-auto-activate nil)
-
-  ;; comment to disable rustfmt on save
-  ;; (setq rustic-format-on-save t)
-  ;; (add-hook 'rustic-mode-hook 'rk/rustic-mode-hook)
+  (require 'lsp)
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-tramp-connection "rls")
+                    :major-modes '(rustic-mode)
+                    :remote? t
+                    :server-id 'rls-remote))
 )
  ;; ================================================================================
 
@@ -289,6 +290,11 @@
                          (require 'lsp-pyright)
                          (lsp)))
   :config
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-tramp-connection "pyright")
+                    :major-modes '(python-mode)
+                    :remote? t
+                    :server-id 'pyright-remote))
   (require 'dap-python)
   (dap-register-debug-template "Python Program"
                                (list :type "python"
@@ -298,9 +304,6 @@
                                      :target-module (expand-file-name "~/工程/Python")
                                      :request "launch"
                                      :name "Python Program")))  ; or lsp-deferred
-
-;; (use-package jupyter
-;;   :ensure t)
 
 (use-package ein
   :ensure t
@@ -320,18 +323,15 @@
 (use-package lsp-clangd
   :defer t
   :hook
-  (c-mode . lsp)
-  (c++-mode . lsp)
-  (objc-mode . lsp)
+  ((c-mode c++-mode objc-mode) . lsp)
   :custom
-  (lsp-clients-clangd-args '("--header-insertion=never")))
-
-;; CCLS
-
-;; (use-package ccls
-;;   :ensure t
-;;   :hook ((c-mode c++-mode objc-mode cuda-mode) .
-;;          (lambda () (require 'ccls) (lsp))))
+  (lsp-clients-clangd-args '("--header-insertion=never"))
+  :config
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-tramp-connection "clangd")
+                    :major-modes '(c-mode c++-mode objc-mode)
+                    :remote? t
+                    :server-id 'clangd-remote)))
 
 (use-package cmake-mode
   :ensure t
@@ -344,29 +344,6 @@
 ;;   :config (add-to-list 'company-backends 'company-qml)
 ;; )
 
-(defun lsp-configure-remote ()
-  (interactive)
-  (require 'lsp)
-  (lsp-register-client
-    (make-lsp-client :new-connection (lsp-tramp-connection "rls")
-                     :major-modes '(rustic-mode)
-                     :remote? t
-                     :server-id 'rls-remote))
-  (lsp-register-client
-    (make-lsp-client :new-connection (lsp-tramp-connection "pyright")
-                     :major-modes '(python-mode)
-                     :remote? t
-                     :server-id 'pyright-remote))
-  (lsp-register-client
-    (make-lsp-client :new-connection (lsp-tramp-connection "clangd")
-                     :major-modes '(c-mode c++-mode)
-                     :remote? t
-                     :server-id 'clangd-remote))
-  (lsp-register-client
-    (make-lsp-client :new-connection (lsp-tramp-connection "metals")
-                     :major-modes '(scala-mode)
-                     :remote? t
-                     :server-id 'metals-remote)))
 
 ;; ================================================================================
 
@@ -469,11 +446,6 @@
 (use-package sis
   :ensure t
   :defer 1
-  ;; :hook
-  ;; enable the /follow context/ and /inline region/ mode for specific buffers
-  ;; (((text-mode prog-mode) . sis-context-mode)
-  ;;  ((text-mode prog-mode) . sis-inline-mode))
-
   :config
   ;; For MacOS
   (sis-ism-lazyman-config "1" "2" 'fcitx5)
@@ -483,16 +455,7 @@
   (sis-global-respect-mode t)
   ;; enable the /context/ mode for all buffers
   (sis-global-context-mode t))
-  ;; enable the /inline english/ mode for all buffers
-  ;; (sis-global-inline-mode t)
 
-;; (org-babel-do-load-languages
-;;  'org-babel-load-languages '((python . t)))
-
-
-;; (use-package pdf-tools
-;;   :ensure t
-;;   :init (pdf-loader-install))
 (use-package org
   :ensure nil
   :defer t
