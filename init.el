@@ -220,7 +220,13 @@
   :defer t
   :custom
   (lsp-metals-server-args '("-J-Dmetals.allow-multiline-string-formatting=off -Xmx8192m"))
-  :hook (scala-mode . lsp))
+  :hook (scala-mode . lsp)
+  :config
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-tramp-connection "metals")
+                    :major-modes '(scala-mode)
+                    :remote? t
+                    :server-id 'metals-remote)))
 
 (use-package lsp-ui
   :ensure t
@@ -260,6 +266,11 @@
               ;; ("C-c p u" . rustic-cargo-run)
               ;; ("C-c p c" . rustic-compile))
   :config
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-tramp-connection "rls")
+                    :major-modes '(rustic-mode)
+                    :remote? t
+                    :server-id 'rls-remote))
   ;; uncomment for less flashiness
   ;; (setq lsp-eldoc-hook nil)
   ;; (setq lsp-enable-symbol-highlighting nil)
@@ -289,15 +300,20 @@
                          (require 'lsp-pyright)
                          (lsp)))
   :config
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-tramp-connection "pyright")
+                    :major-modes '(python-mode)
+                    :remote? t
+                    :server-id 'pyright-remote))
   (require 'dap-python)
   (dap-register-debug-template "Python Program"
-  (list :type "python"
-        :args "-i"
-        :cwd nil
-        :env '(("DEBUG" . "1"))
-        :target-module (expand-file-name "~/工程/Python")
-        :request "launch"
-        :name "Python Program")))  ; or lsp-deferred
+                               (list :type "python"
+                                     :args "-i"
+                                     :cwd nil
+                                     :env '(("DEBUG" . "1"))
+                                     :target-module (expand-file-name "~/工程/Python")
+                                     :request "launch"
+                                     :name "Python Program")))  ; or lsp-deferred
 
 ;; (use-package jupyter
 ;;   :ensure t)
@@ -316,13 +332,21 @@
   :ensure t
   :config (which-key-mode t))
 
-;; 
-(add-hook 'c-mode-hook 'lsp)
-(add-hook 'c++-mode-hook 'lsp)
-(add-hook 'objc-mode 'lsp)
-
-(setq lsp-clients-clangd-args
-      '("--header-insertion=never"))
+;;
+(use-package lsp-clangd
+  :defer t
+  :hook
+  (c-mode . lsp)
+  (c++-mode . lsp)
+  (objc-mode . lsp)
+  :custom
+  (lsp-clients-clangd-args '("--header-insertion=never"))
+  :config
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-tramp-connection "clangd")
+                    :major-modes '(c-mode c++-mode)
+                    :remote? t
+                    :server-id 'clangd-remote)))
 
 ;; CCLS
 
