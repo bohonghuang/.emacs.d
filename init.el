@@ -418,15 +418,6 @@
 
 ;; (setq recentf-max-menu-items 10)
 
-
-;; (use-package company-posframe
-;;   :ensure t)
-;; (company-posframe-mode 1)
-
-;; (use-package company-box
-;;   :ensure t
-;;   :hook (company-mode . company-box-mode))
-
 ;;  (defvar company-mode/enable-yas t "Enable yasnippet for all backends.")
 
 ;; (defun company-mode/backend-with-yas (backend)
@@ -753,7 +744,9 @@
   :defer t
   :custom
   (default-input-method "rime")
-  (rime-show-candidate 'posframe))
+  (rime-show-candidate 'posframe)
+  :config
+  (--each '("C-v" "M-v" "S-<delete>") (add-to-list 'rime-translate-keybindings it)))
 
 ;; (use-package dim
 ;;   :ensure t
