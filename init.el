@@ -460,7 +460,6 @@
   :ensure nil
   :defer t
   :custom
-  (org-directory "~/文档/org")
   (org-attach-use-inheritance t)
   (org-export-with-tags nil)
   (org-format-latex-options
@@ -492,6 +491,12 @@
      ("" "ctex" nil nil)
      ("" "svg" nil nil)))
   :config (message "Org"))
+
+(use-package org-pomodoro
+  :ensure t
+  :defer t
+  :hook (org-agenda-mode . (lambda () (require 'org-pomodoro))))
+
 (use-package org-gtd
   :ensure t
   :defer t
