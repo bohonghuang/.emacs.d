@@ -497,6 +497,11 @@
   :defer t
   :hook (org-agenda-mode . (lambda () (require 'org-pomodoro))))
 
+(use-package org-pomodoro-ext
+  :load-path "custom-lisp"
+  :defer t
+  :hook (org-pomodoro-started-hook . (lambda () (require 'org-pomodoro))))
+
 (use-package org-gtd
   :ensure t
   :defer t
