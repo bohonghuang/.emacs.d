@@ -1,56 +1,58 @@
 (require 'org)
 
 (defmacro org-pomodoro-with-current-drawer (&rest body)
-  (save-excursion
-    `(with-current-buffer (marker-buffer org-clock-marker)
-       (catch 'exit
-         (goto-char org-clock-marker)
-         (org-back-to-heading t)
-         (let* ((beg (line-beginning-position))
-                (end (save-excursion (outline-next-heading) (point)))
-                (drawer "POMODORO"))
-           (when drawer
-             (goto-char beg)
-             (let ((drawer-re (concat "^[ \t]*:" (regexp-quote drawer) ":[ \t]*$")))
-               (while (re-search-forward drawer-re end t)
-                 (let ((element (org-element-at-point)))
-                   (when (eq (org-element-type element) 'drawer)
-                     (let ((cend (org-element-property :contents-end element)))
-                       (if (and (not org-log-states-order-reversed) cend)
-                           (goto-char cend)
-                         (forward-line))
-                       (throw 'exit t)))))))
-           (goto-char beg)
-           (let ((clock-re (concat "^[ \t]*" org-clock-string))
-                 (count 0)
-                 positions)
-             (save-excursion
-               (while (re-search-forward clock-re end t)
-                 (let ((element (org-element-at-point)))
-                   (when (eq (org-element-type element) 'clock)
-                     (setq positions (cons (line-beginning-position) positions)
-                           count (1+ count))))))
-             (cond
-              ((null positions)
-               (org-end-of-meta-data)
-               (unless (bolp) (insert "\n")))
-              (drawer
-               (org-end-of-meta-data)
-               (let ((beg (point)))
-                 (insert ":END:\n")
-                 (let ((end (point-marker)))
-                   (goto-char beg)
-                   (save-excursion (insert ":" drawer ":\n"))
-                   (org-flag-region (line-end-position) (1- end) t 'outline)
-                   (org-indent-region (point) end)
-                   (forward-line)
-                   (unless org-log-states-order-reversed
-                     (goto-char end)
-                     (beginning-of-line -1))
-                   (set-marker end nil))))
-              (org-log-states-order-reversed (goto-char (car (last positions))))
-              (t (goto-char (car positions)))))))
-       (progn ,@body))))
+  `(catch 'exit
+    (save-excursion
+      (pcase (marker-buffer org-clock-marker)
+        (`nil (throw 'exit nil))
+        (buffer (with-current-buffer buffer
+                  (goto-char org-clock-marker)
+                  (org-back-to-heading t)
+                  (let* ((beg (line-beginning-position))
+                         (end (save-excursion (outline-next-heading) (point)))
+                         (drawer "POMODORO"))
+                    (when drawer
+                      (goto-char beg)
+                      (let ((drawer-re (concat "^[ \t]*:" (regexp-quote drawer) ":[ \t]*$")))
+                        (while (re-search-forward drawer-re end t)
+                          (let ((element (org-element-at-point)))
+                            (when (eq (org-element-type element) 'drawer)
+                              (let ((cend (org-element-property :contents-end element)))
+                                (if (and (not org-log-states-order-reversed) cend)
+                                    (goto-char cend)
+                                  (forward-line))
+                                (throw 'exit t)))))))
+                    (goto-char beg)
+                    (let ((clock-re (concat "^[ \t]*" org-clock-string))
+                          (count 0)
+                          positions)
+                      (save-excursion
+                        (while (re-search-forward clock-re end t)
+                          (let ((element (org-element-at-point)))
+                            (when (eq (org-element-type element) 'clock)
+                              (setq positions (cons (line-beginning-position) positions)
+                                    count (1+ count))))))
+                      (cond
+                       ((null positions)
+                        (org-end-of-meta-data)
+                        (unless (bolp) (insert "\n")))
+                       (drawer
+                        (org-end-of-meta-data)
+                        (let ((beg (point)))
+                          (insert ":END:\n")
+                          (let ((end (point-marker)))
+                            (goto-char beg)
+                            (save-excursion (insert ":" drawer ":\n"))
+                            (org-flag-region (line-end-position) (1- end) t 'outline)
+                            (org-indent-region (point) end)
+                            (forward-line)
+                            (unless org-log-states-order-reversed
+                              (goto-char end)
+                              (beginning-of-line -1))
+                            (set-marker end nil))))
+                       (org-log-states-order-reversed (goto-char (car (last positions))))
+                       (t (goto-char (car positions))))))
+                  (progn ,@body)))))))
 
 (defun org-pomodoro-drawer-insert-item (item &optional content)
   (org-pomodoro-with-current-drawer
@@ -69,7 +71,7 @@
 
 (defadvice org-pomodoro-kill (before org-pomodoro-kill-log)
   (setq org-pomodoro-interrupt-count 0)
-  (org-pomodoro-drawer-insert-item "KILLED"))
+  (call-interactively #'org-pomodoro-abort))
 
 (defadvice org-pomodoro-finished (before org-pomodoro-finished-log)
   (setq org-pomodoro-interrupt-count 0)
@@ -83,7 +85,7 @@
     (org-pomodoro-abort "Interrupted more than 3 times.")))
 
 (defun org-pomodoro-abort (cause)
-  (interactive s"Please enter the reason that caused you to abort the pomodoro: ")
+  (interactive "sPlease enter the reason that caused you to abort the pomodoro: ")
   (org-pomodoro-drawer-insert-item "KILLED" cause)
   (if (org-pomodoro-active-p) (org-pomodoro-killed))
   (setq org-pomodoro-interrupt-count 0))
@@ -92,4 +94,3 @@
 (ad-activate 'org-pomodoro-finished)
 
 (provide 'org-pomodoro-ext)
-

@@ -495,12 +495,15 @@
 (use-package org-pomodoro
   :ensure t
   :defer t
+  :bind (("<f12>" . org-pomodoro))
+  :custom (org-pomodoro-keep-killed-pomodoro-time t)
   :hook (org-agenda-mode . (lambda () (require 'org-pomodoro))))
 
 (use-package org-pomodoro-ext
   :load-path "custom-lisp"
   :defer t
-  :hook (org-pomodoro-started-hook . (lambda () (require 'org-pomodoro))))
+  :bind (("S-<f12>" . org-pomodoro-interrupt))
+  :hook (org-pomodoro-started . (lambda () (require 'org-pomodoro-ext))))
 
 (use-package org-gtd
   :ensure t

@@ -80,6 +80,7 @@ the documentation of `org-diary'."
           (error "Agenda file %s is not in Org mode" file))
         (setq org-agenda-buffer (or org-agenda-buffer buffer))
         (setf org-agenda-current-date date)
+        (undo-boundary)
         (org-macro-replace-all org-macro-templates)
         (let ((ret (save-excursion
                      (save-restriction
