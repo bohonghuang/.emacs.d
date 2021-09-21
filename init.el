@@ -609,6 +609,7 @@
 (use-package ox-reveal
   :ensure t
   :defer t
+  :hook (org-mode . (lambda () (require 'ox-reveal)))
   ;; :custom
   ;; (org-reveal-root (concat "file://" (expand-file-name "~/.config/yarn/global/node_modules/reveal.js")))
   )

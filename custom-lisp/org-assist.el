@@ -1,3 +1,4 @@
+;;;  -*- lexical-binding: t; -*-
 (eval-when-compile (require 'subr-x)
                    (require 'cl-lib))
 (require 'org)
@@ -127,3 +128,29 @@ the documentation of `org-diary'."
                               (push deadlines results)))))))))
           (primitive-undo 1 buffer-undo-list)
           ret)))))
+
+(defun org-get-media-link-export-function (media-type)
+  (lambda (path desc backend)
+    (let ((ext (file-name-extension path)))
+      (cond
+       ((eq 'html backend)
+        (format "<%s src='%s' controls/>" media-type (url-encode-url (replace-regexp-in-string "~" (expand-file-name "~") path))))
+       (t nil)))))
+
+(defconst org-media-file-extensions '(("video" . ("mkv" "mp4" "flv"))
+                                      ("audio" . ("mp3" "aac" "m4a" "flac" "ogg"))))
+
+(defun org-media-file-link-export (path desc backend)
+  (cond
+   ((eq 'html backend)
+    (let* ((ext (file-name-extension path))
+           (media-type-cons (--find (-contains-p (cdr it) ext) org-media-file-extensions)))
+      (pcase media-type-cons
+        (`nil nil)
+        ((let media-type (car media-type-cons))
+(funcall (org-link-get-parameter media-type :export) path desc backend)))))
+   (t nil)))
+
+(org-link-set-parameters "video" :export (org-get-media-link-export-function "video"))
+(org-link-set-parameters "audio" :export (org-get-media-link-export-function "audio"))
+(org-link-set-parameters "file" :export #'org-media-file-link-export)
