@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: Export Block
+# key: <exp
+# --
+#+BEGIN_EXPORT ${1:html}
+$0
+#+END_EXPORT

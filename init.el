@@ -61,9 +61,14 @@
   (while custom-enabled-themes
     (disable-theme (car custom-enabled-themes)))
   (call-interactively 'load-theme))
-(use-package jetbrains-darcula-theme
+
+;; (use-package jetbrains-darcula-theme
+;;   :ensure t
+;;   :config (load-theme 'jetbrains-darcula t))
+
+(use-package doom-themes
   :ensure t
-  :config (load-theme 'jetbrains-darcula t))
+  :config (load-theme 'doom-molokai t))
 
 (setq local-file (expand-file-name "local.el" user-emacs-directory))
 (if (file-exists-p local-file) (load-file local-file))
@@ -265,11 +270,10 @@
   :config
   (require 'lsp)
   (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection "rls")
+   (make-lsp-client :new-connection (lsp-tramp-connection "rust-analyzer")
                     :major-modes '(rustic-mode)
                     :remote? t
-                    :server-id 'rls-remote))
-)
+                    :server-id 'rust-analyzer-remote)))
  ;; ================================================================================
 
 
@@ -417,6 +421,17 @@
          ("C->" . mc/mark-next-like-this)
          ("C-<" . mc/mark-previous-like-this)
          ("C-c C-<" . mc/mark-all-like-this)))
+
+(use-package intellij-features
+  :load-path "custom-lisp"
+  :defer t
+  :hook ((c-mode c++-mode objc-mode java-mode) . (lambda ()
+                    (require 'intellij-features)
+                    (local-set-key (kbd "<backspace>") #'intellij-backspace))))
+
+  ;; :hook (c-mode . (lambda ()
+  ;;                   (require 'intellij-feature-collection)
+  ;;                   (local-set-key (kbd "<backspace>") #'intellij-backspace))))
 
 ;; (setq recentf-max-menu-items 10)
 
@@ -605,6 +620,11 @@
 (use-package htmlize
   :ensure t
   :defer t)
+
+(use-package ox-md
+  :ensure nil
+  :defer t
+  :hook (org-mode . (lambda () (require 'ox-md))))
 
 (use-package ox-reveal
   :ensure t
