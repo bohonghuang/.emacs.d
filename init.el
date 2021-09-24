@@ -538,7 +538,7 @@
   ;; the next TODO is automatically changed to NEXT.
   (org-edna-use-inheritance t)
   :config
-  (load-file "~/.emacs.d/custom-lisp/org-assist.el")
+  (load-file "~/.emacs.d/custom-lisp/org-ext.el")
   (org-edna-load)
   :bind
   (("C-c g c" . org-gtd-capture) ;; add item to inbox
