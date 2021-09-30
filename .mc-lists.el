@@ -28,18 +28,15 @@
         org-metaleft
         org-metaright
         org-metaup
+        org-return
+        org-return-and-maybe-indent
         org-self-insert-command
         org-shiftcontrolright
         org-yank
         phi-autopair-delete-backward
         phi-autopair-delete-forward
+        sgml-slash
         sis--prefix-override-handler
         wdired--self-insert
         wdired-abort-changes
-        ))
-
-(setq mc/cmds-to-run-once
-      '(
-        electric-pair-delete-pair
-        mouse-drag-mode-line
         ))

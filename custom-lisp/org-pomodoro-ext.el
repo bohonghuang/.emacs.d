@@ -70,13 +70,17 @@
 
 (defvar org-pomodoro-interrupt-count 0)
 
-(defadvice org-pomodoro-kill (before org-pomodoro-kill-log)
+(defun org-pomodoro-kill@before (&rest _)
   (setq org-pomodoro-interrupt-count 0)
   (call-interactively #'org-pomodoro-abort))
 
-(defadvice org-pomodoro-finished (before org-pomodoro-finished-log)
+(advice-add #'org-pomodoro-kill :before #'org-pomodoro-kill@before)
+
+(defun org-pomodoro-finished@before (&rest _)
   (setq org-pomodoro-interrupt-count 0)
   (org-pomodoro-drawer-insert-item "FINISHED"))
+
+(advice-add #'org-pomodoro-finished :before #'org-pomodoro-finished@before)
 
 (defun org-pomodoro-interrupt (cause)
   (interactive "sPlease enter the reason caused you to be interrupted: ")
@@ -90,8 +94,5 @@
   (org-pomodoro-drawer-insert-item "KILLED" cause)
   (if (org-pomodoro-active-p) (org-pomodoro-killed))
   (setq org-pomodoro-interrupt-count 0))
-
-(ad-activate 'org-pomodoro-kill)
-(ad-activate 'org-pomodoro-finished)
 
 (provide 'org-pomodoro-ext)

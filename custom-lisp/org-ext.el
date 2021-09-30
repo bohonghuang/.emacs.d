@@ -63,7 +63,7 @@ Excludes the heading and any child subtrees."
 
 (defun iso-week-from-date (date)
   (calendar-iso-from-absolute
-   (calendar-absolute-from-gregorian date)))
+   (calendar-absolute-from-gregorian date))) ;week day year
 
 (defun time-to-date (time)
   (let ((decoded-time (decode-time time)))
@@ -161,14 +161,14 @@ the documentation of `org-diary'."
 (org-link-set-parameters "audio" :export (org-get-media-link-export-function "audio"))
 (org-link-set-parameters "file" :export #'org-media-file-link-export)
 
-(defadvice org--deadline-or-schedule (after org--deadline-or-schedule-reset-todo-status)
-  (org-todo (org-get-todo-sequence-head org-todo-heads)))
+(defun org--deadline-or-schedule@after-scheduled (arg type time)
+  (when (eq type 'scheduled) (org-todo (org-get-todo-sequence-head org-todo-heads))))
 
-(ad-activate #'org--deadline-or-schedule)
+(advice-add #'org--deadline-or-schedule :after #'org--deadline-or-schedule@after-scheduled)
 
 (defun org-agenda-review (time-start &optional time-end level)
   (let* ((buffer (get-buffer-create "*Org Agenda Review*"))
-         (level (and level 3))
+         (level (or level 3))
          (time-format "<%Y-%m-%d>")
          (time-start-string (format-time-string time-format time-start))
          (time-end-string (format-time-string time-format time-end))
@@ -183,7 +183,7 @@ the documentation of `org-diary'."
     (unless (eq major-mode 'org-mode) (org-mode))
     (org-insert-heading)
     (insert "Org Agenda Review " (if (string-equal time-start-string time-end-inclusive-string) time-start-string (format "%s--%s" time-start-string time-end-inclusive-string)) "\n")
-    (insert (format "#+BEGIN: clocktable :scope agenda :maxlevel %d :tstart \"%s\" :tend \"%s\"\n#+END:" 2
+    (insert (format "#+BEGIN: clocktable :scope agenda :maxlevel %d :tstart \"%s\" :tend \"%s\"\n#+END:" level
                     time-start-string time-end-string))
     (org-ctrl-c-ctrl-c)
     (let ((beg (point)))
@@ -200,11 +200,14 @@ the documentation of `org-diary'."
       (delete-region beg (point)))
     (beginning-of-buffer)
     (read-only-mode +1)
+    (use-local-map (copy-keymap org-mode-map))
     (local-set-key (kbd "q") #'quit-window)
     (local-set-key (kbd "d") #'org-agenda-daily-review)
     (local-set-key (kbd "w") #'org-agenda-weekly-review)
     (local-set-key (kbd "m") #'org-agenda-monthly-review)
-    (local-set-key (kbd "y") #'org-agenda-yearly-review)))
+    (local-set-key (kbd "y") #'org-agenda-yearly-review)
+    (local-set-key (kbd "n") #'next-line)
+    (local-set-key (kbd "p") #'previous-line)))
 
 (defun org-agenda-daily-review (&optional time)
   (interactive)

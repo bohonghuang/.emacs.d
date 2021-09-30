@@ -2,14 +2,15 @@
   (interactive "*P")
   (if (<= (current-column) (current-indentation))
       (if (= (current-indentation) (c-get-syntactic-indentation (c-guess-basic-syntax)))
-	  (if (previous-line-blank-p) (moveline-up) (delete-indentation))
+	  (if (previous-line-blank-p)
+	      (progn (delete-region (line-beginning-position 0) (line-beginning-position)) (back-to-indentation))
+	    (delete-indentation))
 	(if (= (current-column) 0)
-	    (if (previous-line-blank-p) (moveline-up) (delete-indentation)) (c-indent-line)))
-    (backward-delete-char-untabify(prefix-numeric-value arg))))
-
-(defun moveline-up ()
-  (delete-region (line-beginning-position 0) (line-beginning-position))
-  (c-indent-line))
+	    (if (previous-line-blank-p)
+		(progn (delete-indentation) (c-indent-line))
+	      (delete-indentation))
+	  (c-indent-line)))
+    (backward-delete-char-untabify (prefix-numeric-value arg))))
 
 (defun previous-line-blank-p ()
   (save-excursion

@@ -45,7 +45,6 @@
    '("melpa" . "https://melpa.org/packages/")
    t))
 
-;; Install use-package if not already installed
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
@@ -62,13 +61,15 @@
     (disable-theme (car custom-enabled-themes)))
   (call-interactively 'load-theme))
 
-;; (use-package jetbrains-darcula-theme
-;;   :ensure t
-;;   :config (load-theme 'jetbrains-darcula t))
-
 (use-package doom-themes
   :ensure t
-  :config (load-theme 'doom-molokai t))
+  :config (load-theme 'doom-gruvbox t))
+
+(defmacro with-suppressed-message (&rest body)
+  "Suppress new messages temporarily in the echo area and the `*Messages*' buffer while BODY is evaluated."
+  (declare (indent 0))
+  (let ((message-log-max nil))
+    `(with-temp-message (or (current-message) "") ,@body)))
 
 (setq local-file (expand-file-name "local.el" user-emacs-directory))
 (if (file-exists-p local-file) (load-file local-file))
@@ -105,10 +106,6 @@
   :custom
   (cnfonts-personal-fontnames '(("JetBrains Mono") nil nil))
   (cnfonts-use-face-font-rescale t))
-
-;; 让 cnfonts 随着 Emacs 自动生效。
-;; 让 spacemacs mode-line 中的 Unicode 图标正确显示。
-;; (cnfonts-set-spacemacs-fallback-fonts)
 
 (use-package ligature
   :defer t
@@ -344,10 +341,6 @@
 (use-package qml-mode
   :ensure t
   :defer t)
-;; (use-package company-qml
-;;   :config (add-to-list 'company-backends 'company-qml)
-;; )
-
 
 ;; ================================================================================
 
@@ -405,9 +398,9 @@
   :ensure t
   :defer t
   :hook
-  (prog-mode . yas-minor-mode)
-  (org-mode . yas-minor-mode)
-  (latex-mode . yas-minor-mode))
+  ((prog-mode org-mode latex-mode) . yas-minor-mode)
+  :config
+  (yas-reload-all))
 
 (use-package expand-region
   :ensure t
@@ -428,35 +421,6 @@
   :hook ((c-mode c++-mode objc-mode java-mode) . (lambda ()
                     (require 'intellij-features)
                     (local-set-key (kbd "<backspace>") #'intellij-backspace))))
-
-  ;; :hook (c-mode . (lambda ()
-  ;;                   (require 'intellij-feature-collection)
-  ;;                   (local-set-key (kbd "<backspace>") #'intellij-backspace))))
-
-;; (setq recentf-max-menu-items 10)
-
-;;  (defvar company-mode/enable-yas t "Enable yasnippet for all backends.")
-
-;; (defun company-mode/backend-with-yas (backend)
-;;   (if (or (not company-mode/enable-yas) (and (listp backend)    (member 'company-yasnippet backend)))
-;;   backend
-;; (append (if (consp backend) backend (list backend))
-;;         '(:with company-yasnippet))))
-
-;; (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
-
-;; (defun my-company-yasnippet-disable-inline (fun command &optional arg &rest _ignore)
-;;       "Enable yasnippet but disable it inline."
-;;       (if (eq command 'prefix)
-;;           (when-let ((prefix (funcall fun 'prefix)))
-;;             (unless (memq (char-before (- (point) (length prefix))) '(?: ?. ?> ?\())
-;;               prefix))
-;;         (funcall fun command arg)))
-;; (advice-add #'company-yasnippet :around #'my-company-yasnippet-disable-inline)
-
-;; (setq org-image-actual-width 512);/ (display-pixel-width) 5))
-
-;; (add-hook 'org-mode-hook (lambda () (setq truncate-lines nil)))
 
 (use-package sis
   :ensure t
@@ -505,6 +469,8 @@
      ("a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm" "geometry" nil nil)
      ("" "ctex" nil nil)
      ("" "svg" nil nil)))
+  (org-latex-image-default-width nil)
+  (org-latex-image-default-height "120pt")
   :config (message "Org"))
 
 (use-package org-pomodoro
@@ -629,10 +595,7 @@
 (use-package ox-reveal
   :ensure t
   :defer t
-  :hook (org-mode . (lambda () (require 'ox-reveal)))
-  ;; :custom
-  ;; (org-reveal-root (concat "file://" (expand-file-name "~/.config/yarn/global/node_modules/reveal.js")))
-  )
+  :hook (org-mode . (lambda () (require 'ox-reveal))))
 
 (defun org-media-note-hydra/body-with-sis-set-english ()
   (interactive)
@@ -657,13 +620,6 @@
   (org-media-note-display-inline-images nil)
   (org-media-note-screenshot-image-dir (expand-file-name "org-media-note" org-directory)))
 
-;; (use-package org-krita
-;;   :load-path "site-lisp/org-krita"
-;;   :config
-;;   (add-hook 'org-mode-hook 'org-krita-mode))
-
-;; (setq org-media-note-save-screenshot-p t)
-
 (use-package org-link-edit
   :load-path "site-lisp/org-link-edit"
   :defer t)
@@ -679,29 +635,6 @@
   (org-sketch-xournal-default-template-name "template.xopp") ;; 默认笔记模版名称，应该位于 org-sketch-xournal-template-dir
   (org-sketch-apps '("xournal" "drawio")))
 
-
-;; (use-package symon)
-;; (setq symon-delay 1)
-;; (symon-mode)
-
-;; (use-package nyan-mode
-;;   :ensure t
-;;   :config
-;;   (setq nyan-animate-nyancat t)
-;;   (setq nyan-wavy-trail t)
-;;   (setq nyan-bar-length 20)
-;;   (nyan-mode 1))
-
-
-;; (use-package webkit
-;;   :load-path "site-lisp/emacs-webkit"
-;;   :config
-;;   (require 'webkit-ace)
-;;   (require 'webkit-dark))
-;;  :bind ("s-b" 'webkit)) ;; Bind to whatever global key binding you want if you want
-
-;; (use-package svg-clock)
-
 (use-package vterm
   :ensure t
   :defer t)
@@ -709,41 +642,6 @@
 (use-package quickrun
   :ensure t
   :defer t)
-
-
-
-;; (add-hook 'prog-mode-hook (lambda ()
-;;                             (local-set-key (kbd "C-c C-c") 'quickrun)))
-
-;; (use-package imbot
-;;   :ensure t
-;;   :hook (org-media-note-hydra/body . imbot-mode)
-;;   :preface (setq imbot--im-config 'imbot--fcitx5))
-
-
-;; (load-file "~/.emacs.d/custom-lisp/advance-words-count.el")
-
-;; (use-package dashboard
-;;   :ensure t
-;;   :config
-;;   (dashboard-setup-startup-hook)
-;; ;; Set the title
-;;   ;; (setq dashboard-banner-logo-title "Welcome to Emacs Dashboard")
-;;   ;; Set the banner
-;;   (setq dashboard-startup-banner 3)
-;;   (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
-;;   ;; Value can be
-;;   ;; 'official which displays the official emacs logo
-;;   ;; 'logo which displays an alternative emacs logo
-;;   ;; 1, 2 or 3 which displays one of the text banners
-;;   ;; "path/to/your/image.png" or "path/to/your/text.txt" which displays whatever image/text you would prefer
-
-;;   ;; Content is not centered by default. To center, set
-;;   ;; (setq dashboard-center-content t)
-
-;;   ;; To disable shortcut "jump" indicators for each section, set
-;;   ;; (setq dashboard-show-shortcuts nil)
-;; )
 
 (use-package command-log-mode
   :ensure t
@@ -770,19 +668,6 @@
   :config
   (--each '("C-v" "M-v" "S-<delete>") (add-to-list 'rime-translate-keybindings it)))
 
-;; (use-package dim
-;;   :ensure t
-;;   :defer t
-;;   :config
-;;   (dim-major-names
-;;    '((emacs-lisp-mode    "elisp")))
-;;   (dim-minor-names
-;;    '((auto-fill-function " ↵")
-;;      (whitespace-mode    " _"  whitespace)
-;;      (paredit-mode       " ()" paredit)
-;;      (company-mode       "comp")
-;;      (eldoc-mode         ""    eldoc))))
-
 (use-package emms
   :ensure t
   :defer t
@@ -798,15 +683,11 @@
   (emms-all)
   (emms-default-players)
   (emms-mode-line-disable)
-  (emms-playing-time-disable-display)) ;;; load functions that will talk to emms-print-metadata which in turn talks to libtag and gets metadata
-   ;;; make sure libtag is the only thing delivering metadata
+  (emms-playing-time-disable-display))
 
 (when (daemonp)
   (menu-bar-mode +1)
   (global-tab-line-mode +1)
-  ;; (tab-bar-mode +1)
-  ;; (add-hook 'find-file-hook (lambda () (run-at-time 0.001 nil (lambda ()
-                         ;; (switch-to-buffer-other-tab (previous-buffer))))))
   (use-package right-click-context
     :ensure t
     :config (right-click-context-mode +1))
