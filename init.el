@@ -36,7 +36,7 @@
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 (defalias 'list-buffers 'ibuffer)
-
+(defalias 'elisp-mode 'emacs-lisp-mode)
 ;; load emacs 24's package system. Add MELPA repository.
 (when (>= emacs-major-version 24)
   (require 'package)
@@ -51,7 +51,7 @@
 
 (require 'use-package)
 
-;; (setq use-package-verbose t)
+(setq use-package-verbose t)
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 (defun change-theme ()
@@ -151,6 +151,16 @@
   :hook
   (lisp-mode . rainbow-delimiters-mode)
   (emacs-lisp-mode . rainbow-delimiters-mode))
+
+(use-package good-scroll
+  :ensure t
+  :defer nil
+  :hook (org-mode . (lambda ()
+                      (local-set-key (kbd "C-v") (lambda () (interactive) (good-scroll-move (/ (good-scroll--window-usable-height) 2))))
+                      (local-set-key (kbd "M-v") (lambda () (interactive) (good-scroll-move (- (/ (good-scroll--window-usable-height) 2)))))))
+  :custom (good-scroll-step 100)
+  :config
+  (good-scroll-mode +1))
 
 (use-package projectile
   :ensure t
@@ -637,7 +647,11 @@
 
 (use-package vterm
   :ensure t
-  :defer t)
+  :defer t
+  :bind (:map vterm-mode-map
+              ("C-x C-q" . vterm-copy-mode)
+         :map vterm-copy-mode-map
+              ("C-x C-q" . vterm-copy-mode)))
 
 (use-package quickrun
   :ensure t
