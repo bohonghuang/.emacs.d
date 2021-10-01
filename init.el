@@ -24,7 +24,8 @@
  '(tool-bar-mode nil)
  '(visible-bell t)
  '(warning-suppress-log-types '((comp)))
- '(winner-mode t))
+ '(winner-mode t)
+ '(context-menu-mode t))
 
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 (add-hook 'prog-mode-hook #'hl-line-mode)
@@ -152,12 +153,15 @@
   (lisp-mode . rainbow-delimiters-mode)
   (emacs-lisp-mode . rainbow-delimiters-mode))
 
+(use-package repeat
+  :ensure nil
+  :defer nil
+  :config
+  (repeat-mode +1))
+
 (use-package good-scroll
   :ensure t
   :defer nil
-  :hook (org-mode . (lambda ()
-                      (local-set-key (kbd "C-v") (lambda () (interactive) (good-scroll-move (/ (good-scroll--window-usable-height) 2))))
-                      (local-set-key (kbd "M-v") (lambda () (interactive) (good-scroll-move (- (/ (good-scroll--window-usable-height) 2)))))))
   :custom (good-scroll-step 100)
   :config
   (good-scroll-mode +1))
@@ -702,9 +706,6 @@
 (when (daemonp)
   (menu-bar-mode +1)
   (global-tab-line-mode +1)
-  (use-package right-click-context
-    :ensure t
-    :config (right-click-context-mode +1))
   (use-package bar-cursor
   :ensure t
   :config (bar-cursor-mode +1)))
