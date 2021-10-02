@@ -29,10 +29,10 @@
 
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 (add-hook 'prog-mode-hook #'hl-line-mode)
-(add-hook 'prog-mode-hook #'visual-line-mode)
+(add-hook 'prog-mode-hook #'toggle-word-wrap)
+
 (global-set-key (kbd "C-?") 'undo-redo)
 (global-set-key (kbd "C-S-d") 'delete-region)
-;; (global-set-key (kbd "C-;") 'avy-goto-char-timer)
 (global-set-key (kbd "C-x o") 'ace-window)
 
 (defalias 'yes-or-no-p 'y-or-n-p)
@@ -89,8 +89,12 @@
 (use-package crux
   :ensure t
   :defer t
-  :bind (("C-x C-S-e" . crux-eval-and-replace)
-         ("C-x C-S-f" . crux-open-with)))
+  :bind (:map global-map
+         ("C-x C-S-e" . crux-eval-and-replace)
+         ("C-x C-S-f" . crux-open-with)
+         ("C-S-<return>" . crux-smart-open-line-above)
+         ("C-<return>" . crux-smart-open-line)
+         ("S-<f1>" . crux-find-user-init-file)))
 
 (defun my-new-file-hook ()
   (unless (file-exists-p (file-truename buffer-file-name))
@@ -110,7 +114,7 @@
 
 (use-package ligature
   :defer t
-  :hook (prog-mode . ligature-mode)
+  :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode) major-mode) (require 'ligature) (ligature-mode +1))))
   :load-path "site-lisp/"
   :config
   ;; Enable all JetBrains Mono ligatures in programming modes
@@ -500,6 +504,10 @@
   :bind (("S-<f12>" . org-pomodoro-interrupt))
   :hook (org-pomodoro-started . (lambda () (require 'org-pomodoro-ext))))
 
+(use-package org-ext
+  :load-path "custom-lisp"
+  :hook (org-mode . (lambda () (require 'org-ext))))
+
 (use-package org-gtd
   :ensure t
   :defer t
@@ -518,7 +526,6 @@
   ;; the next TODO is automatically changed to NEXT.
   (org-edna-use-inheritance t)
   :config
-  (load-file "~/.emacs.d/custom-lisp/org-ext.el")
   (org-edna-load)
   :bind
   (("C-c g c" . org-gtd-capture) ;; add item to inbox
