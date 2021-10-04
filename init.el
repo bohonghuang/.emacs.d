@@ -134,21 +134,70 @@
   (interactive)
   (set-window-dedicated-p (selected-window) t))
 
+(defalias 'window-buffer-change-hook 'window-buffer-change-functions)
+
+(use-package popper
+  :ensure t
+  :bind (("C-`"   . popper-toggle-latest)
+         ("M-`"   . popper-cycle)
+         ("C-M-`" . popper-toggle-type))
+  :custom
+  (popper-reference-buffers '("\\*Messages\\*"
+                              "Output\\*$"
+                              "\\*Async Shell Command\\*"
+                              eshell-mode
+                              vterm-mode
+                              help-mode
+                              compilation-mode
+                              dap-server-log-mode))
+  :config
+  (popper-mode +1)
+  (popper-echo-mode +1))
+
 (use-package smartparens
   :ensure t
   :defer t
   :hook
-  (prog-mode . smartparens-mode)
-  (text-mode . smartparens-mode)
-  (minibuffer-mode . smartparens-mode)
+  ((prog-mode text-mode minibuffer-mode) . smartparens-mode)
   :bind (:map smartparens-mode-map
-              ("C-(" . sp-unwrap-sexp))
+              ("C-*" . sp-join-sexp)
+              ("C-|" . sp-split-sexp)
+              ("C-M-f" . sp-forward-sexp)                          
+              ("C-M-b" . sp-backward-sexp)                         
+              ("C-M-d" . sp-down-sexp)                             
+              ("C-M-S-d" . sp-backward-down-sexp)                    
+              ("C-S-a" . sp-beginning-of-sexp)                     
+              ("C-S-e" . sp-end-of-sexp)                           
+              ("C-M-u" . sp-up-sexp)                               
+              ("C-M-S-u" . sp-backward-up-sexp)                      
+              ("C-M-n" . sp-next-sexp)                             
+              ("C-M-p" . sp-previous-sexp)                         
+              ("C-M-k" . sp-kill-sexp)                             
+              ("C-M-(" . sp-backward-unwrap-sexp)          
+              ("C-<right>" . sp-forward-slurp-sexp)                
+              ("C-<left>" . sp-forward-barf-sexp)                  
+              ("C-M-<left>" . sp-backward-slurp-sexp)              
+              ("C-M-<right>" . sp-backward-barf-sexp)              
+              ("M-D" . sp-splice-sexp)                             
+              ("C-M-<delete>" . sp-splice-sexp-killing-forward)    
+              ("C-M-<backspace>" . sp-splice-sexp-killing-backward)
+              ("C-S-=" . sp-splice-sexp-killing-around)  
+              ("C-)" . sp-select-next-thing-exchange)              
+              ("C-M-)" . sp-select-next-thing)                     
+              ("C-(" . sp-select-previous-thing-exchange)
+              ("C-M-(" . sp-select-previous-thing)
+              ("C-M-SPC" . sp-mark-sexp)                           
+              ("M-F" . sp-forward-symbol)                          
+              ("M-B" . sp-backward-symbol)
+              ("C-\"" . sp-unwrap-sexp)
+              ("C-:" . sp-rewrap-sexp)
+              ("C-M-=" . sp-mark-sexp))
   :init
   (require 'smartparens-config)
-  :config
-  (setq sp-highlight-pair-overlay nil
-        sp-highlight-wrap-overlay nil
-        sp-highlight-wrap-tag-overlay nil))
+  :custom
+  (sp-highlight-pair-overlay nil)
+  (sp-highlight-wrap-overlay nil)
+  (sp-highlight-wrap-tag-overlay nil))
 
 (use-package rainbow-delimiters
   :ensure t
@@ -226,9 +275,6 @@
   (setq lsp-eldoc-hook nil)
   (setq lsp-eldoc-enable-hover nil)
   :hook (lsp-mode . lsp-lens-mode)
-  :bind(:map prog-mode-map
-        ("C-c d d" . dap-debug)
-        ("C-c d t". dap-breakpoint-toggle))
   :config
   (setq read-process-output-max (* 1024 1024 16)) ;; 1mb
   (setq lsp-ui-doc-position 'at-point)
@@ -271,6 +317,14 @@
 (use-package dap-mode
   :ensure t
   :defer t
+  :bind(:map prog-mode-map
+        ("C-c l d" . dap-debug)
+        ("C-<f8>". dap-breakpoint-toggle)
+        ("<f8>" . dap-continue)
+        ("S-<f8>" . dap-step-out)
+        ("<f7>" . dap-step-in)
+        ("C-<f2>" . dap-disconnect)
+        ("C-S-<f2>" . dap-stop-thread))
   :hook
   (lsp-mode . dap-mode)
   (lsp-mode . dap-ui-mode))
@@ -652,7 +706,7 @@
   :bind(:map org-mode-map
              ("C-c s s" . org-sketch-insert))
   :custom
-  (org-sketch-xournal-template-dir "~/.emacs.d/site-lisp/org-sketch/template")  ;; xournal 模板存储目录
+  (org-sketch-xournal-template-dir (expand-file-name "site-lisp/org-sketch/template" user-emacs-directory))  ;; xournal 模板存储目录
   (org-sketch-xournal-default-template-name "template.xopp") ;; 默认笔记模版名称，应该位于 org-sketch-xournal-template-dir
   (org-sketch-apps '("xournal" "drawio")))
 

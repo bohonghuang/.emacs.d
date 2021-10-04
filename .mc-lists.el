@@ -9,6 +9,7 @@
         c-electric-slash
         c-indent-line-or-region
         comment-line
+        dap-breakpoint-toggle
         delete-horizontal-space
         forward-sexp
         ignore
@@ -37,6 +38,12 @@
         phi-autopair-delete-forward
         sgml-slash
         sis--prefix-override-handler
+        sp-backward-sexp
+        sp-forward-sexp
         wdired--self-insert
         wdired-abort-changes
+        ))
+
+(setq mc/cmds-to-run-once
+      '(
         ))
