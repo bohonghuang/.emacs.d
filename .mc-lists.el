@@ -9,8 +9,10 @@
         c-electric-slash
         c-indent-line-or-region
         comment-line
+        crux-eval-and-replace
         dap-breakpoint-toggle
         delete-horizontal-space
+        eval-last-sexp
         forward-sexp
         ignore
         indent-for-tab-command
@@ -46,4 +48,6 @@
 
 (setq mc/cmds-to-run-once
       '(
+        rime--backspace
+        toggle-input-method
         ))

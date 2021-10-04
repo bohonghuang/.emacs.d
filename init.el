@@ -75,6 +75,13 @@
 (setq local-file (expand-file-name "local.el" user-emacs-directory))
 (if (file-exists-p local-file) (load-file local-file))
 
+(use-package dired
+  :ensure nil
+  :defer t
+  :custom
+  (dired-dwim-target t))
+
+
 (use-package recentf
   :init (defalias 'reopfs 'recentf-open-files)
   :defer t
@@ -173,15 +180,17 @@
               ("C-M-n" . sp-next-sexp)                             
               ("C-M-p" . sp-previous-sexp)                         
               ("C-M-k" . sp-kill-sexp)                             
-              ("C-M-(" . sp-backward-unwrap-sexp)          
+              ("C-M-\"" . sp-backward-unwrap-sexp)          
               ("C-<right>" . sp-forward-slurp-sexp)                
-              ("C-<left>" . sp-forward-barf-sexp)                  
+              ("C-<left>" . sp-forward-barf-sexp)
+              ("C-M-t" . sp-transpose-sexp)
+              ("C-M-T" . sp-convolute-sexp)
               ("C-M-<left>" . sp-backward-slurp-sexp)              
               ("C-M-<right>" . sp-backward-barf-sexp)              
               ("M-D" . sp-splice-sexp)                             
               ("C-M-<delete>" . sp-splice-sexp-killing-forward)    
               ("C-M-<backspace>" . sp-splice-sexp-killing-backward)
-              ("C-S-=" . sp-splice-sexp-killing-around)  
+              ("C-M-S-<backspace>" . sp-splice-sexp-killing-around)  
               ("C-)" . sp-select-next-thing-exchange)              
               ("C-M-)" . sp-select-next-thing)                     
               ("C-(" . sp-select-previous-thing-exchange)
