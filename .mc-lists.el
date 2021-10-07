@@ -14,10 +14,12 @@
         delete-horizontal-space
         eval-last-sexp
         forward-sexp
+        ibuffer-do-delete
         ignore
         indent-for-tab-command
         kill-region
         kill-visual-line
+        kmacro-start-macro-or-insert-counter
         list-buffers
         lsp-ui-doc--handle-mouse-movement
         org-beginning-of-line
@@ -25,6 +27,7 @@
         org-cycle
         org-delete-char
         org-end-of-line
+        org-force-self-insert
         org-kill-line
         org-latex-preview
         org-metadown
@@ -42,6 +45,7 @@
         sis--prefix-override-handler
         sp-backward-sexp
         sp-forward-sexp
+        vhdl-electric-space
         wdired--self-insert
         wdired-abort-changes
         ))

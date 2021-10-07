@@ -25,7 +25,8 @@
  '(visible-bell t)
  '(warning-suppress-log-types '((comp)))
  '(winner-mode t)
- '(context-menu-mode t))
+ '(context-menu-mode t)
+ '(savehist-mode t))
 
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 (add-hook 'prog-mode-hook #'hl-line-mode)
@@ -33,11 +34,11 @@
 
 (global-set-key (kbd "C-?") 'undo-redo)
 (global-set-key (kbd "C-S-d") 'delete-region)
-(global-set-key (kbd "C-x o") 'ace-window)
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 (defalias 'list-buffers 'ibuffer)
 (defalias 'elisp-mode 'emacs-lisp-mode)
+(defalias 'md-mode 'markdown-mode)
 ;; load emacs 24's package system. Add MELPA repository.
 (when (>= emacs-major-version 24)
   (require 'package)
@@ -81,6 +82,10 @@
   :custom
   (dired-dwim-target t))
 
+(use-package xref
+  :ensure nil
+  :defer t
+  :bind (("<mouse-8>" . xref-pop-marker-stack)))
 
 (use-package recentf
   :init (defalias 'reopfs 'recentf-open-files)
@@ -92,6 +97,17 @@
   (let ((file-name (buffer-file-name)))
     (if (and file-name (file-exists-p file-name))
       (recentf-add-file buffer-file-name))))
+
+(global-set-key (kbd "C-x O") (lambda ()
+                          (interactive)
+                          (setq repeat-map 'other-window-repeat-map)
+                          (other-window -1)))
+
+(use-package ace-window
+  :ensure t
+  :defer t
+  :bind (("M-o" . ace-window))
+  :custom (aw-dispatch-always t))
 
 (use-package crux
   :ensure t
@@ -156,7 +172,8 @@
                               vterm-mode
                               help-mode
                               compilation-mode
-                              dap-server-log-mode))
+                              dap-server-log-mode
+                              xref--xref-buffer-mode))
   :config
   (popper-mode +1)
   (popper-echo-mode +1))
@@ -169,38 +186,38 @@
   :bind (:map smartparens-mode-map
               ("C-*" . sp-join-sexp)
               ("C-|" . sp-split-sexp)
-              ("C-M-f" . sp-forward-sexp)                          
-              ("C-M-b" . sp-backward-sexp)                         
-              ("C-M-d" . sp-down-sexp)                             
-              ("C-M-S-d" . sp-backward-down-sexp)                    
-              ("C-S-a" . sp-beginning-of-sexp)                     
-              ("C-S-e" . sp-end-of-sexp)                           
-              ("C-M-u" . sp-up-sexp)                               
-              ("C-M-S-u" . sp-backward-up-sexp)                      
-              ("C-M-n" . sp-next-sexp)                             
-              ("C-M-p" . sp-previous-sexp)                         
-              ("C-M-k" . sp-kill-sexp)                             
-              ("C-M-\"" . sp-backward-unwrap-sexp)          
-              ("C-<right>" . sp-forward-slurp-sexp)                
-              ("C-<left>" . sp-forward-barf-sexp)
-              ("C-M-t" . sp-transpose-sexp)
-              ("C-M-T" . sp-convolute-sexp)
-              ("C-M-<left>" . sp-backward-slurp-sexp)              
-              ("C-M-<right>" . sp-backward-barf-sexp)              
-              ("M-D" . sp-splice-sexp)                             
-              ("C-M-<delete>" . sp-splice-sexp-killing-forward)    
-              ("C-M-<backspace>" . sp-splice-sexp-killing-backward)
-              ("C-M-S-<backspace>" . sp-splice-sexp-killing-around)  
-              ("C-)" . sp-select-next-thing-exchange)              
-              ("C-M-)" . sp-select-next-thing)                     
+              ("C-M-f" . sp-forward-sexp)
+              ("C-M-b" . sp-backward-sexp)
+              ("C-M-d" . sp-down-sexp)
+              ("C-M-S-d" . sp-backward-down-sexp)
+              ("C-S-a" . sp-beginning-of-sexp)
+              ("C-S-e" . sp-end-of-sexp)
+              ("C-M-u" . sp-up-sexp)
+              ("C-M-S-u" . sp-backward-up-sexp)
+              ("C-M-n" . sp-next-sexp)
+              ("C-M-p" . sp-previous-sexp)
+              ("C-M-k" . sp-kill-sexp)
+              ("C-M-\"" . sp-backward-unwrap-sexp)
+              ("C-\"" . sp-unwrap-sexp)
+              ("M-\"" . sp-rewrap-sexp)
+              ("C-M-\"" . sp-splice-sexp)
+              ("C-)" . sp-select-next-thing-exchange)
+              ("C-M-)" . sp-select-next-thing)
               ("C-(" . sp-select-previous-thing-exchange)
               ("C-M-(" . sp-select-previous-thing)
-              ("C-M-SPC" . sp-mark-sexp)                           
-              ("M-F" . sp-forward-symbol)                          
-              ("M-B" . sp-backward-symbol)
-              ("C-\"" . sp-unwrap-sexp)
-              ("C-:" . sp-rewrap-sexp)
-              ("C-M-=" . sp-mark-sexp))
+              ("C-M-SPC" . sp-mark-sexp)
+          :map emacs-lisp-mode-map
+              ("M-<right>" . sp-forward-slurp-sexp)
+              ("M-<left>" . sp-forward-barf-sexp)
+              ("C-M-t" . sp-transpose-sexp)
+              ("C-M-T" . sp-convolute-sexp)
+              ("C-M-<left>" . sp-backward-slurp-sexp)
+              ("C-M-<right>" . sp-backward-barf-sexp)
+              ("C-M-<delete>" . sp-splice-sexp-killing-forward)
+              ("C-M-<backspace>" . sp-splice-sexp-killing-backward)
+              ("C-M-S-<backspace>" . sp-splice-sexp-killing-around)
+              ("M-F" . sp-forward-symbol)
+              ("M-B" . sp-backward-symbol))
   :init
   (require 'smartparens-config)
   :custom
@@ -313,7 +330,6 @@
   :defer t
   :hook
   (prog-mode . company-mode)
-  (latex-mode . company-mode)
   :custom
   (lsp-completion-provider :capf)
   (company-dabbrev-downcase nil)
@@ -483,6 +499,12 @@
   :config
   (yas-reload-all))
 
+(use-package binary-jump
+  :load-path "custom-lisp"
+  :defer t
+  :bind (("M-P" . binary-jump-previous-line)
+         ("M-N" . binary-jump-next-line)))
+
 (use-package expand-region
   :ensure t
   :defer t
@@ -494,7 +516,9 @@
   :bind (("C-S-c C-S-c" . mc/edit-lines)
          ("C->" . mc/mark-next-like-this)
          ("C-<" . mc/mark-previous-like-this)
-         ("C-c C-<" . mc/mark-all-like-this)))
+         ("C-c C-<" . mc/mark-all-like-this)
+         ("C-M->" . mc/skip-to-next-like-this)
+         ("C-M-<" . mc/skip-to-previous-like-this)))
 
 (use-package intellij-features
   :load-path "custom-lisp"
@@ -505,7 +529,7 @@
 
 (use-package sis
   :ensure t
-  :defer 1
+  :defer t
   :config
   ;; For MacOS
   (sis-ism-lazyman-config "1" "2" 'fcitx5)
@@ -520,6 +544,7 @@
   :ensure nil
   :defer t
   :custom
+  (org-adapt-indentation t)
   (org-attach-use-inheritance t)
   (org-export-with-tags nil)
   (org-format-latex-options
@@ -551,8 +576,7 @@
      ("" "ctex" nil nil)
      ("" "svg" nil nil)))
   (org-latex-image-default-width nil)
-  (org-latex-image-default-height "120pt")
-  :config (message "Org"))
+  (org-latex-image-default-height "120pt"))
 
 (use-package org-pomodoro
   :ensure t
@@ -568,6 +592,7 @@
   :hook (org-pomodoro-started . (lambda () (require 'org-pomodoro-ext))))
 
 (use-package org-ext
+  :defer t
   :load-path "custom-lisp"
   :hook (org-mode . (lambda () (require 'org-ext))))
 
@@ -602,6 +627,11 @@
 (use-package org-agenda
   :ensure nil ;; this is how you tell use-package to manage a sub-package
   :after org-gtd ;; because we need to add the org-gtd directory to the agenda files
+  :bind (:map org-mode-map
+              ("C-c C-x C-S-o" . org-resolve-clocks)
+              ("<mouse-8>" . org-mark-ring-goto)
+         :map org-agenda-mode-map
+              ("C-c C-x C-S-o" . org-resolve-clocks))
   :custom
   ;; use as-is if you don't have an existing org-agenda setup
   ;; otherwise push the directory to the existing list
@@ -755,6 +785,24 @@
   (rime-show-candidate 'posframe)
   :config
   (--each '("C-v" "M-v" "S-<delete>") (add-to-list 'rime-translate-keybindings it)))
+
+(use-package edit-server
+  :defer t
+  :ensure t
+  :commands edit-server-start
+  :init (when (daemonp)
+          (if after-init-time
+              (edit-server-start)
+            (add-hook 'after-init-hook
+                      #'(lambda() (edit-server-start)))))
+  :custom (edit-server-new-frame-alist
+                '((name . "Edit with Emacs FRAME")
+                  (top . 200)
+                  (left . 200)
+                  (width . 80)
+                  (height . 25)
+                  (minibuffer . t)
+                  (menu-bar-lines . t))))
 
 (use-package emms
   :ensure t

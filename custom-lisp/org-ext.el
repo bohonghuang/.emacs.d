@@ -77,62 +77,64 @@ the one returned by `calendar-current-date'.  ARGS are symbols indicating
 which kind of entries should be extracted.  For details about these, see
 the documentation of `org-diary'."
     (let* ((org-startup-folded nil)
-           (org-startup-align-all-tables nil)
-           (buffer (if (file-exists-p file) (org-get-agenda-file-buffer file)
-                     (error "No such file %s" file))))
+	   (org-startup-align-all-tables nil)
+	   (buffer (if (file-exists-p file) (org-get-agenda-file-buffer file)
+		     (error "No such file %s" file))))
       (if (not buffer)
-          ;; If file does not exist, signal it in diary nonetheless.
-          (list (format "ORG-AGENDA-ERROR: No such org-file %s" file))
+	  ;; If file does not exist, signal it in diary nonetheless.
+	  (list (format "ORG-AGENDA-ERROR: No such org-file %s" file))
         (with-current-buffer buffer
-          (unless (derived-mode-p 'org-mode)
-            (error "Agenda file %s is not in Org mode" file))
-          (setq org-agenda-buffer (or org-agenda-buffer buffer))
-          (setf org-agenda-current-date date)
+	  (unless (derived-mode-p 'org-mode)
+	    (error "Agenda file %s is not in Org mode" file))
+	  (setq org-agenda-buffer (or org-agenda-buffer buffer))
+	  (setf org-agenda-current-date date)
           (undo-boundary)
           (org-macro-replace-all org-macro-templates)
           (let ((ret (save-excursion
-                       (save-restriction
-                         (if (eq buffer org-agenda-restrict)
-                             (narrow-to-region org-agenda-restrict-begin
-                                               org-agenda-restrict-end)
-                           (widen))
-                         ;; Rationalize ARGS.  Also make sure `:deadline' comes
-                         ;; first in order to populate DEADLINES before passing it.
-                         ;;
-                         ;; We use `delq' since `org-uniquify' duplicates ARGS,
-                         ;; guarding us from modifying `org-agenda-entry-types'.
-                         (setf args (org-uniquify (or args org-agenda-entry-types)))
-                         (when (and (memq :scheduled args) (memq :scheduled* args))
-                           (setf args (delq :scheduled* args)))
-                         (cond
-                          ((memq :deadline args)
-                           (setf args (cons :deadline
-                                            (delq :deadline (delq :deadline* args)))))
-                          ((memq :deadline* args)
-                           (setf args (cons :deadline* (delq :deadline* args)))))
-                         ;; Collect list of headlines.  Return them flattened.
-                         (let ((case-fold-search nil) results deadlines)
-                           (dolist (arg args (apply #'nconc (nreverse results)))
-                             (pcase arg
-                               ((and :todo (guard (org-agenda-today-p date)))
-                                (push (org-agenda-get-todos) results))
-                               (:timestamp
-                                (push (org-agenda-get-blocks) results)
-                                (push (org-agenda-get-timestamps deadlines) results))
-                               (:sexp
-                                (push (org-agenda-get-sexps) results))
-                               (:scheduled
-                                (push (org-agenda-get-scheduled deadlines) results))
-                               (:scheduled*
-                                (push (org-agenda-get-scheduled deadlines t) results))
-                               (:closed
-                                (push (org-agenda-get-progress) results))
-                               (:deadline
-                                (setf deadlines (org-agenda-get-deadlines))
-                                (push deadlines results))
-                               (:deadline*
-                                (setf deadlines (org-agenda-get-deadlines t))
-                                (push deadlines results)))))))))
+	               (save-restriction
+	                 (if (eq buffer org-agenda-restrict)
+		             (narrow-to-region org-agenda-restrict-begin
+				               org-agenda-restrict-end)
+	                   (widen))
+	                 ;; Rationalize ARGS.  Also make sure `:deadline' comes
+	                 ;; first in order to populate DEADLINES before passing it.
+	                 ;;
+	                 ;; We use `delq' since `org-uniquify' duplicates ARGS,
+	                 ;; guarding us from modifying `org-agenda-entry-types'.
+	                 (setf args (org-uniquify (or args org-agenda-entry-types)))
+	                 (when (and (memq :scheduled args) (memq :scheduled* args))
+	                   (setf args (delq :scheduled* args)))
+	                 (cond
+	                  ((memq :deadline args)
+	                   (setf args (cons :deadline
+			                    (delq :deadline (delq :deadline* args)))))
+	                  ((memq :deadline* args)
+	                   (setf args (cons :deadline* (delq :deadline* args)))))
+	                 ;; Collect list of headlines.  Return them flattened.
+	                 (let ((case-fold-search nil) results deadlines)
+                           (org-dlet
+                               ((date date))
+	                     (dolist (arg args (apply #'nconc (nreverse results)))
+		               (pcase arg
+		                 ((and :todo (guard (org-agenda-today-p date)))
+		                  (push (org-agenda-get-todos) results))
+		                 (:timestamp
+		                  (push (org-agenda-get-blocks) results)
+		                  (push (org-agenda-get-timestamps deadlines) results))
+		                 (:sexp
+		                  (push (org-agenda-get-sexps) results))
+		                 (:scheduled
+		                  (push (org-agenda-get-scheduled deadlines) results))
+		                 (:scheduled*
+		                  (push (org-agenda-get-scheduled deadlines t) results))
+		                 (:closed
+		                  (push (org-agenda-get-progress) results))
+		                 (:deadline
+		                  (setf deadlines (org-agenda-get-deadlines))
+		                  (push deadlines results))
+		                 (:deadline*
+		                  (setf deadlines (org-agenda-get-deadlines t))
+		                  (push deadlines results))))))))))
             (primitive-undo 1 buffer-undo-list)
             ret))))))
 
@@ -214,23 +216,23 @@ the documentation of `org-diary'."
   (interactive)
   (let ((time (or time (current-time))))
     (org-agenda-review time
-                     (encode-time
-                      (--map-indexed
-                       (pcase it-index 
-                         (`3 (+ it 1))
-                         (_ it)) (decode-time time))))
+                       (encode-time
+                        (--map-indexed
+                         (pcase it-index 
+                           (`3 (+ it 1))
+                           (_ it)) (decode-time time))))
     (local-set-key (kbd "f") (lambda () (interactive) (org-agenda-daily-review
-                                       (encode-time
-                                        (--map-indexed (pcase it-index
-                                                         (`3 (+ it 1))
-                                                         (_ it))
-                                                       (decode-time time))))))
+                                                       (encode-time
+                                                        (--map-indexed (pcase it-index
+                                                                         (`3 (+ it 1))
+                                                                         (_ it))
+                                                                       (decode-time time))))))
     (local-set-key (kbd "b") (lambda () (interactive) (org-agenda-daily-review
-                                       (encode-time
-                                        (--map-indexed (pcase it-index
-                                                         (`3 (- it 1))
-                                                         (_ it))
-                                                       (decode-time time))))))))
+                                                       (encode-time
+                                                        (--map-indexed (pcase it-index
+                                                                         (`3 (- it 1))
+                                                                         (_ it))
+                                                                       (decode-time time))))))))
 
 (defun org-agenda-weekly-review (&optional time)
   (interactive)
@@ -244,46 +246,46 @@ the documentation of `org-diary'."
                                                (_ it)) iso-this-week-start)))
     (org-agenda-review (iso-week-to-time iso-this-week-start) (iso-week-to-time iso-next-week-start))
     (local-set-key (kbd "f") (lambda () (interactive) (org-agenda-weekly-review
-                                       (encode-time
-                                        (--map-indexed (pcase it-index
-                                                         (`3 (+ it 7))
-                                                         (_ it))
-                                                       (decode-time time))))))
+                                                       (encode-time
+                                                        (--map-indexed (pcase it-index
+                                                                         (`3 (+ it 7))
+                                                                         (_ it))
+                                                                       (decode-time time))))))
     (local-set-key (kbd "b") (lambda () (interactive) (org-agenda-weekly-review
-                                       (encode-time
-                                        (--map-indexed (pcase it-index
-                                                         (`3 (- it 7))
-                                                         (_ it))
-                                                       (decode-time time))))))))
+                                                       (encode-time
+                                                        (--map-indexed (pcase it-index
+                                                                         (`3 (- it 7))
+                                                                         (_ it))
+                                                                       (decode-time time))))))))
 
 (defun org-agenda-monthly-review (&optional time)
   (interactive)
   (let ((time (or time (current-time))))
     (org-agenda-review (encode-time
-                      (--map-indexed
-                       (pcase it-index 
-                         (`3 1)
-                         (_ it)) (decode-time time)))
-                     (encode-time
-                      (--map-indexed
-                       (pcase it-index 
-                         (`3 1)
-                         (`4 (+ it 1))
-                         (_ it)) (decode-time time))))
+                        (--map-indexed
+                         (pcase it-index 
+                           (`3 1)
+                           (_ it)) (decode-time time)))
+                       (encode-time
+                        (--map-indexed
+                         (pcase it-index 
+                           (`3 1)
+                           (`4 (+ it 1))
+                           (_ it)) (decode-time time))))
     (local-set-key (kbd "f") (lambda () (interactive) (org-agenda-monthly-review
-                                       (encode-time
-                                        (--map-indexed (pcase it-index
-                                                         (`3 1)
-                                                         (`4 (+ it 1))
-                                                         (_ it))
-                                                       (decode-time time))))))
+                                                       (encode-time
+                                                        (--map-indexed (pcase it-index
+                                                                         (`3 1)
+                                                                         (`4 (+ it 1))
+                                                                         (_ it))
+                                                                       (decode-time time))))))
     (local-set-key (kbd "b") (lambda () (interactive) (org-agenda-monthly-review
-                                       (encode-time
-                                        (--map-indexed (pcase it-index
-                                                         (`3 1)
-                                                         (`4 (- it 1))
-                                                         (_ it))
-                                                       (decode-time time))))))))
+                                                       (encode-time
+                                                        (--map-indexed (pcase it-index
+                                                                         (`3 1)
+                                                                         (`4 (- it 1))
+                                                                         (_ it))
+                                                                       (decode-time time))))))))
 
 (defun org-agenda-yearly-review (&optional time)
   (interactive)
@@ -300,20 +302,50 @@ the documentation of `org-diary'."
                            (`5 (+ it 1))
                            (_ it)) (decode-time time))))
     (local-set-key (kbd "f") (lambda () (interactive) (org-agenda-yearly-review
-                                       (encode-time
-                                        (--map-indexed (pcase it-index
-                                                         ((or `3 `4) 1)
-                                                         (`5 (+ it 1))
-                                                         (_ it))
-                                                       (decode-time time))))))
+                                                       (encode-time
+                                                        (--map-indexed (pcase it-index
+                                                                         ((or `3 `4) 1)
+                                                                         (`5 (+ it 1))
+                                                                         (_ it))
+                                                                       (decode-time time))))))
     (local-set-key (kbd "b") (lambda () (interactive) (org-agenda-yearly-review
-                                       (encode-time
-                                        (--map-indexed (pcase it-index
-                                                         ((or `3 `4) 1)
-                                                         (`5 (- it 1))
-                                                         (_ it))
-                                                       (decode-time time))))))))
+                                                       (encode-time
+                                                        (--map-indexed (pcase it-index
+                                                                         ((or `3 `4) 1)
+                                                                         (`5 (- it 1))
+                                                                         (_ it))
+                                                                       (decode-time time))))))))
 
 (global-set-key (kbd "C-c g r") #'org-agenda-daily-review)
+
+(defun org-up-heading ()
+  (interactive)
+  (org-up-heading-or-point-min))
+
+(defun org-down-heading ()
+  (interactive)
+  (org-goto-first-child))
+
+(defvar org-mode-navigation-repeat-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "n") #'org-next-visible-heading)
+    (define-key map (kbd "p") #'org-previous-visible-heading)
+    (define-key map (kbd "f") #'org-forward-heading-same-level)
+    (define-key map (kbd "b") #'org-backward-heading-same-level)
+    (define-key map (kbd "u") #'org-up-heading)
+    (define-key map (kbd "i") #'org-down-heading)
+    (define-key map (kbd "C-n") #'org-next-visible-heading)
+    (define-key map (kbd "C-p") #'org-previous-visible-heading)
+    (define-key map (kbd "C-f") #'org-forward-heading-same-level)
+    (define-key map (kbd "C-b") #'org-backward-heading-same-level)
+    (define-key map (kbd "C-u") #'org-up-heading)
+    (define-key map (kbd "C-i") #'org-down-heading)
+    (define-key map (kbd "<down>") #'org-forward-heading-same-level)
+    (define-key map (kbd "<up>") #'org-backward-heading-same-level)
+    (define-key map (kbd "<left>") #'org-up-heading)
+    (define-key map (kbd "<right>") #'org-down-heading)
+    (--each '(org-next-visible-heading org-previous-visible-heading org-forward-heading-same-level org-backward-heading-same-level org-up-heading org-down-heading) (put it 'repeat-map 'org-mode-navigation-repeat-map))
+    map)
+  "Keymap to repeat org-mode navigation key sequences.  Used in `repeat-mode'.")
 
 (provide 'org-ext)
