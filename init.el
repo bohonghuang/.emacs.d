@@ -367,7 +367,17 @@
    (make-lsp-client :new-connection (lsp-tramp-connection "rust-analyzer")
                     :major-modes '(rustic-mode)
                     :remote? t
-                    :server-id 'rust-analyzer-remote)))
+                    :server-id 'rust-analyzer-remote))
+  (defun rustic-return (&optional arg)
+    (interactive "P")
+    (if (and (looking-back "\{[[:space:]]*" (line-beginning-position))
+             (looking-at "[[:space:]]*\}"))
+        (progn
+          (newline-and-indent (+ (or arg 1) 1))          
+          (previous-line)
+          (indent-for-tab-command))
+      (call-interactively #'newline)))
+  (define-key rustic-mode-map (kbd "<return>") #'rustic-return))
  ;; ================================================================================
 
 
