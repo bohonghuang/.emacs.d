@@ -523,7 +523,7 @@
 (use-package intellij-features
   :load-path "custom-lisp"
   :defer t
-  :hook ((c-mode c++-mode objc-mode java-mode) . (lambda ()
+  :hook ((c-mode c++-mode objc-mode java-mode scala-mode rustic-mode) . (lambda ()
                     (require 'intellij-features)
                     (local-set-key (kbd "<backspace>") #'intellij-backspace))))
 
@@ -578,6 +578,12 @@
   (org-latex-image-default-width nil)
   (org-latex-image-default-height "120pt"))
 
+(use-package ob
+  :ensure nil
+  :defer t
+  :config
+  (org-babel-do-load-languages 'org-babel-load-languages '((shell . t))))
+
 (use-package org-pomodoro
   :ensure t
   :defer t
@@ -594,7 +600,9 @@
 (use-package org-ext
   :defer t
   :load-path "custom-lisp"
-  :hook (org-mode . (lambda () (require 'org-ext))))
+  :hook (org-mode . (lambda () (require 'org-ext)))
+  :bind (:map org-mode-map
+         ("C-c C-S-L" . org-link-make-from-region)))
 
 (use-package org-gtd
   :ensure t
@@ -696,6 +704,30 @@
   :bind (:map org-mode-map
          ("C-c t a" . org-transclusion-add)
          ("C-c t t" . org-transclusion-mode)))
+
+(use-package org-journal
+  :ensure t
+  :defer t
+  :init
+  (setq org-journal-prefix-key "C-c j")
+  :bind (("C-c j j" . org-journal-new-entry))
+  :custom
+  (org-journal-date-format "%Y年%m月%d日 %A")
+  (org-journal-dir (expand-file-name "org-journal" org-directory))
+  :config
+  (global-unset-key (kbd "C-c C-j"))
+  (defun org-journal-insert-template-after-header ()
+    (let ((template-file (expand-file-name ".template-header.org")))
+      (when (file-exists-p template-file)
+        (org-return)
+        (insert-file-contents template-file)
+        (when (org-in-src-block-p)
+          (org-indent-block)
+          (make-local-variable 'org-confirm-babel-evaluate)
+          (setq org-confirm-babel-evaluate nil)
+          (org-babel-execute-src-block)
+          (kill-local-variable 'org-confirm-babel-evaluate)))))
+  (add-hook 'org-journal-after-header-create-hook #'org-journal-insert-template-after-header))
 
 (use-package htmlize
   :ensure t

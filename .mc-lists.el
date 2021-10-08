@@ -15,6 +15,7 @@
         eval-last-sexp
         forward-sexp
         ibuffer-do-delete
+        ibuffer-mark-forward
         ignore
         indent-for-tab-command
         kill-region

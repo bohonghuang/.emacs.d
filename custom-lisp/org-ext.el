@@ -348,4 +348,10 @@ the documentation of `org-diary'."
     map)
   "Keymap to repeat org-mode navigation key sequences.  Used in `repeat-mode'.")
 
+(defun org-link-make-from-region (beg end &optional desc)
+  (interactive "*r\n")
+  (let ((link (buffer-substring beg end)))
+    (delete-region beg end)
+    (insert "[[" link "][" link "]]")))
+
 (provide 'org-ext)
