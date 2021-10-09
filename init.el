@@ -238,11 +238,12 @@
   (lisp-mode . rainbow-delimiters-mode)
   (emacs-lisp-mode . rainbow-delimiters-mode))
 
-(use-package repeat
-  :ensure nil
-  :defer nil
-  :config
-  (repeat-mode +1))
+(when (>= emacs-major-version 28)
+  (use-package repeat
+    :ensure nil
+    :defer nil
+    :config
+    (repeat-mode +1)))
 
 (use-package good-scroll
   :ensure t
