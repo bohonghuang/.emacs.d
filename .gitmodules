@@ -13,3 +13,6 @@
 [submodule "rime"]
 	path = rime
 	url = git@github.com:HuangBoHong/my-rime.git
+[submodule "site-lisp/monokai-theme"]
+	path = site-lisp/monokai-theme
+	url = git@github.com:HuangBoHong/monokai-emacs.git

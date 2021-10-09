@@ -39,6 +39,7 @@
         org-return-and-maybe-indent
         org-self-insert-command
         org-shiftcontrolright
+        org-shiftright
         org-yank
         phi-autopair-delete-backward
         phi-autopair-delete-forward

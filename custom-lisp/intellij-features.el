@@ -1,6 +1,6 @@
 (defun intellij-backspace (arg)
   (interactive "*P")
-  (if (or (region-active-p) (not (looking-back "^[[:space:]]*")))
+  (if (or (region-active-p) (not (looking-back "^[[:space:]]*" (line-beginning-position))))
       (backward-delete-char-untabify (prefix-numeric-value arg))
     (let* ((beg (point))
            (end (progn (indent-for-tab-command) (point))))
@@ -13,5 +13,16 @@
   (save-excursion
     (beginning-of-line)
     (looking-at "[[:space:]]*$")))
+
+(defun pycharm-return (&optional arg)
+  (interactive "*P")
+  (if (looking-back "^[[:space:]]*" (line-beginning-position))
+    (let ((arg (or arg 1))
+          (indent (buffer-substring-no-properties (line-beginning-position) (point))))
+      (dotimes (_ arg)
+        ;; (delete-region (line-beginning-position) (point))
+        (newline)
+        (insert indent)))
+    (call-interactively #'newline arg)))
 
 (provide 'intellij-features)

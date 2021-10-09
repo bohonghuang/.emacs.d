@@ -10,9 +10,8 @@
 (custom-set-variables
  '(avy-single-candidate-jump nil)
  '(column-number-mode t)
- '(company-minimum-prefix-length 1)
  '(compilation-scroll-output t)
- '(display-line-numbers-type 'relative)
+ '(display-line-numbers-type t) ; 'relative)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(initial-major-mode 'fundamental-mode)
@@ -32,8 +31,9 @@
 (add-hook 'prog-mode-hook #'hl-line-mode)
 (add-hook 'prog-mode-hook #'toggle-word-wrap)
 
-(global-set-key (kbd "C-?") 'undo-redo)
-(global-set-key (kbd "C-S-d") 'delete-region)
+(global-set-key (kbd "C-?") #'undo-redo)
+(global-set-key (kbd "C-S-d") #'delete-region)
+(global-set-key (kbd "S-<backspace>") #'delete-indentation)
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 (defalias 'list-buffers 'ibuffer)
@@ -63,9 +63,16 @@
     (disable-theme (car custom-enabled-themes)))
   (call-interactively 'load-theme))
 
-(use-package doom-themes
+(use-package monokai-theme
+  :load-path "site-lisp/monokai-theme"
+  :config
+  (load-theme 'monokai t))
+
+(use-package doom-modeline
   :ensure t
-  :config (load-theme 'doom-gruvbox t))
+  :defer t
+  :hook (window-setup . doom-modeline-mode))
+
 
 (defmacro with-suppressed-message (&rest body)
   "Suppress new messages temporarily in the echo area and the `*Messages*' buffer while BODY is evaluated."
@@ -100,7 +107,6 @@
 
 (global-set-key (kbd "C-x O") (lambda ()
                           (interactive)
-                          (setq repeat-map 'other-window-repeat-map)
                           (other-window -1)))
 
 (use-package ace-window
@@ -298,14 +304,15 @@
   :defer t
   :init
   (setq lsp-keymap-prefix "C-c l")
-  (setq lsp-eldoc-hook nil)
-  (setq lsp-eldoc-enable-hover nil)
   :hook (lsp-mode . lsp-lens-mode)
-  :config
-  (setq read-process-output-max (* 1024 1024 16)) ;; 1mb
-  (setq lsp-ui-doc-position 'at-point)
-  (setq lsp-idle-delay 0.500)
-  (setq lsp-log-io nil))
+  :custom
+  (lsp-eldoc-hook nil)
+  (lsp-eldoc-enable-hover nil)
+  (lsp-completion-provider :capf)
+  (read-process-output-max (* 1024 1024 16)) ;; 1mb
+  (lsp-ui-doc-position 'at-point)
+  (lsp-idle-delay 0.500)
+  (lsp-log-io nil))
 
 (use-package lsp-metals
   :ensure t
@@ -331,7 +338,9 @@
   :hook
   (prog-mode . company-mode)
   :custom
-  (lsp-completion-provider :capf)
+  (company-minimum-prefix-length 1)
+  (company-frontends '(company-pseudo-tooltip-frontend
+                          company-echo-metadata-frontend))
   (company-dabbrev-downcase nil)
   (company-dabbrev-ignore-case t))
 
@@ -391,6 +400,10 @@
 
 
 ;; ====================================== Python ==========================================
+(use-package python
+  :ensure nil
+  :defer t)
+
 (use-package lsp-pyright
   :ensure t
   :defer t
@@ -533,9 +546,18 @@
 (use-package intellij-features
   :load-path "custom-lisp"
   :defer t
-  :hook ((c-mode c++-mode objc-mode java-mode scala-mode rustic-mode) . (lambda ()
+  :hook
+  ((c-mode
+    c++-mode
+    objc-mode
+    java-mode
+    scala-mode
+    rustic-mode) .(lambda ()
                     (require 'intellij-features)
-                    (local-set-key (kbd "<backspace>") #'intellij-backspace))))
+                    (local-set-key (kbd "<backspace>") #'intellij-backspace)))
+  (python-mode . (lambda ()
+                   (require 'intellij-features)
+                   (local-set-key (kbd "<return>") #'pycharm-return))))
 
 (use-package sis
   :ensure t
@@ -828,6 +850,23 @@
   :config
   (--each '("C-v" "M-v" "S-<delete>") (add-to-list 'rime-translate-keybindings it)))
 
+(use-package emms
+  :ensure t
+  :defer t
+  :commands emms
+  :custom
+  (emms-player-list '(emms-player-mpv))
+  (emms-playlist-buffer-name "*Music*")
+  (emms-info-asynchronously t)
+  (emms-info-functions '(emms-info-libtag))
+  :config
+  (require 'emms-setup)
+  (require 'emms-info-libtag)
+  (emms-all)
+  (emms-default-players)
+  (emms-mode-line-disable)
+  (emms-playing-time-disable-display))
+
 (use-package edit-server
   :defer t
   :ensure t
@@ -845,23 +884,6 @@
                   (height . 25)
                   (minibuffer . t)
                   (menu-bar-lines . t))))
-
-(use-package emms
-  :ensure t
-  :defer t
-  :commands emms
-  :custom
-  (emms-player-list '(emms-player-mpv))
-  (emms-playlist-buffer-name "*Music*")
-  (emms-info-asynchronously t)
-  (emms-info-functions '(emms-info-libtag))
-  :config
-  (require 'emms-setup)
-  (require 'emms-info-libtag)
-  (emms-all)
-  (emms-default-players)
-  (emms-mode-line-disable)
-  (emms-playing-time-disable-display))
 
 (when (daemonp)
   (menu-bar-mode +1)
