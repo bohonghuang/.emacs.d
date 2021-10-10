@@ -100,6 +100,7 @@
   :hook (find-file . (lambda () (require 'recentf)))
   :commands recentf-open-files
   :config
+  (nconc recentf-exclude '("~$" "/tmp/" "/ssh:" "/sshx:" "/sudo:"))
   (recentf-mode +1)
   (let ((file-name (buffer-file-name)))
     (if (and file-name (file-exists-p file-name))
@@ -270,9 +271,9 @@
 (use-package scala-mode
   :ensure t
   :defer t
+  :mode ("\\.sc\\'" . scala-mode)
   :interpreter
-  ("scala" . scala-mode)
-  )
+  ("scala" . scala-mode))
 
 ;; Enable sbt mode for executing sbt commands
 (use-package sbt-mode
@@ -403,7 +404,15 @@
 ;; ====================================== Python ==========================================
 (use-package python
   :ensure nil
-  :defer t)
+  :defer t
+  :config
+  (defvar python-indent-repeat-map
+    (let ((map (make-sparse-keymap)))
+      (define-key map (kbd "<") #'python-indent-shift-left)
+      (define-key map (kbd ">") #'python-indent-shift-right)
+      (--each '(python-indent-shift-left python-indent-shift-right) (put it 'repeat-map 'python-indent-repeat-map))
+      map)
+    "Keymap to repeat Python indentation key sequences.  Used in `repeat-mode'."))
 
 (use-package lsp-pyright
   :ensure t
@@ -680,7 +689,9 @@
   ;; (org-agenda-files `(,org-gtd-directory))
   ;; a useful view to see what can be accomplished today
   (org-agenda-custom-commands '(("g" "Scheduled today and all NEXT items" ((agenda "" ((org-agenda-span 1))) (todo "NEXT")))))
-  :config (setq recentf-exclude (org-agenda-files)))
+  :config
+  (require 'recentf)
+  (nconc recentf-exclude (org-agenda-files)))
 
 
 (use-package org-capture
