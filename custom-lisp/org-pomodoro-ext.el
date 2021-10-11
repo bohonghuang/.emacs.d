@@ -71,8 +71,9 @@
 (defvar org-pomodoro-interrupt-count 0)
 
 (defun org-pomodoro-kill@before (&rest _)
-  (setq org-pomodoro-interrupt-count 0)
-  (call-interactively #'org-pomodoro-abort))
+  (when (and (org-pomodoro-active-p) (org-clock-is-active))
+    (setq org-pomodoro-interrupt-count 0)
+    (call-interactively #'org-pomodoro-abort)))
 
 (advice-add #'org-pomodoro-kill :before #'org-pomodoro-kill@before)
 

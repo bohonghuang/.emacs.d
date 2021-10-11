@@ -68,12 +68,6 @@
   :config
   (load-theme 'monokai t))
 
-(use-package doom-modeline
-  :ensure t
-  :defer t
-  :hook (window-setup . doom-modeline-mode))
-
-
 (defmacro with-suppressed-message (&rest body)
   "Suppress new messages temporarily in the echo area and the `*Messages*' buffer while BODY is evaluated."
   (declare (indent 0))
@@ -116,6 +110,12 @@
   :bind (("M-o" . ace-window))
   :custom (aw-dispatch-always t))
 
+(use-package doom-modeline
+  :ensure t
+  :defer nil
+  :config
+  (doom-modeline-mode +1))
+
 (use-package crux
   :ensure t
   :defer t
@@ -134,13 +134,13 @@
 
 (use-package cnfonts
   :ensure t
+  :defer t
   :bind (("C-M-_" . cnfonts-decrease-fontsize)
          ("C-M-+" . cnfonts-increase-fontsize))
-  :init
-  (cnfonts-enable)
   :custom
   (cnfonts-personal-fontnames '(("JetBrains Mono") nil nil))
-  (cnfonts-use-face-font-rescale t))
+  (cnfonts-use-face-font-rescale t)
+  (cnfonts-use-cache t))
 
 (use-package ligature
   :defer t
