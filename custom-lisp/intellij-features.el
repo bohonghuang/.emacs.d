@@ -25,4 +25,14 @@
         (insert indent)))
     (call-interactively #'newline arg)))
 
+(defun intellij-after-drag ()
+  (if (region-active-p)
+      (progn
+        (indent-region-line-by-line (region-beginning) (region-end))
+        (setq deactivate-mark nil)
+        )
+    (indent-for-tab-command)))
+
+(add-hook 'drag-stuff-after-drag-hook #'intellij-after-drag)
+
 (provide 'intellij-features)

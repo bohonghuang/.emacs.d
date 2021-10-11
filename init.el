@@ -7,38 +7,6 @@
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (if (file-exists-p custom-file) (load-file custom-file))
 
-(custom-set-variables
- '(avy-single-candidate-jump nil)
- '(column-number-mode t)
- '(compilation-scroll-output t)
- '(display-line-numbers-type t) ; 'relative)
- '(indent-tabs-mode nil)
- '(inhibit-startup-screen t)
- '(initial-major-mode 'fundamental-mode)
- '(initial-scratch-message "")
- '(make-backup-files nil)
- '(menu-bar-mode nil)
- '(scroll-bar-mode nil)
- '(show-paren-mode t)
- '(tool-bar-mode nil)
- '(visible-bell t)
- '(warning-suppress-log-types '((comp)))
- '(winner-mode t)
- '(context-menu-mode t)
- '(savehist-mode t))
-
-(add-hook 'prog-mode-hook #'display-line-numbers-mode)
-(add-hook 'prog-mode-hook #'hl-line-mode)
-(add-hook 'prog-mode-hook #'toggle-word-wrap)
-
-(global-set-key (kbd "C-?") #'undo-redo)
-(global-set-key (kbd "C-S-d") #'delete-region)
-(global-set-key (kbd "S-<backspace>") #'delete-indentation)
-
-(defalias 'yes-or-no-p 'y-or-n-p)
-(defalias 'list-buffers 'ibuffer)
-(defalias 'elisp-mode 'emacs-lisp-mode)
-(defalias 'md-mode 'markdown-mode)
 ;; load emacs 24's package system. Add MELPA repository.
 (when (>= emacs-major-version 24)
   (require 'package)
@@ -54,6 +22,36 @@
 (require 'use-package)
 
 (setq use-package-verbose t)
+
+(use-package startup
+  :ensure nil
+  :defer nil
+  :custom
+  (inhibit-startup-screen t)
+  (initial-major-mode 'fundamental-mode)
+  (initial-scratch-message ""))
+
+(use-package simple
+  :ensure nil
+  :defer nil
+  :hook (prog-mode . toggle-word-wrap)
+  :bind (("C-?" . undo-redo)
+         ("S-<backspace>" . delete-indentation))
+  :custom
+  (column-number-mode t)
+  (visible-bell t)
+  (show-paren-mode t)
+  (indent-tabs-mode nil))
+
+(use-package subr
+  :ensure nil
+  :defer t
+  :init (defalias 'yes-or-no-p 'y-or-n-p))
+
+(use-package files
+  :ensure nil
+  :defer t
+  :custom (make-backup-files nil))
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 (defun change-theme ()
@@ -77,24 +75,77 @@
 (setq local-file (expand-file-name "local.el" user-emacs-directory))
 (if (file-exists-p local-file) (load-file local-file))
 
+(use-package hl-line
+  :ensure nil
+  :defer nil
+  :hook (prog-mode . hl-line-mode))
+
+(use-package menu-bar
+  :ensure nil
+  :defer t
+  :custom (menu-bar-mode nil))
+(use-package scroll-bar
+  :ensure nil
+  :defer t
+  :custom (scroll-bar-mode nil))
+
+(use-package tool-bar
+  :ensure nil
+  :defer t
+  :custom (tool-bar-mode nil))
+
+(use-package mouse
+  :ensure nil
+  :defer t
+  :custom (context-menu-mode t))
+
+(use-package ibuffer
+  :ensure nil
+  :defer t
+  :init (defalias 'list-buffers 'ibuffer))
+
 (use-package dired
   :ensure nil
   :defer t
   :custom
   (dired-dwim-target t))
 
+(use-package savehist
+  :ensure nil
+  :defer t
+  :config
+  (savehist-mode t))
+
+(use-package display-line-numbers
+  :ensure nil
+  :defer t
+  :hook (prog-mode . display-line-numbers-mode)
+  :custom (display-line-numbers-type t))
+
 (use-package xref
   :ensure nil
   :defer t
   :bind (("<mouse-8>" . xref-pop-marker-stack)))
+
+(use-package compile
+  :ensure nil
+  :defer t
+  :custom
+  (compilation-scroll-output t))
+
+(use-package winner
+  :ensure nil
+  :defer t
+  :config
+  (winner-mode +1))
 
 (use-package recentf
   :init (defalias 'reopfs 'recentf-open-files)
   :defer t
   :hook (find-file . (lambda () (require 'recentf)))
   :commands recentf-open-files
+  :custom (recentf-exclude '("~$" "/tmp/" "/ssh:" "/sshx:" "/sudo:"))
   :config
-  (nconc recentf-exclude '("~$" "/tmp/" "/ssh:" "/sshx:" "/sudo:"))
   (recentf-mode +1)
   (let ((file-name (buffer-file-name)))
     (if (and file-name (file-exists-p file-name))
@@ -175,6 +226,7 @@
   (popper-reference-buffers '("\\*Messages\\*"
                               "Output\\*$"
                               "\\*Async Shell Command\\*"
+                              "\\*rustic-compilation\\*"
                               eshell-mode
                               vterm-mode
                               help-mode
@@ -239,6 +291,18 @@
   (lisp-mode . rainbow-delimiters-mode)
   (emacs-lisp-mode . rainbow-delimiters-mode))
 
+(use-package drag-stuff
+  :ensure t
+  :defer t
+  :diminish
+  :commands drag-stuff-mode drag-stuff-global-mode
+  :bind (:map drag-stuff-mode-map
+         ("M-<up>" . drag-stuff-up)
+         ("M-<down>" . drag-stuff-down)
+         ("M-<right>" . drag-stuff-right)
+         ("M-<left>" . drag-stuff-left))
+  :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode common-lisp-mode) major-mode) (drag-stuff-mode +1)))))
+
 (when (>= emacs-major-version 28)
   (use-package repeat
     :ensure nil
@@ -264,6 +328,11 @@
   (put 'projectile-project-run-cmd 'safe-local-variable #'stringp)
   (put 'projectile-project-compilation-cmd 'safe-local-variable #'stringp)
   (put 'compilation-read-command 'safe-local-variable #'booleanp))
+
+(use-package elisp-mode
+  :ensure nil
+  :defer t
+  :init (defalias 'elisp-mode 'emacs-lisp-mode))
 
 ;; ======================================== Scala ========================================
 
@@ -389,16 +458,12 @@
           (indent-for-tab-command))
       (call-interactively #'newline)))
   (define-key rustic-mode-map (kbd "<return>") #'rustic-return))
- ;; ================================================================================
-
 
 ;; ======================================== Groovy ========================================
 
 (use-package groovy-mode
   :ensure t
   :defer t)
-
-;; ================================================================================
 
 
 ;; ====================================== Python ==========================================
@@ -512,6 +577,12 @@
 
 ;; ====================================================================================
 
+(use-package markdown-mode
+  :ensure nil
+  :defer t
+  :init
+  (defalias 'md-mode 'markdown-mode))
+
 (use-package yaml-mode
   :ensure t
   :defer t)
@@ -564,10 +635,10 @@
     scala-mode
     rustic-mode) .(lambda ()
                     (require 'intellij-features)
-                    (local-set-key (kbd "<backspace>") #'intellij-backspace)))
+                    (local-set-key (kbd "DEL") #'intellij-backspace)))
   (python-mode . (lambda ()
                    (require 'intellij-features)
-                   (local-set-key (kbd "<return>") #'pycharm-return))))
+                   (local-set-key (kbd "RET") #'pycharm-return))))
 
 (use-package sis
   :ensure t
@@ -824,6 +895,16 @@
   (org-sketch-xournal-template-dir (expand-file-name "site-lisp/org-sketch/template" user-emacs-directory))  ;; xournal 模板存储目录
   (org-sketch-xournal-default-template-name "template.xopp") ;; 默认笔记模版名称，应该位于 org-sketch-xournal-template-dir
   (org-sketch-apps '("xournal" "drawio")))
+
+(use-package org-tree-slide
+  :ensure t
+  :defer t
+  :bind (:map org-mode-map
+         ("<f8>" . org-tree-slide-mode)
+         ("S-<f8>" . 'org-tree-slide-skip-done-toggle)
+         :map org-tree-slide-mode-map
+              ("<f9>" . org-tree-slide-move-previous-tree)
+              ("<f10>" . org-tree-slide-move-next-tree)))
 
 (use-package vterm
   :ensure t
