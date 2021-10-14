@@ -18,6 +18,7 @@
         ibuffer-mark-forward
         ignore
         indent-for-tab-command
+        intellij-backspace
         kill-region
         kill-visual-line
         kmacro-start-macro-or-insert-counter
@@ -47,6 +48,7 @@
         sis--prefix-override-handler
         sp-backward-sexp
         sp-forward-sexp
+        vhdl-electric-semicolon
         vhdl-electric-space
         wdired--self-insert
         wdired-abort-changes
@@ -55,5 +57,6 @@
 (setq mc/cmds-to-run-once
       '(
         rime--backspace
+        suspend-frame
         toggle-input-method
         ))

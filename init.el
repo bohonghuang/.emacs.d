@@ -175,13 +175,12 @@
          ("C-x C-S-f" . crux-open-with)
          ("C-S-<return>" . crux-smart-open-line-above)
          ("C-<return>" . crux-smart-open-line)
-         ("S-<f1>" . crux-find-user-init-file)))
+         ("S-<f1>" . crux-find-user-init-file)
+         ("C-x K" . crux-kill-other-buffers)))
 
-(defun my-new-file-hook ()
-  (unless (file-exists-p (file-truename buffer-file-name))
-    (set-buffer-file-coding-system 'utf-8)))
-
-(add-to-list 'find-file-hook #'my-new-file-hook)
+(add-hook 'find-file-hook (lambda ()
+                                               (unless (file-exists-p (file-truename buffer-file-name))
+                                                 (set-buffer-file-coding-system 'utf-8))))
 
 (use-package cnfonts
   :ensure t
@@ -191,7 +190,9 @@
   :custom
   (cnfonts-personal-fontnames '(("JetBrains Mono") nil nil))
   (cnfonts-use-face-font-rescale t)
-  (cnfonts-use-cache t))
+  (cnfonts-use-cache t)
+  :config
+  (advice-add #'cnfonts--step-fontsize :after (lambda (&rest _) (and (boundp 'doom-modeline-mode) doom-modeline-mode (doom-modeline-refresh-font-width-cache)))))
 
 (use-package ligature
   :defer t
@@ -486,11 +487,11 @@
                          (require 'lsp-pyright)
                          (lsp)))
   :config
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection "pyright")
-                    :major-modes '(python-mode)
-                    :remote? t
-                    :server-id 'pyright-remote))
+  ;; (lsp-register-client
+  ;;  (make-lsp-client :new-connection (lsp-tramp-connection "pyright")
+  ;;                   :major-modes '(python-mode)
+  ;;                   :remote? t
+  ;;                   :server-id 'pyright-remote))
   (require 'dap-python)
   (dap-register-debug-template "Python Program"
                                (list :type "python"
@@ -600,6 +601,8 @@
   :defer t
   :hook
   ((prog-mode org-mode latex-mode) . yas-minor-mode)
+  :custom
+  (yas-triggers-in-field t)
   :config
   (yas-reload-all))
 
@@ -943,6 +946,12 @@
   :config
   (--each '("C-v" "M-v" "S-<delete>") (add-to-list 'rime-translate-keybindings it)))
 
+(use-package secret-mode
+  :load-path "site-lisp/secret-mode"
+  :defer t
+  :commands secret-mode
+  :bind (("<pause>" . secret-mode)))
+
 (use-package emms
   :ensure t
   :defer t
@@ -981,6 +990,7 @@
 (when (daemonp)
   (menu-bar-mode +1)
   (global-tab-line-mode +1)
+  (scroll-bar-mode +1)
   (use-package bar-cursor
   :ensure t
   :config (bar-cursor-mode +1)))

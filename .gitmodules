@@ -16,3 +16,6 @@
 [submodule "site-lisp/monokai-theme"]
 	path = site-lisp/monokai-theme
 	url = git@github.com:HuangBoHong/monokai-emacs.git
+[submodule "site-lisp/secret-mode"]
+	path = site-lisp/secret-mode
+	url = git@github.com:bkaestner/secret-mode.el.git
