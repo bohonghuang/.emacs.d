@@ -36,6 +36,7 @@
         org-metaleft
         org-metaright
         org-metaup
+        org-open-line
         org-return
         org-return-and-maybe-indent
         org-self-insert-command

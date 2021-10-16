@@ -1,4 +1,5 @@
-;;; Package -- Summary
+;;; Package -- Summary 
+
 (progn
   (setq original-gc-cons-threshold gc-cons-threshold)
   (setq gc-cons-threshold 50000000)
@@ -7,7 +8,6 @@
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (if (file-exists-p custom-file) (load-file custom-file))
 
-;; load emacs 24's package system. Add MELPA repository.
 (when (>= emacs-major-version 24)
   (require 'package)
   (add-to-list
@@ -21,7 +21,17 @@
 
 (require 'use-package)
 
-(setq use-package-verbose t)
+(use-package use-package
+  :defer nil
+  :ensure nil
+  :custom
+  (use-package-verbose t)
+  (use-package-minimum-reported-time 0.01))
+
+(use-package comp
+  :ensure nil
+  :defer nil
+  :custom (package-native-compile t))
 
 (use-package startup
   :ensure nil
@@ -84,6 +94,7 @@
   :ensure nil
   :defer t
   :custom (menu-bar-mode nil))
+
 (use-package scroll-bar
   :ensure nil
   :defer t
@@ -219,6 +230,7 @@
 (defalias 'window-buffer-change-hook 'window-buffer-change-functions)
 
 (use-package popper
+  :defer nil
   :ensure t
   :bind (("C-`"   . popper-toggle-latest)
          ("M-`"   . popper-cycle)
@@ -233,7 +245,9 @@
                               help-mode
                               compilation-mode
                               dap-server-log-mode
-                              xref--xref-buffer-mode))
+                              xref--xref-buffer-mode
+                              quickrun--mode
+                              flymake-diagnostics-buffer-mode))
   :config
   (popper-mode +1)
   (popper-echo-mode +1))
@@ -304,12 +318,12 @@
          ("M-<left>" . drag-stuff-left))
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode common-lisp-mode) major-mode) (drag-stuff-mode +1)))))
 
-(when (>= emacs-major-version 28)
-  (use-package repeat
-    :ensure nil
-    :defer nil
-    :config
-    (repeat-mode +1)))
+(use-package repeat
+  :if (>= emacs-major-version 28)
+  :ensure nil
+  :defer nil
+  :config
+  (repeat-mode +1))
 
 (use-package good-scroll
   :ensure t
@@ -364,7 +378,22 @@
 (use-package flymake
   :ensure nil
   :defer t
-  :bind (("C-c f" . flymake-show-diagnostics-buffer)))
+  :hook (emacs-lisp-mode . flymake-mode)
+  :bind
+  ("C-c f f" . flymake-show-buffer-diagnostics)
+  ("C-c f p" . flymake-show-project-diagnostics)
+  ("C-c f C-n" . flymake-goto-next-error)
+  ("C-c f C-p" . flymake-goto-prev-error)
+  :config
+  (defvar flymake-navigation-repeat-map
+    (let ((map (make-sparse-keymap)))
+      (define-key map (kbd "C-n") #'flymake-goto-next-error)
+      (define-key map (kbd "C-p") #'flymake-goto-prev-error)
+      (--each '(flymake-goto-next-error
+                flymake-goto-prev-error)
+        (put it 'repeat-map 'flymake-navigation-repeat-map))
+      map)
+    "Keymap to repeat flymake navigation key sequences.  Used in `repeat-mode'."))
 
 ;; (use-package flycheck
 ;;   :ensure t
@@ -448,17 +477,7 @@
    (make-lsp-client :new-connection (lsp-tramp-connection "rust-analyzer")
                     :major-modes '(rustic-mode)
                     :remote? t
-                    :server-id 'rust-analyzer-remote))
-  (defun rustic-return (&optional arg)
-    (interactive "P")
-    (if (and (looking-back "\{[[:space:]]*" (line-beginning-position))
-             (looking-at "[[:space:]]*\}"))
-        (progn
-          (newline-and-indent (+ (or arg 1) 1))          
-          (previous-line)
-          (indent-for-tab-command))
-      (call-interactively #'newline)))
-  (define-key rustic-mode-map (kbd "<return>") #'rustic-return))
+                    :server-id 'rust-analyzer-remote)))
 
 ;; ======================================== Groovy ========================================
 
@@ -606,6 +625,11 @@
   :config
   (yas-reload-all))
 
+(use-package yasnippet-snippets
+  :ensure t
+  :defer t
+  :hook (yas-minor-mode . (lambda () (require 'yasnippet-snippets)))) 
+
 (use-package binary-jump
   :load-path "custom-lisp"
   :defer t
@@ -636,9 +660,15 @@
     objc-mode
     java-mode
     scala-mode
-    rustic-mode) .(lambda ()
-                    (require 'intellij-features)
-                    (local-set-key (kbd "DEL") #'intellij-backspace)))
+    rustic-mode
+    js-mode)
+   .
+   (lambda ()
+     (require 'intellij-features)
+     (local-set-key (kbd "DEL") #'intellij-backspace)
+     (local-set-key (kbd "{") #'intellij-left-bracket)
+     (when (-contains-p '(java-mode rustic-mode js-mode) major-mode)
+       (local-set-key (kbd "RET") #'intellij-return))))
   (python-mode . (lambda ()
                    (require 'intellij-features)
                    (local-set-key (kbd "RET") #'pycharm-return))))
@@ -919,7 +949,8 @@
 
 (use-package quickrun
   :ensure t
-  :defer t)
+  :defer t
+  :init (defalias 'qr 'quickrun))
 
 (use-package command-log-mode
   :ensure t
@@ -987,13 +1018,14 @@
                   (minibuffer . t)
                   (menu-bar-lines . t))))
 
-(when (daemonp)
+(use-package bar-cursor
+  :if (daemonp)
+  :ensure t
+  :config
+  (bar-cursor-mode +1)
   (menu-bar-mode +1)
   (global-tab-line-mode +1)
-  (scroll-bar-mode +1)
-  (use-package bar-cursor
-  :ensure t
-  :config (bar-cursor-mode +1)))
+  (scroll-bar-mode +1))
 
 (when (not window-system)
   (global-set-key (kbd "M-=") 'er/expand-region))

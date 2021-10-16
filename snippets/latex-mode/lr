@@ -1,5 +1,5 @@
 # -*- mode: snippet -*-
-# name: Left Right
+# name: left and right
 # key: lr
 # --
 \left${1:(}$2\right${1:$(let ((text yas-text)) (-each (cons '("." . "|") sp-pair-list) (lambda (cs) (setq text (replace-regexp-in-string (regexp-quote (car cs)) (cdr cs) text)))) text)}$0
