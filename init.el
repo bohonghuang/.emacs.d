@@ -119,7 +119,10 @@
   :ensure nil
   :defer t
   :custom
-  (dired-dwim-target t))
+  (dired-dwim-target t)
+  (browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
+  :config
+  (put 'dired-find-alternate-file 'disabled nil))
 
 (use-package savehist
   :ensure nil
@@ -186,8 +189,7 @@
          ("C-x C-S-f" . crux-open-with)
          ("C-S-<return>" . crux-smart-open-line-above)
          ("C-<return>" . crux-smart-open-line)
-         ("S-<f1>" . crux-find-user-init-file)
-         ("C-x K" . crux-kill-other-buffers)))
+         ("S-<f1>" . crux-find-user-init-file)))
 
 (add-hook 'find-file-hook (lambda ()
                                                (unless (file-exists-p (file-truename buffer-file-name))
@@ -197,7 +199,8 @@
   :ensure t
   :defer t
   :bind (("C-M-_" . cnfonts-decrease-fontsize)
-         ("C-M-+" . cnfonts-increase-fontsize))
+         ("C-M-+" . cnfonts-increase-fontsize)
+         ("C-M-)" . cnfonts-reset-fontsize))
   :custom
   (cnfonts-personal-fontnames '(("JetBrains Mono") nil nil))
   (cnfonts-use-face-font-rescale t)
@@ -395,6 +398,11 @@
       map)
     "Keymap to repeat flymake navigation key sequences.  Used in `repeat-mode'."))
 
+(use-package subword
+  :ensure nil
+  :defer t
+  :hook ((c++-mode java-mode scala-mode) . subword-mode))
+
 ;; (use-package flycheck
 ;;   :ensure t
 ;;   :init (global-flycheck-mode))
@@ -412,7 +420,8 @@
   (lsp-completion-provider :capf)
   (read-process-output-max (* 1024 1024 16)) ;; 1mb
   (lsp-ui-doc-position 'at-point)
-  (lsp-idle-delay 0.500)
+  (lsp-ui-doc-delay 0.5)
+  (lsp-idle-delay 0.5)
   (lsp-log-io nil))
 
 (use-package lsp-metals
@@ -671,7 +680,8 @@
        (local-set-key (kbd "RET") #'intellij-return))))
   (python-mode . (lambda ()
                    (require 'intellij-features)
-                   (local-set-key (kbd "RET") #'pycharm-return))))
+                   (local-set-key (kbd "RET") #'pycharm-return)
+                   (local-set-key (kbd "DEL") #'pycharm-backspace))))
 
 (use-package sis
   :ensure t
@@ -685,6 +695,13 @@
   (sis-global-respect-mode t)
   ;; enable the /context/ mode for all buffers
   (sis-global-context-mode t))
+
+(use-package calendar
+  :ensure nil
+  :defer t
+  :custom
+  (calendar-mark-today t)
+  (calendar-chinese-all-holidays-flag t))
 
 (use-package org
   :ensure nil
@@ -728,7 +745,7 @@
   :ensure nil
   :defer t
   :config
-  (org-babel-do-load-languages 'org-babel-load-languages '((shell . t))))
+  (org-babel-do-load-languages 'org-babel-load-languages '((shell . t) (python . t))))
 
 (use-package org-pomodoro
   :ensure t
@@ -1032,4 +1049,3 @@
 
 (provide 'init)
 ;;;
-(put 'dired-find-alternate-file 'disabled nil)

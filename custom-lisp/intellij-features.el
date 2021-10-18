@@ -25,6 +25,12 @@
         (insert indent)))
     (call-interactively #'newline arg)))
 
+(defun pycharm-backspace (&optional arg)
+  (interactive "*P")
+  (if (region-active-p)
+      (delete-region (region-beginning) (region-end))
+    (python-indent-dedent-line-backspace (or arg 1))))
+
 (defun intellij-after-drag ()
   (if (region-active-p)
       (progn
