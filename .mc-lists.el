@@ -45,6 +45,7 @@
         org-yank
         phi-autopair-delete-backward
         phi-autopair-delete-forward
+        pycharm-backspace
         sgml-slash
         sis--prefix-override-handler
         sp-backward-sexp

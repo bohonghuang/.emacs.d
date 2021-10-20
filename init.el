@@ -407,6 +407,20 @@
 ;;   :ensure t
 ;;   :init (global-flycheck-mode))
 
+(use-package tree-sitter
+  :ensure t
+  :defer t
+  :hook (prog-mode . (lambda ()
+                       (require 'tree-sitter-langs)
+                       (if (assoc major-mode tree-sitter-major-mode-language-alist)
+                           (tree-sitter-mode +1))))
+  :config
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+
+(use-package tree-sitter-langs
+  :ensure t
+  :defer t)
+
 (use-package lsp-mode
   ;; Optional - enable lsp-mode automatically in scala files
   :ensure t
@@ -545,6 +559,7 @@
   :config (which-key-mode t))
 
 ;;
+
 (use-package lsp-clangd
   :defer t
   :hook
@@ -567,6 +582,18 @@
   :defer t)
 
 ;; ================================================================================
+
+
+(use-package lsp-java
+  :ensure t
+  :defer t
+  :hook (java-mode . lsp)
+  :config
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-tramp-connection "java-language-server")
+                    :major-modes '(java-mode)
+                    :remote? t
+                    :server-id 'lsp-java-remote)))
 
 ;; ======================================== PlatformIO ========================================
 
