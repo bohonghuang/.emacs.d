@@ -379,7 +379,7 @@
 )
 
 (use-package flymake
-  :ensure t
+  :ensure nil
   :defer t
   :hook (emacs-lisp-mode . flymake-mode)
   :bind
