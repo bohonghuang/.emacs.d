@@ -5,32 +5,26 @@
 (defvar binary-jump-round-up t)
 
 (defun binary-jump-select-line (&optional arg)
-  (let* ((screen-lines-from-top (count-screen-lines (save-excursion (move-to-window-line 0) (point)) (point)))
-         (screen-lines-to-bottom (count-screen-lines (point) (save-excursion (move-to-window-line -1) (point))))
-         (step-up screen-lines-from-top)
-         (step-down (- screen-lines-to-bottom 1)))
-    (catch 'break
-      (unwind-protect
-          (while t
-            (progn
-              (unless (overlayp hl-line-overlay)
-                (setq hl-line-overlay (hl-line-make-overlay)))
-              (overlay-put hl-line-overlay
-                           'window (unless hl-line-sticky-flag (selected-window)))
-              (hl-line-move hl-line-overlay)
-              (hl-line-maybe-unhighlight))
-            (pcase (or (car arg) (read-key))
-              (`?p (setq step-down (/ (+ step-up (if binary-jump-round-up 1 0)) 2)
-                         step-up (- step-up step-down))
-                   (previous-line (max step-down 1)))
-              (`?n (setq step-up (/ (+ step-down (if binary-jump-round-up 1 0)) 2)
-                         step-down (- step-down step-up))
-                   (next-line (max step-up 1)))
-              (`? (throw 'break nil))
-              ((or `? `?  `?j)  (throw 'break t)))
-            (when (not (null arg))
-              (pop arg)))
-        (hl-line-highlight)))))
+  (setq binary-jump-vertical-range nil)
+  (catch 'break
+    (unwind-protect
+        (while t
+          (progn
+            (unless (overlayp hl-line-overlay)
+              (setq hl-line-overlay (hl-line-make-overlay)))
+            (overlay-put hl-line-overlay
+                         'window (unless hl-line-sticky-flag (selected-window)))
+            (hl-line-move hl-line-overlay)
+            (hl-line-maybe-unhighlight))
+          (pcase (or (car arg) (read-key))
+            (`?p (binary-jump-toward 'up t))
+            (`?n (binary-jump-toward 'down t))
+            (`?g (setq binary-jump-vertical-range nil))
+            (`? (throw 'break nil))
+            ((or `? `?  `?j)  (throw 'break t)))
+          (when (not (null arg))
+            (pop arg)))
+      (hl-line-highlight))))
 
 (defun binary-jump-toward (dir &optional continue)
   (pcase dir
