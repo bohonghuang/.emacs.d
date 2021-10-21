@@ -4,7 +4,7 @@
 
 (defvar binary-jump-round-up t)
 
-(defun binary-jump-line-char (&optional arg)
+(defun binary-jump-select-line (&optional arg)
   (let* ((screen-lines-from-top (count-screen-lines (save-excursion (move-to-window-line 0) (point)) (point)))
          (screen-lines-to-bottom (count-screen-lines (point) (save-excursion (move-to-window-line -1) (point))))
          (step-up screen-lines-from-top)
@@ -26,8 +26,8 @@
               (`?n (setq step-up (/ (+ step-down (if binary-jump-round-up 1 0)) 2)
                          step-down (- step-down step-up))
                    (next-line (max step-up 1)))
-              (`7 (throw 'break nil))
-              (_  (throw 'break t)))
+              (`? (throw 'break nil))
+              ((or `? `?  `?j)  (throw 'break t)))
             (when (not (null arg))
               (pop arg)))
         (hl-line-highlight)))))
@@ -35,7 +35,8 @@
 (defun binary-jump-toward (dir)
   (pcase dir
     ((or `up `down)
-     (let ((screen-lines-from-top (count-screen-lines (save-excursion (move-to-window-line 0) (point)) (point)))
+     (let ((beginning-of-visual-line-p (eq (point) (save-excursion (beginning-of-visual-line) (point))))
+           (screen-lines-from-top (count-screen-lines (save-excursion (move-to-window-line 0) (point)) (point)))
            (screen-lines-to-bottom (count-screen-lines (point) (save-excursion (move-to-window-line -1) (point)))))
        (unless (and binary-jump-vertical-range (string-prefix-p "binary-jump" (format "%s" last-command)))
          (setq binary-jump-vertical-range (cons (- screen-lines-from-top 1) (- screen-lines-to-bottom 1))))
@@ -43,13 +44,13 @@
          (`up (setf (cdr binary-jump-vertical-range) (/ (+ (car binary-jump-vertical-range) 1) 2)
                     (car binary-jump-vertical-range) (- (car binary-jump-vertical-range) (cdr binary-jump-vertical-range)))
               (previous-line (max (cdr binary-jump-vertical-range) 1))
-              (when (= screen-lines-from-top 0) (setq binary-jump-vertical-range nil)))
+              (when (= screen-lines-from-top (if beginning-of-visual-line-p 0 1)) (setq binary-jump-vertical-range nil)))
          (`down (setf (car binary-jump-vertical-range) (/ (+ (cdr binary-jump-vertical-range) 1) 2)
                       (cdr binary-jump-vertical-range) (- (cdr binary-jump-vertical-range) (car binary-jump-vertical-range)))
                 (next-line (max (car binary-jump-vertical-range) 1))
-                (when (= screen-lines-to-bottom 0) (setq binary-jump-vertical-range nil))))))))
+                (when (= screen-lines-to-bottom (if beginning-of-visual-line-p 0 1)) (setq binary-jump-vertical-range nil))))))))
 
-(defmacro with-mark-set (&rest body)
+(defmacro binary-jump-with-mark-set (&rest body)
   `(let ((mark (point)))
      (if (progn ,@body)
          (unless mark-active (push-mark mark))
@@ -63,6 +64,10 @@
   (interactive)
   (binary-jump-toward 'down))
 
+(defun binary-jump-select-line-command ()
+  (interactive)
+  (binary-jump-with-mark-set
+   (binary-jump-select-line)))
 
 (defun binary-jump-command ()
   (interactive)

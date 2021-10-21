@@ -379,7 +379,7 @@
 )
 
 (use-package flymake
-  :ensure nil
+  :ensure t
   :defer t
   :hook (emacs-lisp-mode . flymake-mode)
   :bind
@@ -670,7 +670,8 @@
   :load-path "custom-lisp"
   :defer t
   :bind (("M-P" . binary-jump-previous-line)
-         ("M-N" . binary-jump-next-line)))
+         ("M-N" . binary-jump-next-line)
+         ("M-J" . binary-jump-select-line-command)))
 
 (use-package expand-region
   :ensure t
