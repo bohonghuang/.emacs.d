@@ -1,27 +1,3 @@
-[submodule "site-lisp/org-link-edit"]
-	path = site-lisp/org-link-edit
-	url = git@github.com:kyleam/org-link-edit.git
-[submodule "site-lisp/org-transclusion"]
-	path = site-lisp/org-transclusion
-	url = git@github.com:nobiot/org-transclusion.git
-[submodule "site-lisp/org-sketch"]
-	path = site-lisp/org-sketch
-	url = git@github.com:HuangBoHong/org-sketch.git
-[submodule "site-lisp/org-media-note"]
-	path = site-lisp/org-media-note
-	url = git@github.com:yuchen-lea/org-media-note.git
 [submodule "rime"]
 	path = rime
 	url = git@github.com:HuangBoHong/my-rime.git
-[submodule "site-lisp/monokai-theme"]
-	path = site-lisp/monokai-theme
-	url = git@github.com:HuangBoHong/monokai-emacs.git
-[submodule "site-lisp/secret-mode"]
-	path = site-lisp/secret-mode
-	url = git@github.com:bkaestner/secret-mode.el.git
-[submodule "site-lisp/vertico"]
-	path = site-lisp/vertico
-	url = git@github.com:minad/vertico.git
-[submodule "site-lisp/ligature"]
-	path = site-lisp/ligature
-	url = git@github.com:mickeynp/ligature.el.git

@@ -28,6 +28,11 @@
   (use-package-verbose t)
   (use-package-minimum-reported-time 0.01))
 
+(use-package quelpa-use-package
+  :demand t
+  :ensure t
+  :custom (quelpa-update-melpa-p nil))
+
 ;; (use-package emacs
 ;;   :ensure nil
 ;;   :defer nil
@@ -83,7 +88,7 @@
 (if (file-exists-p local-file) (load-file local-file))
 
 (use-package monokai-theme
-  :load-path "site-lisp/monokai-theme"
+  :quelpa (monokai-theme :fetcher github :repo "HuangBoHong/monokai-emacs")
   :if (null custom-enabled-themes)
   :config
   (load-theme 'monokai t))
@@ -202,7 +207,7 @@
   (vertico-mode +1))
 
 (use-package vertico-directory
-  :load-path "site-lisp/vertico/extensions"
+  :quelpa (vertico-directory :fetcher url :url "https://github.com/minad/vertico/raw/main/extensions/vertico-directory.el")
   :defer t
   :bind(:map vertico-map
         ("RET" . vertico-directory-enter)
@@ -241,7 +246,7 @@
 (use-package ligature
   :defer t
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode) major-mode) (require 'ligature) (ligature-mode +1))))
-  :load-path "site-lisp/ligature"
+  :quelpa (ligature :fetcher github :repo "mickeynp/ligature.el")
   :config
   ;; Enable all JetBrains Mono ligatures in programming modes
   (ligature-set-ligatures 'prog-mode '("-|" "-~" "---" "-<<" "-<" "--" "->" "->>" "-->" "///" "/=" "/=="
@@ -951,7 +956,7 @@
   (require 'org-roam-protocol))
 
 (use-package org-transclusion
-  :load-path "site-lisp/org-transclusion"
+  :quelpa (org-transclusion :fetcher github :repo "nobiot/org-transclusion")
   :defer t
   :bind (:map org-mode-map
          ("C-c t a" . org-transclusion-add)
@@ -1009,7 +1014,7 @@
   :defer t)
 
 (use-package org-media-note
-  :load-path "site-lisp/org-media-note"
+  :quelpa (org-media-note :fetcher github :repo "yuchen-lea/org-media-note")
   :defer t
   :hook (org-mode . org-media-note-mode)
   :bind(:map org-mode-map
@@ -1017,21 +1022,6 @@
   :custom
   (org-media-note-display-inline-images nil)
   (org-media-note-screenshot-image-dir (expand-file-name "org-media-note" org-directory)))
-
-(use-package org-link-edit
-  :load-path "site-lisp/org-link-edit"
-  :defer t)
-
-(use-package org-sketch
-  :load-path "site-lisp/org-sketch"
-  :defer t
-  :hook (org-mode . org-sketch-mode)
-  :bind(:map org-mode-map
-             ("C-c s s" . org-sketch-insert))
-  :custom
-  (org-sketch-xournal-template-dir (expand-file-name "site-lisp/org-sketch/template" user-emacs-directory))  ;; xournal 模板存储目录
-  (org-sketch-xournal-default-template-name "template.xopp") ;; 默认笔记模版名称，应该位于 org-sketch-xournal-template-dir
-  (org-sketch-apps '("xournal" "drawio")))
 
 (use-package org-tree-slide
   :ensure t
@@ -1082,7 +1072,7 @@
   (--each '("C-v" "M-v" "S-<delete>") (add-to-list 'rime-translate-keybindings it)))
 
 (use-package secret-mode
-  :load-path "site-lisp/secret-mode"
+  :quelpa (secret-mode :fetcher github :repo "bkaestner/secret-mode.el")
   :defer t
   :commands secret-mode
   :bind (("<pause>" . secret-mode)))
