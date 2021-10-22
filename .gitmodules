@@ -19,3 +19,6 @@
 [submodule "site-lisp/secret-mode"]
 	path = site-lisp/secret-mode
 	url = git@github.com:bkaestner/secret-mode.el.git
+[submodule "site-lisp/vertico"]
+	path = site-lisp/vertico
+	url = git@github.com:minad/vertico.git

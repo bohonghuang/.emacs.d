@@ -28,6 +28,12 @@
   (use-package-verbose t)
   (use-package-minimum-reported-time 0.01))
 
+;; (use-package emacs
+;;   :ensure nil
+;;   :defer nil
+;;   :custom
+;;   (enable-recursive-minibuffers t))
+
 (use-package comp
   :ensure nil
   :defer nil
@@ -124,11 +130,16 @@
   :config
   (put 'dired-find-alternate-file 'disabled nil))
 
+(use-package fd-dired
+  :ensure t
+  :defer t
+  :init (defalias 'fd 'fd-dired))
+
 (use-package savehist
   :ensure nil
   :defer t
   :config
-  (savehist-mode t))
+  (savehist-mode +1))
 
 (use-package display-line-numbers
   :ensure nil
@@ -180,6 +191,22 @@
   :defer nil
   :config
   (doom-modeline-mode +1))
+
+(use-package vertico
+  :ensure t
+  :defer nil
+  :config
+  (vertico-mode +1))
+
+(use-package vertico-directory
+  :load-path "site-lisp/vertico/extensions"
+  :defer t
+  :bind(:map vertico-map
+        ("RET" . vertico-directory-enter)
+        ("DEL" . vertico-directory-delete-char)
+        ("C-DEL" . vertico-directory-delete-word))
+  :hook
+  (rfn-eshadow-update-overlay . vertico-directory-tidy))
 
 (use-package crux
   :ensure t
@@ -259,7 +286,7 @@
   :ensure t
   :defer t
   :hook
-  ((prog-mode text-mode minibuffer-mode) . smartparens-mode)
+  ((prog-mode text-mode minibuffer-mode eshell-mode lisp-mode inferior-emacs-lisp-mode) . smartparens-mode)
   :bind (:map smartparens-mode-map
               ("C-*" . sp-join-sexp)
               ("C-|" . sp-split-sexp)
@@ -306,8 +333,7 @@
   :ensure t
   :defer t
   :hook
-  (lisp-mode . rainbow-delimiters-mode)
-  (emacs-lisp-mode . rainbow-delimiters-mode))
+  ((lisp-mode emacs-lisp-mode eshell-mode inferior-emacs-lisp-mode) . rainbow-delimiters-mode))
 
 (use-package drag-stuff
   :ensure t
@@ -351,6 +377,33 @@
   :ensure nil
   :defer t
   :init (defalias 'elisp-mode 'emacs-lisp-mode))
+
+(use-package ielm
+  :ensure nil
+  :defer t
+  ;; Adapted from http://www.modernemacs.com/post/comint-highlighting/ to add
+  ;; syntax highlighting to ielm REPLs.
+  :custom (ielm-font-lock-keywords
+           (append '(("\\(^\\*\\*\\*[^*]+\\*\\*\\*\\)\\(.*$\\)"
+                      (1 font-lock-comment-face)
+                      (2 font-lock-constant-face)))
+                   (when (require 'highlight-numbers nil t)
+                     (highlight-numbers--get-regexp-for-mode 'emacs-lisp-mode))
+                   (cl-loop for (matcher . match-highlights)
+                            in (append lisp-el-font-lock-keywords-2
+                                       lisp-cl-font-lock-keywords-2)
+                            collect
+                            `((lambda (limit)
+                                (when ,(if (symbolp matcher)
+                                           `(,matcher limit)
+                                         `(re-search-forward ,matcher limit t))
+                                  ;; Only highlight matches after the prompt
+                                  (> (match-beginning 0) (car comint-last-prompt))
+                                  ;; Make sure we're not in a comment or string
+                                  (let ((state (syntax-ppss)))
+                                    (not (or (nth 3 state)
+                                             (nth 4 state))))))
+                              ,@match-highlights)))))
 
 ;; ======================================== Scala ========================================
 
@@ -460,7 +513,7 @@
   :ensure t
   :defer t
   :hook
-  (prog-mode . company-mode)
+  ((prog-mode ielm-mode) . company-mode)
   :custom
   (company-minimum-prefix-length 1)
   (company-frontends '(company-pseudo-tooltip-frontend
@@ -697,6 +750,7 @@
     objc-mode
     java-mode
     scala-mode
+    rust-mode
     rustic-mode
     js-mode)
    .
@@ -704,7 +758,7 @@
      (require 'intellij-features)
      (local-set-key (kbd "DEL") #'intellij-backspace)
      (local-set-key (kbd "{") #'intellij-left-bracket)
-     (when (-contains-p '(java-mode rustic-mode js-mode) major-mode)
+     (when (-contains-p '(java-mode rust-mode rustic-mode js-mode) major-mode)
        (local-set-key (kbd "RET") #'intellij-return))))
   (python-mode . (lambda ()
                    (require 'intellij-features)
@@ -983,6 +1037,11 @@
          :map org-tree-slide-mode-map
               ("<f9>" . org-tree-slide-move-previous-tree)
               ("<f10>" . org-tree-slide-move-next-tree)))
+
+(use-package eshell-syntax-highlighting
+  :defer t
+  :ensure t
+  :hook (eshell-mode . eshell-syntax-highlighting-mode))
 
 (use-package vterm
   :ensure t
