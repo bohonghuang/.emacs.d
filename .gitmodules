@@ -22,3 +22,6 @@
 [submodule "site-lisp/vertico"]
 	path = site-lisp/vertico
 	url = git@github.com:minad/vertico.git
+[submodule "site-lisp/ligature"]
+	path = site-lisp/ligature
+	url = git@github.com:mickeynp/ligature.el.git

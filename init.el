@@ -1,4 +1,4 @@
-;;; Package -- Summary 
+;;; Package -- Summary
 
 (progn
   (setq original-gc-cons-threshold gc-cons-threshold)
@@ -238,7 +238,7 @@
 (use-package ligature
   :defer t
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode) major-mode) (require 'ligature) (ligature-mode +1))))
-  :load-path "site-lisp/"
+  :load-path "site-lisp/ligature"
   :config
   ;; Enable all JetBrains Mono ligatures in programming modes
   (ligature-set-ligatures 'prog-mode '("-|" "-~" "---" "-<<" "-<" "--" "->" "->>" "-->" "///" "/=" "/=="
@@ -286,7 +286,7 @@
   :ensure t
   :defer t
   :hook
-  ((prog-mode text-mode minibuffer-mode eshell-mode lisp-mode inferior-emacs-lisp-mode) . smartparens-mode)
+  ((prog-mode text-mode minibuffer-mode eshell-mode lisp-mode ielm-mode) . smartparens-mode)
   :bind (:map smartparens-mode-map
               ("C-*" . sp-join-sexp)
               ("C-|" . sp-split-sexp)
@@ -333,7 +333,7 @@
   :ensure t
   :defer t
   :hook
-  ((lisp-mode emacs-lisp-mode eshell-mode inferior-emacs-lisp-mode) . rainbow-delimiters-mode))
+  ((lisp-mode emacs-lisp-mode) . rainbow-delimiters-mode))
 
 (use-package drag-stuff
   :ensure t
@@ -383,7 +383,7 @@
   :defer t
   ;; Adapted from http://www.modernemacs.com/post/comint-highlighting/ to add
   ;; syntax highlighting to ielm REPLs.
-  :custom (ielm-font-lock-keywords
+  :config (setq ielm-font-lock-keywords
            (append '(("\\(^\\*\\*\\*[^*]+\\*\\*\\*\\)\\(.*$\\)"
                       (1 font-lock-comment-face)
                       (2 font-lock-constant-face)))
@@ -1037,11 +1037,6 @@
          :map org-tree-slide-mode-map
               ("<f9>" . org-tree-slide-move-previous-tree)
               ("<f10>" . org-tree-slide-move-next-tree)))
-
-(use-package eshell-syntax-highlighting
-  :defer t
-  :ensure t
-  :hook (eshell-mode . eshell-syntax-highlighting-mode))
 
 (use-package vterm
   :ensure t
