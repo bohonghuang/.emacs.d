@@ -34,6 +34,8 @@
 ;;   :custom
 ;;   (enable-recursive-minibuffers t))
 
+(set-language-environment "UTF-8")
+
 (use-package comp
   :ensure nil
   :defer nil
@@ -77,8 +79,12 @@
     (disable-theme (car custom-enabled-themes)))
   (call-interactively 'load-theme))
 
+(setq local-file (expand-file-name "local.el" user-emacs-directory))
+(if (file-exists-p local-file) (load-file local-file))
+
 (use-package monokai-theme
   :load-path "site-lisp/monokai-theme"
+  :if (null custom-enabled-themes)
   :config
   (load-theme 'monokai t))
 
@@ -87,9 +93,6 @@
   (declare (indent 0))
   (let ((message-log-max nil))
     `(with-temp-message (or (current-message) "") ,@body)))
-
-(setq local-file (expand-file-name "local.el" user-emacs-directory))
-(if (file-exists-p local-file) (load-file local-file))
 
 (use-package hl-line
   :ensure nil
@@ -348,7 +351,7 @@
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode common-lisp-mode) major-mode) (drag-stuff-mode +1)))))
 
 (use-package repeat
-  :if (>= emacs-major-version 28)
+  :if (version<= "28.0.60" emacs-version)
   :ensure nil
   :defer nil
   :config
@@ -463,6 +466,7 @@
 (use-package tree-sitter
   :ensure t
   :defer t
+  :if (not (eq system-type 'windows-nt))
   :hook (prog-mode . (lambda ()
                        (require 'tree-sitter-langs)
                        (if (assoc major-mode tree-sitter-major-mode-language-alist)
@@ -472,7 +476,8 @@
 
 (use-package tree-sitter-langs
   :ensure t
-  :defer t)
+  :defer t
+  :if (not (eq system-type 'windows-nt)))
 
 (use-package lsp-mode
   ;; Optional - enable lsp-mode automatically in scala files
