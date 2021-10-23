@@ -31,9 +31,8 @@
 (use-package quelpa-use-package
   :demand t
   :ensure t
-  :custom
-  (quelpa-use-package-inhibit-loading-quelpa t)
-  (quelpa-update-melpa-p nil))
+  :init (setq quelpa-update-melpa-p nil
+              quelpa-use-package-inhibit-loading-quelpa t))
 
 ;; (use-package emacs
 ;;   :ensure nil
