@@ -31,7 +31,9 @@
 (use-package quelpa-use-package
   :demand t
   :ensure t
-  :custom (quelpa-update-melpa-p nil))
+  :custom
+  (quelpa-use-package-inhibit-loading-quelpa t)
+  (quelpa-update-melpa-p nil))
 
 ;; (use-package emacs
 ;;   :ensure nil
@@ -1093,6 +1095,11 @@
   (emms-default-players)
   (emms-mode-line-disable)
   (emms-playing-time-disable-display))
+
+(use-package rsync-mode
+  :quelpa (rsync-mode :fetcher github :repo "HuangBoHong/rsync-mode")
+  :ensure t
+  :defer t)
 
 (use-package edit-server
   :defer t
