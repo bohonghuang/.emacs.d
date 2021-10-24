@@ -34,13 +34,14 @@
   :init (setq quelpa-update-melpa-p nil
               quelpa-use-package-inhibit-loading-quelpa t))
 
-;; (use-package emacs
-;;   :ensure nil
-;;   :defer nil
-;;   :custom
-;;   (enable-recursive-minibuffers t))
+(use-package emacs
+  :defer nil
+  :ensure nil
+  :config (set-language-environment "UTF-8"))
 
-(set-language-environment "UTF-8")
+(use-package emacs-ext
+  :load-path "custom-lisp"
+  :demand t)
 
 (use-package comp
   :ensure nil
@@ -77,14 +78,6 @@
   :defer t
   :custom (make-backup-files nil))
 
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-(defun change-theme ()
-  "Disable all themes and then load a single theme interactively."
-  (interactive)
-  (while custom-enabled-themes
-    (disable-theme (car custom-enabled-themes)))
-  (call-interactively 'load-theme))
-
 (setq local-file (expand-file-name "local.el" user-emacs-directory))
 (if (file-exists-p local-file) (load-file local-file))
 
@@ -93,12 +86,6 @@
   :if (null custom-enabled-themes)
   :config
   (load-theme 'monokai t))
-
-(defmacro with-suppressed-message (&rest body)
-  "Suppress new messages temporarily in the echo area and the `*Messages*' buffer while BODY is evaluated."
-  (declare (indent 0))
-  (let ((message-log-max nil))
-    `(with-temp-message (or (current-message) "") ,@body)))
 
 (use-package hl-line
   :ensure nil
@@ -262,9 +249,6 @@
                                       "###" "####" "#[" "#{" "#=" "#!" "#:" "#_(" "#_" "#?" "#(" ";;" "_|_"
                                       "__" "~~" "~~>" "~>" "~-" "~@" "$>" "^=" "]#")))
 
-(defun dedicate-window ()
-  (interactive)
-  (set-window-dedicated-p (selected-window) t))
 
 (defalias 'window-buffer-change-hook 'window-buffer-change-functions)
 
@@ -988,10 +972,10 @@
   (add-hook 'org-journal-after-header-create-hook #'org-journal-insert-template-after-header))
 
 (use-package org-bars
+  :if (and window-system (>= emacs-major-version 26))
   :quelpa (org-bars :fetcher github :repo "tonyaldon/org-bars")
   :defer t
-  :hook (org-mode . org-bars-mode)
-  :if (and window-system (>= emacs-major-version 26)))
+  :hook (org-mode . org-bars-mode))
 
 (use-package htmlize
   :ensure t
@@ -1123,6 +1107,23 @@
                   (height . 25)
                   (minibuffer . t)
                   (menu-bar-lines . t))))
+
+(use-package frameshot
+  :ensure t
+  :defer t
+  :commands frameshot-temp
+  :config
+  (defun frameshot-temp (&optional type)
+    "Save a screenshot of the current frame as an SVG image.
+Saves to a temp file and puts the filename in the kill ring."
+    (interactive)
+    (let*((type (or type 'svg))
+          (filename (make-temp-file "Emacs_" nil (format ".%s" type)))
+          (data (x-export-frames nil type)))
+      (with-temp-file filename
+        (insert data))
+      (kill-new filename)
+      (message (format "Frameshot saved: %s" filename)))))
 
 (use-package bar-cursor
   :if (daemonp)
