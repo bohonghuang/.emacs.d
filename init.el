@@ -987,6 +987,12 @@
           (kill-local-variable 'org-confirm-babel-evaluate)))))
   (add-hook 'org-journal-after-header-create-hook #'org-journal-insert-template-after-header))
 
+(use-package org-bars
+  :quelpa (org-bars :fetcher github :repo "tonyaldon/org-bars")
+  :defer t
+  :hook (org-mode . org-bars-mode)
+  :if (and window-system (>= emacs-major-version 26)))
+
 (use-package htmlize
   :ensure t
   :defer t)
