@@ -195,7 +195,7 @@
   (vertico-mode +1))
 
 (use-package vertico-directory
-  :quelpa (vertico-directory :fetcher url :url "https://github.com/minad/vertico/raw/main/extensions/vertico-directory.el")
+  :quelpa (vertico-directory :fetcher github :repo "minad/vertico" :files ("extensions/vertico-directory.el"))
   :defer t
   :bind(:map vertico-map
         ("RET" . vertico-directory-enter)
@@ -1023,6 +1023,13 @@
          :map org-tree-slide-mode-map
               ("<f9>" . org-tree-slide-move-previous-tree)
               ("<f10>" . org-tree-slide-move-next-tree)))
+
+;; (use-package calctex
+;;   :quelpa (calctex :fetcher github :repo "johnbcoughlin/calctex" :files ("calctex/*.el"))
+;;   :defer t
+;;   :hook (calc-mode . calctex-mode)
+;;   :config (setq calctex-dvichop-sty (expand-file-name "quelpa/build/calctex/vendor/texd/dvichop" user-emacs-directory)
+;;                 calctex-dvichop-bin calctex-dvichop-sty))
 
 (use-package vterm
   :ensure t
