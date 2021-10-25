@@ -1,5 +1,5 @@
 (require 'parsec)
-
+(require 'dash)
 (defun calc-trail-vis-parsec-whitespace ()
   (parsec-many (parsec-ch ? )))
 
@@ -14,14 +14,15 @@
   (cons (calc-trail-vis-parsec-real-number) (parsec-and (calc-trail-vis-parsec-comma) (calc-trail-vis-parsec-real-number))))
 
 (defvar calc-trail-vis-operator-alist
-  '(("*" . "{$2}\\times{$1}")
-    ("/" . "\\frac{$2}{$1}")
+  '(("*" . "{$1}\\times{$2}")
+    ("/" . "\\frac{$1}{$2}")
     ("+" . 2)
     ("-" . 2)
     ("sin" . 1)
     ("cos" . 1)
     ("tan" . 1)
-    ("()" . "($2+$1j)")))
+    ("()" . "($1+$2j)")
+    ("sqrt" . 1)))
 
 (defun calc-trail-vis-parsec-operator-arg ()
   (parsec-ch ?$)
@@ -57,3 +58,15 @@
                                        (push (cons x args) stack)))
         (x (error (format "Unexpected input: %s" x))))))
     stack))
+
+(defun calc-trail-vis-tree-to-latex (tree)
+  (pcase-let ((`(,op . ,args) tree))
+    (pcase (cdr (assoc op calc-trail-vis-operator-alist))
+      ((and x (guard (integerp x)))
+       (let ((arg-strings (-map (lambda (x)
+                                  (pcase x
+                                    (`(,head . ,tail)
+                                     (if (listp tail) (calc-trail-vis-tree-to-latex tree)))
+                                    ((pred #'numberp) (number-to-string x))))))))))))
+
+(calc-trail-vis-parse-tree "1 \n 2 \n 3 \n + \n + \n")
