@@ -664,13 +664,12 @@
 ;; ======================================= VHDL =======================================
 
 (use-package lsp-vhdl
-  :load-path "site-lisp"
-  :defer nil
+  :defer t
   :hook
   (vhdl-mode . lsp)
   (vhdl-mode . (lambda () (ligature-mode -1)))
-  :config
-  (setq lsp-vhdl-server 'ghdl-ls))
+  :custom
+  (lsp-vhdl-server 'ghdl-ls))
 
 (use-package vhdl-capf
   :ensure t
@@ -784,7 +783,7 @@
   :ensure nil
   :defer t
   :custom
-  (org-adapt-indentation t)
+  (org-adapt-indentation nil)
   (org-attach-use-inheritance t)
   (org-export-with-tags nil)
   (org-format-latex-options
@@ -972,10 +971,15 @@
   (add-hook 'org-journal-after-header-create-hook #'org-journal-insert-template-after-header))
 
 (use-package org-bars
-  :if (and window-system (>= emacs-major-version 26))
+  :if window-system
   :quelpa (org-bars :fetcher github :repo "tonyaldon/org-bars")
   :defer t
   :hook (org-mode . org-bars-mode))
+
+(use-package org-indent
+  :ensure nil
+  :defer t
+  :hook (org-mode . org-indent-mode))
 
 (use-package htmlize
   :ensure t
@@ -1030,6 +1034,11 @@
 ;;   :hook (calc-mode . calctex-mode)
 ;;   :config (setq calctex-dvichop-sty (expand-file-name "quelpa/build/calctex/vendor/texd/dvichop" user-emacs-directory)
 ;;                 calctex-dvichop-bin calctex-dvichop-sty))
+
+(use-package calc-textrail
+  :quelpa (calc-textrail :fetcher github :repo "HuangBoHong/calc-textrail")
+  :defer t
+  :hook (calc-mode . calc-textrail-mode))
 
 (use-package vterm
   :ensure t
