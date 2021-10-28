@@ -15,6 +15,8 @@
    '("melpa" . "https://melpa.org/packages/")
    t))
 
+
+
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
@@ -33,6 +35,11 @@
   :ensure t
   :init (setq quelpa-update-melpa-p nil
               quelpa-use-package-inhibit-loading-quelpa t))
+
+(use-package package
+  :ensure nil
+  :defer nil
+  :init (defalias 'ls-pkg 'list-packages))
 
 (use-package emacs
   :defer nil
@@ -279,7 +286,7 @@
   :ensure t
   :defer t
   :hook
-  ((prog-mode text-mode minibuffer-mode eshell-mode lisp-mode ielm-mode) . smartparens-mode)
+  ((prog-mode text-mode minibuffer-mode eshell-mode lisp-mode ielm-mode mermaid-mode) . smartparens-mode)
   :bind (:map smartparens-mode-map
               ("C-*" . sp-join-sexp)
               ("C-|" . sp-split-sexp)
@@ -669,7 +676,12 @@
   (vhdl-mode . lsp)
   (vhdl-mode . (lambda () (ligature-mode -1)))
   :custom
-  (lsp-vhdl-server 'ghdl-ls))
+  (lsp-vhdl-server 'ghdl-ls)
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-tramp-connection "ghdl-ls")
+                    :major-modes '(vhdl-mode)
+                    :remote? t
+                    :server-id 'ghdl-ls-remote)))
 
 (use-package vhdl-capf
   :ensure t
@@ -901,6 +913,10 @@
                                     :kill-buffer t)
                                    ("l" "Todo with link"
                                     entry (file ,(org-gtd--path org-gtd-inbox-file-basename))
+                                    "* %?\n%U\n\n  %i\n  %a"
+                                    :kill-buffer t)
+                                   ("e" "English sentence"
+                                    entry (file ,(expand-file-name "org-capture/english.org" org-directory))
                                     "* %?\n%U\n\n  %i\n  %a"
                                     :kill-buffer t)))
   :config
