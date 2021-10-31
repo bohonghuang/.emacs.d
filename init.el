@@ -1,5 +1,3 @@
-;;; Package -- Summary
-
 (progn
   (setq original-gc-cons-threshold gc-cons-threshold)
   (setq gc-cons-threshold 50000000)
@@ -14,8 +12,6 @@
    'package-archives
    '("melpa" . "https://melpa.org/packages/")
    t))
-
-
 
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
@@ -98,6 +94,11 @@
   :ensure nil
   :defer nil
   :hook (prog-mode . hl-line-mode))
+
+(use-package paragraphs
+  :ensure nil
+  :defer nil
+  :custom (sentence-end-double-space nil))
 
 (use-package menu-bar
   :ensure nil
@@ -270,6 +271,7 @@
                               "Output\\*$"
                               "\\*Async Shell Command\\*"
                               "\\*rustic-compilation\\*"
+                              "\\*Go-Translate\\*"
                               eshell-mode
                               vterm-mode
                               help-mode
@@ -328,6 +330,19 @@
   (sp-highlight-pair-overlay nil)
   (sp-highlight-wrap-overlay nil)
   (sp-highlight-wrap-tag-overlay nil))
+
+(use-package separedit
+  :ensure t
+  :defer t
+  :bind
+  (:map prog-mode-map
+        ("C-c '" . separedit)
+   :map minibuffer-local-map
+        ("C-c '" . separedit)
+   :map help-mode-map
+   ("C-c '" . separedit))
+  :config
+  (add-to-list 'separedit-comment-faces 'tree-sitter-hl-face:comment))
 
 (use-package rainbow-delimiters
   :ensure t
@@ -950,7 +965,8 @@
          ("C-c r i" . org-roam-node-insert)
          ("C-c r c" . org-roam-capture)
          ;; Dailies
-         ("C-c r j" . org-roam-dailies-capture-today))
+         ("C-c r j" . org-roam-dailies-capture-today)
+         ("C-c r t" . org-roam-buffer-toggle))
   :config
   (org-roam-setup)
   (require 'org-roam-protocol))
@@ -1044,17 +1060,30 @@
               ("<f9>" . org-tree-slide-move-previous-tree)
               ("<f10>" . org-tree-slide-move-next-tree)))
 
-;; (use-package calctex
-;;   :quelpa (calctex :fetcher github :repo "johnbcoughlin/calctex" :files ("calctex/*.el"))
-;;   :defer t
-;;   :hook (calc-mode . calctex-mode)
-;;   :config (setq calctex-dvichop-sty (expand-file-name "quelpa/build/calctex/vendor/texd/dvichop" user-emacs-directory)
-;;                 calctex-dvichop-bin calctex-dvichop-sty))
+(use-package org-englearn
+  :quelpa (org-englearn :fetcher github :repo "HuangBoHong/org-englearn")
+  :defer t
+  :commands org-englearn-capture org-englearn-process-inbox org-englearn-capture-process-region
+  :bind
+  (("C-c e c" . org-englearn-capture)
+   ("C-c e p" . org-englearn-process-inbox)
+   :map org-capture-mode-map
+   ("C-c e r" . org-englearn-capture-process-region)))
+
+(use-package go-translate
+  :ensure t
+  :defer t
+  :custom
+  (gts-translate-list '(("en" "zh")))
+  :bind ("C-c t t" . gts-do-translate)
+  :config
+  (defalias 'subseq 'cl-subseq))
 
 (use-package calc-textrail
   :quelpa (calc-textrail :fetcher github :repo "HuangBoHong/calc-textrail")
-  :defer t
-  :hook (calc-mode . calc-textrail-mode))
+  :commands calc-textrail-mode calc-textrail-preview
+  :defer t)
+
 
 (use-package vterm
   :ensure t

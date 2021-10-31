@@ -50,6 +50,7 @@
         sis--prefix-override-handler
         sp-backward-sexp
         sp-forward-sexp
+        sp-unwrap-sexp
         vhdl-electric-semicolon
         vhdl-electric-space
         wdired--self-insert
