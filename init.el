@@ -1,7 +1,7 @@
 ;;; -*- lexical-binding: t -*-
 (progn
-  (setq gc-cons-threshold most-positive-fixnum)
   (let ((original-gc-cons-threshold gc-cons-threshold))
+    (setq gc-cons-threshold most-positive-fixnum)
     (add-hook 'emacs-startup-hook (lambda () (setq gc-cons-threshold original-gc-cons-threshold)))))
 
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
@@ -135,11 +135,16 @@
   :config
   (put 'dired-find-alternate-file 'disabled nil))
 
-(use-package dired+
-  :quelpa (dired+ :fetcher wiki :url "https://www.emacswiki.org/emacs/dired+.el")
-  :after dired
+(use-package dired-async
+  :ensure nil
   :demand t
-  :custom (diredp-hide-details-initially-flag nil))
+  :after dired
+  :config (dired-async-mode +1))
+
+(use-package diredfl
+  :ensure t
+  :defer t
+  :hook (dired-mode . diredfl-mode))
 
 (use-package fd-dired
   :ensure t
@@ -197,6 +202,11 @@
   :bind (("M-o" . ace-window))
   :custom (aw-dispatch-always t))
 
+(use-package which-key
+  :ensure t
+  :defer 0.5
+  :config (which-key-mode t))
+
 (use-package doom-modeline
   :ensure t
   :defer nil
@@ -236,9 +246,9 @@
   ;; Replace bindings. Lazily loaded due by `use-package'.
   :bind (;; C-c bindings (mode-specific-map)
          ("C-c h" . consult-history)
-         ("C-c m" . consult-mode-command)
-         ("C-c b" . consult-bookmark)
-         ("C-c k" . consult-kmacro)
+         ("C-x M-x" . consult-mode-command)
+         ("C-c r b" . consult-bookmark)
+         ("C-x C-k C-c" . consult-kmacro)
          ;; C-x bindings (ctl-x-map)
          ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
          ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
@@ -348,6 +358,15 @@
   ;; (setq consult-project-root-function (lambda () (locate-dominating-file "." ".git")))
   )
 
+(use-package consult-dir
+  :ensure t
+  :demand t
+  :after consult
+  :bind (("C-x C-d" . consult-dir)
+         :map minibuffer-local-completion-map
+         ("C-x C-d" . consult-dir)
+         ("C-x C-j" . consult-dir-jump-file)))
+
 (use-package embark
   :ensure t
   :defer t
@@ -396,7 +415,7 @@
          ("C-M-+" . cnfonts-increase-fontsize)
          ("C-M-)" . cnfonts-reset-fontsize))
   :custom
-  (cnfonts-personal-fontnames '(("JetBrains Mono") nil nil))
+  (cnfonts-personal-fontnames '(("JetBrains Mono" "JetBrainsMono Nerd Font") nil nil))
   (cnfonts-use-face-font-rescale t)
   (cnfonts-use-cache t)
   :config
@@ -671,6 +690,11 @@
   (lsp-idle-delay 0.5)
   (lsp-log-io nil))
 
+(use-package consult-lsp
+  :ensure t
+  :demand t
+  :after lsp consult)
+
 (use-package lsp-metals
   :ensure t
   :defer t
@@ -787,12 +811,6 @@
 
 ;; Clangd
 
-(use-package which-key
-  :ensure t
-  :config (which-key-mode t))
-
-;;
-
 (use-package lsp-clangd
   :defer t
   :hook
@@ -875,6 +893,11 @@
   :defer t
   :init
   (defalias 'md-mode 'markdown-mode))
+
+(use-package csv-mode
+  :ensure t
+  :defer t
+  :hook (csv-mode . csv-align-mode))
 
 (use-package yaml-mode
   :ensure t
@@ -1103,6 +1126,11 @@
   ;; you can of course change the letters, too
   )
 
+(use-package org-protocol
+  :ensure nil
+  :demand t
+  :after org-capture)
+
 (use-package org-download
   :defer t
   :ensure t
@@ -1201,7 +1229,8 @@
 
 (use-package mpv
   :ensure t
-  :defer t)
+  :defer t
+  :custom (mpv-default-options '("--volume-max=300")))
 
 (use-package org-media-note
   :quelpa (org-media-note :fetcher github :repo "yuchen-lea/org-media-note")
@@ -1225,7 +1254,8 @@
 
 (use-package org-englearn
   :quelpa (org-englearn :fetcher github :repo "HuangBoHong/org-englearn")
-  :defer t
+  :after org-capture
+  :demand t
   :commands org-englearn-capture org-englearn-process-inbox org-englearn-capture-process-region
   :bind
   (("C-c e c" . org-englearn-capture)

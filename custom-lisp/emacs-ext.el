@@ -13,8 +13,9 @@
   (let ((message-log-max nil))
     `(with-temp-message (or (current-message) "") ,@body)))
 
-(defun dedicate-window ()
+(defun toggle-dedicate-window ()
   (interactive)
-  (set-window-dedicated-p (selected-window) t))
+  (let ((window (selected-window)))
+    (set-window-dedicated-p window (not (window-dedicated-p window)))))
 
 (provide 'emacs-ext)
