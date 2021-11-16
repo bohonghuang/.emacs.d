@@ -770,7 +770,9 @@
    (use-package eglot
      :hook ((scala-mode rustic-mode c++-mode c-mode objc-mode java-mode python-mode) . eglot-ensure)
      :defer t
-     :ensure t))
+     :ensure t
+     :config
+     (setf (cdr (assoc 'python-mode eglot-server-programs)) '("pyright-langserver" "--stdio"))))
   (`lsp-mode
    (use-package lsp-mode
      ;; Optional - enable lsp-mode automatically in scala files
