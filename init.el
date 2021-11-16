@@ -691,7 +691,7 @@
   :ensure t
   :defer t
   :custom
-  (rustic-lsp-client . (if (boundp 'lsp-client) lsp-client 'eglot)))
+  (rustic-lsp-client (if (boundp 'lsp-client) lsp-client 'eglot)))
 
 (use-package groovy-mode
   :ensure t
