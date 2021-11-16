@@ -602,32 +602,6 @@
                                              (nth 4 state))))))
                               ,@match-highlights)))))
 
-;; ======================================== Scala ========================================
-
-;; Enable scala-mode for highlighting, indentation and motion commands
-(use-package scala-mode
-  :ensure t
-  :defer t
-  :mode ("\\.sc\\'" . scala-mode)
-  :interpreter
-  ("scala" . scala-mode))
-
-;; Enable sbt mode for executing sbt commands
-(use-package sbt-mode
-  :ensure t
-  :defer t
-  :commands sbt-start sbt-command
-  :config
-  ;; WORKAROUND: https://github.com/ensime/emacs-sbt-mode/issues/31
-  ;; allows using SPACE when in the minibuffer
-  (substitute-key-definition
-   'minibuffer-complete-word
-   'self-insert-command
-   minibuffer-local-completion-map)
-   ;; sbt-supershell kills sbt-mode:  https://github.com/hvesalai/emacs-sbt-mode/issues/152
-   (setq sbt:program-options '("-Dsbt.supershell=false"))
-)
-
 (use-package flymake
   :ensure nil
   :defer t
@@ -673,46 +647,6 @@
   :defer t
   :if (not (eq system-type 'windows-nt)))
 
-(use-package lsp-mode
-  ;; Optional - enable lsp-mode automatically in scala files
-  :ensure t
-  :defer t
-  :init
-  (setq lsp-keymap-prefix "C-c l")
-  :hook (lsp-mode . lsp-lens-mode)
-  :custom
-  (lsp-eldoc-hook nil)
-  (lsp-eldoc-enable-hover nil)
-  (lsp-completion-provider :capf)
-  (read-process-output-max (* 1024 1024 16)) ;; 1mb
-  (lsp-ui-doc-position 'at-point)
-  (lsp-ui-doc-delay 0.5)
-  (lsp-idle-delay 0.5)
-  (lsp-log-io nil))
-
-(use-package consult-lsp
-  :ensure t
-  :demand t
-  :after lsp consult)
-
-(use-package lsp-metals
-  :ensure t
-  :defer t
-  :custom
-  (lsp-metals-server-args '("-J-Dmetals.allow-multiline-string-formatting=off -Xmx8192m"))
-  :hook (scala-mode . lsp)
-  :config
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection "metals")
-                    :major-modes '(scala-mode)
-                    :remote? t
-                    :server-id 'metals-remote)))
-
-(use-package lsp-ui
-  :ensure t
-  :defer t
-  :after lsp)
-
 (use-package company
   :ensure t
   :defer t
@@ -729,44 +663,40 @@
   :ensure t
   :defer t)
 
-(use-package dap-mode
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Language Supports ;;
+;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package scala-mode
   :ensure t
   :defer t
-  :bind(:map prog-mode-map
-        ("C-c l d" . dap-debug)
-        ("C-<f8>". dap-breakpoint-toggle)
-        ("<f8>" . dap-continue)
-        ("S-<f8>" . dap-step-out)
-        ("<f7>" . dap-step-in)
-        ("C-<f2>" . dap-disconnect)
-        ("C-S-<f2>" . dap-stop-thread))
-  :hook
-  (lsp-mode . dap-mode)
-  (lsp-mode . dap-ui-mode))
+  :mode ("\\.sc\\'" . scala-mode)
+  :interpreter
+  ("scala" . scala-mode))
 
-;; ================================================================================
-
-;; =======================================Rust =========================================
+(use-package sbt-mode
+  :ensure t
+  :defer t
+  :commands sbt-start sbt-command
+  :config
+  (substitute-key-definition
+   'minibuffer-complete-word
+   'self-insert-command
+   minibuffer-local-completion-map)
+   (setq sbt:program-options '("-Dsbt.supershell=false"))
+)
 
 (use-package rustic
   :ensure t
   :defer t
-  :config
-  (require 'lsp)
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection "rust-analyzer")
-                    :major-modes '(rustic-mode)
-                    :remote? t
-                    :server-id 'rust-analyzer-remote)))
-
-;; ======================================== Groovy ========================================
+  :custom
+  (rustic-lsp-client . (if (boundp 'lsp-client) lsp-client 'eglot)))
 
 (use-package groovy-mode
   :ensure t
   :defer t)
 
-
-;; ====================================== Python ==========================================
 (use-package python
   :ensure nil
   :defer t
@@ -779,50 +709,9 @@
       map)
     "Keymap to repeat Python indentation key sequences.  Used in `repeat-mode'."))
 
-(use-package lsp-pyright
-  :ensure t
-  :defer t
-  :hook (python-mode . (lambda ()
-                         (require 'lsp-pyright)
-                         (lsp)))
-  :config
-  ;; (lsp-register-client
-  ;;  (make-lsp-client :new-connection (lsp-tramp-connection "pyright")
-  ;;                   :major-modes '(python-mode)
-  ;;                   :remote? t
-  ;;                   :server-id 'pyright-remote))
-  (require 'dap-python)
-  (dap-register-debug-template "Python Program"
-                               (list :type "python"
-                                     :args "-i"
-                                     :cwd nil
-                                     :env '(("DEBUG" . "1"))
-                                     :target-module (expand-file-name "~/工程/Python")
-                                     :request "launch"
-                                     :name "Python Program")))  ; or lsp-deferred
-
 (use-package ein
   :ensure t
   :defer t)
-
-;; ================================================================================
-
-;; ======================================== C++ ========================================
-
-;; Clangd
-
-(use-package lsp-clangd
-  :defer t
-  :hook
-  ((c-mode c++-mode objc-mode) . lsp)
-  :custom
-  (lsp-clients-clangd-args '("--header-insertion=never"))
-  :config
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection "clangd")
-                    :major-modes '(c-mode c++-mode objc-mode)
-                    :remote? t
-                    :server-id 'clangd-remote)))
 
 (use-package cmake-mode
   :ensure t
@@ -832,27 +721,9 @@
   :ensure t
   :defer t)
 
-;; ================================================================================
-
-
-(use-package lsp-java
-  :ensure t
-  :defer t
-  :hook (java-mode . lsp)
-  :config
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection "java-language-server")
-                    :major-modes '(java-mode)
-                    :remote? t
-                    :server-id 'lsp-java-remote)))
-
-;; ======================================== PlatformIO ========================================
-
 (use-package platformio-mode
   :ensure t
   :defer t)
-
-;; ================================================================================
 
 (use-package scad-mode
   :ensure t
@@ -864,29 +735,12 @@
   :bind(:map scad-mode-map
              ("C-c C-c" . scad-preview-mode)))
 
-;; ======================================= VHDL =======================================
-
-(use-package lsp-vhdl
-  :defer t
-  :hook
-  (vhdl-mode . lsp)
-  (vhdl-mode . (lambda () (ligature-mode -1)))
-  :custom
-  (lsp-vhdl-server 'ghdl-ls)
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection "ghdl-ls")
-                    :major-modes '(vhdl-mode)
-                    :remote? t
-                    :server-id 'ghdl-ls-remote)))
-
 (use-package vhdl-capf
   :ensure t
   :defer t
   :hook (vhdl-mode . vhdl-capf-enable)
   :config
   (defun vhdl-capf-flatten (l) (-flatten l)))
-
-;; ====================================================================================
 
 (use-package markdown-mode
   :ensure nil
@@ -906,6 +760,141 @@
 (use-package toml-mode
   :ensure t
   :defer t)
+
+;;;;;;;;;
+;; LSP ;;
+;;;;;;;;;
+
+(pcase (and (boundp 'lsp-client) lsp-client)
+  ((or `nil `eglot)
+   (use-package eglot
+     :hook ((scala-mode rustic-mode c++-mode c-mode objc-mode java-mode python-mode) . eglot-ensure)
+     :defer t
+     :ensure t))
+  (`lsp-mode
+   (use-package lsp-mode
+     ;; Optional - enable lsp-mode automatically in scala files
+     :ensure t
+     :defer t
+     :init
+     (setq lsp-keymap-prefix "C-c l")
+     :hook (lsp-mode . lsp-lens-mode)
+     :custom
+     (lsp-eldoc-hook nil)
+     (lsp-eldoc-enable-hover nil)
+     (lsp-completion-provider :capf)
+     (read-process-output-max (* 1024 1024 16)) ;; 1mb
+     (lsp-ui-doc-position 'at-point)
+     (lsp-ui-doc-delay 0.5)
+     (lsp-idle-delay 0.5)
+     (lsp-log-io nil))
+
+   (use-package dap-mode
+     :ensure t
+     :defer t
+     :bind(:map prog-mode-map
+                ("C-c l d" . dap-debug)
+                ("C-<f8>". dap-breakpoint-toggle)
+                ("<f8>" . dap-continue)
+                ("S-<f8>" . dap-step-out)
+                ("<f7>" . dap-step-in)
+                ("C-<f2>" . dap-disconnect)
+                ("C-S-<f2>" . dap-stop-thread))
+     :hook
+     (lsp-mode . dap-mode)
+     (lsp-mode . dap-ui-mode))
+
+   (use-package lsp-ui
+     :ensure t
+     :defer t
+     :after lsp)
+
+   (use-package consult-lsp
+     :ensure t
+     :demand t
+     :after lsp consult)
+
+   (use-package lsp-metals
+     :ensure t
+     :defer t
+     :custom
+     (lsp-metals-server-args '("-J-Dmetals.allow-multiline-string-formatting=off -Xmx8192m"))
+     :hook (scala-mode . lsp)
+     :config
+     (lsp-register-client
+      (make-lsp-client :new-connection (lsp-tramp-connection "metals")
+                       :major-modes '(scala-mode)
+                       :remote? t
+                       :server-id 'metals-remote)))
+
+   (use-package lsp-rust
+     :defer t
+     :hook (rustic-mode . lsp)
+     :config
+     (lsp-register-client
+      (make-lsp-client :new-connection (lsp-tramp-connection "rust-analyzer")
+                       :major-modes '(rustic-mode)
+                       :remote? t
+                       :server-id 'rust-analyzer-remote)))
+
+   (use-package lsp-clangd
+     :defer t
+     :hook
+     ((c-mode c++-mode objc-mode) . lsp)
+     :custom
+     (lsp-clients-clangd-args '("--header-insertion=never"))
+     :config
+     (lsp-register-client
+      (make-lsp-client :new-connection (lsp-tramp-connection "clangd")
+                       :major-modes '(c-mode c++-mode objc-mode)
+                       :remote? t
+                       :server-id 'clangd-remote)))
+
+   (use-package lsp-pyright
+     :ensure t
+     :defer t
+     :hook (python-mode . (lambda ()
+                            (require 'lsp-pyright)
+                            (lsp)))
+     :config
+     (lsp-register-client
+      (make-lsp-client :new-connection (lsp-tramp-connection "pyright")
+                       :major-modes '(python-mode)
+                       :remote? t
+                       :server-id 'pyright-remote))
+     (require 'dap-python)
+     (dap-register-debug-template "Python Program"
+                                  (list :type "python"
+                                        :args "-i"
+                                        :cwd nil
+                                        :env '(("DEBUG" . "1"))
+                                        :target-module (expand-file-name "~/工程/Python")
+                                        :request "launch"
+                                        :name "Python Program")))  ; or lsp-deferred
+
+   (use-package lsp-java
+     :ensure t
+     :defer t
+     :hook (java-mode . lsp)
+     :config
+     (lsp-register-client
+      (make-lsp-client :new-connection (lsp-tramp-connection "java-language-server")
+                       :major-modes '(java-mode)
+                       :remote? t
+                       :server-id 'lsp-java-remote)))
+
+   (use-package lsp-vhdl
+     :defer t
+     :hook
+     (vhdl-mode . lsp)
+     (vhdl-mode . (lambda () (ligature-mode -1)))
+     :custom
+     (lsp-vhdl-server 'ghdl-ls)
+     (lsp-register-client
+      (make-lsp-client :new-connection (lsp-tramp-connection "ghdl-ls")
+                       :major-modes '(vhdl-mode)
+                       :remote? t
+                       :server-id 'ghdl-ls-remote)))))
 
 (use-package magit
   :defer t
@@ -964,7 +953,8 @@
    (lambda ()
      (require 'intellij-features)
      (local-set-key (kbd "DEL") #'intellij-backspace)
-     (local-set-key (kbd "{") #'intellij-left-bracket)
+     (when (not (-contains-p '(rust-mode rustic-mode) major-mode))
+       (local-set-key (kbd "{") #'intellij-left-bracket))
      (when (-contains-p '(java-mode rust-mode rustic-mode js-mode) major-mode)
        (local-set-key (kbd "RET") #'intellij-return))))
   (python-mode . (lambda ()
@@ -991,6 +981,10 @@
   :custom
   (calendar-mark-today t)
   (calendar-chinese-all-holidays-flag t))
+
+;;;;;;;;;
+;; Org ;;
+;;;;;;;;;
 
 (use-package org
   :ensure nil
@@ -1218,11 +1212,6 @@
   :defer t
   :hook (org-mode . (lambda () (require 'ox-reveal))))
 
-(defun org-media-note-hydra/body-with-sis-set-english ()
-  (interactive)
-  (sis-set-english)
-  (org-media-note-hydra/body))
-
 (use-package pretty-hydra
   :ensure t
   :defer t)
@@ -1393,7 +1382,8 @@ Saves to a temp file and puts the filename in the kill ring."
   (scroll-bar-mode +1))
 
 (when (not window-system)
-  (global-set-key (kbd "M-=") 'er/expand-region))
+  (global-set-key (kbd "M-=") #'er/expand-region)
+  (global-set-key (kbd "C-x ;") #'comment-line))
 
 (provide 'init)
 ;;;
