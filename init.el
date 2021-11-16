@@ -772,7 +772,8 @@
      :defer t
      :ensure t
      :config
-     (setf (cdr (assoc 'python-mode eglot-server-programs)) '("pyright-langserver" "--stdio"))))
+     (setf (cdr (assoc 'python-mode eglot-server-programs)) '("pyright-langserver" "--stdio")
+           (cdr (assoc 'scala-mode eglot-server-programs)) '("metals"))))
   (`lsp-mode
    (use-package lsp-mode
      ;; Optional - enable lsp-mode automatically in scala files
