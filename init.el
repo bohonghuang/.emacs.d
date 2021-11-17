@@ -33,11 +33,6 @@
   :init (setq quelpa-update-melpa-p nil
               quelpa-use-package-inhibit-loading-quelpa t))
 
-(use-package package
-  :ensure nil
-  :defer nil
-  :init (defalias 'ls-pkg 'list-packages))
-
 (use-package emacs
   :defer nil
   :ensure nil
@@ -46,6 +41,15 @@
 (use-package emacs-ext
   :load-path "custom-lisp"
   :demand t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Internal Packages (Basic) ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package package
+  :ensure nil
+  :defer nil
+  :init (defalias 'ls-pkg 'list-packages))
 
 (use-package comp
   :ensure nil
@@ -80,16 +84,35 @@
 (use-package files
   :ensure nil
   :defer t
-  :custom (make-backup-files nil))
+  :custom (make-backup-files nil)
+  :hook (find-file . (lambda ()
+                       (unless (file-exists-p (file-truename buffer-file-name))
+                         (set-buffer-file-coding-system 'utf-8)))))
 
 (setq local-file (expand-file-name "local.el" user-emacs-directory))
 (if (file-exists-p local-file) (load-file local-file))
+
+(use-package window
+  :ensure nil
+  :defer nil
+  :config
+  (global-set-key (kbd "C-x O") (lambda ()
+                          (interactive)
+                          (other-window -1))))
+
+;;;;;;;;;;;
+;; Theme ;;
+;;;;;;;;;;;
 
 (use-package monokai-theme
   :quelpa (monokai-theme :fetcher github :repo "HuangBoHong/monokai-emacs")
   :if (null custom-enabled-themes)
   :config
   (load-theme 'monokai t))
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Internal Packages ;;
+;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package hl-line
   :ensure nil
@@ -192,9 +215,16 @@
     (if (and file-name (file-exists-p file-name))
       (recentf-add-file buffer-file-name))))
 
-(global-set-key (kbd "C-x O") (lambda ()
-                          (interactive)
-                          (other-window -1)))
+(use-package repeat
+  :if (version<= "28.0.60" emacs-version)
+  :ensure nil
+  :defer nil
+  :config
+  (repeat-mode +1))
+
+;;;;;;;;;;;;;;;;;
+;; Interaction ;;
+;;;;;;;;;;;;;;;;;
 
 (use-package ace-window
   :ensure t
@@ -289,43 +319,15 @@
          ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
          ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
          ("M-s L" . consult-line-multi))           ;; needed by consult-line to detect isearch
-
-  ;; Enable automatic preview at point in the *Completions* buffer.
-  ;; This is relevant when you use the default completion UI,
-  ;; and not necessary for Vertico, Selectrum, etc.
   :hook (completion-list-mode . consult-preview-at-point-mode)
-
-  ;; The :init configuration is always executed (Not lazy)
   :init
-
-  ;; Optionally configure the register formatting. This improves the register
-  ;; preview for `consult-register', `consult-register-load',
-  ;; `consult-register-store' and the Emacs built-ins.
   (setq register-preview-delay 0
         register-preview-function #'consult-register-format)
-
-  ;; Optionally tweak the register preview window.
-  ;; This adds thin lines, sorting and hides the mode line of the window.
   (advice-add #'register-preview :override #'consult-register-window)
-
-  ;; Optionally replace `completing-read-multiple' with an enhanced version.
   (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
-
-  ;; Use Consult to select xref locations with preview
   (setq xref-show-xrefs-function #'consult-xref
         xref-show-definitions-function #'consult-xref)
-
-  ;; Configure other variables and modes in the :config section,
-  ;; after lazily loading the package.
   :config
-
-  ;; Optionally configure preview. The default value
-  ;; is 'any, such that any key triggers the preview.
-  ;; (setq consult-preview-key 'any)
-  ;; (setq consult-preview-key (kbd "M-."))
-  ;; (setq consult-preview-key (list (kbd "<S-down>") (kbd "<S-up>")))
-  ;; For some commands and buffer sources it is useful to configure the
-  ;; :preview-key on a per-command basis using the `consult-customize' macro.
   (consult-customize
    consult-theme
    :preview-key '(:debounce 0.2 any)
@@ -333,30 +335,11 @@
    consult-bookmark consult-recent-file consult-xref
    consult--source-file consult--source-project-file consult--source-bookmark
    :preview-key (kbd "M-."))
-
-  ;; Optionally configure the narrowing key.
-  ;; Both < and C-+ work reasonably well.
   (setq consult-narrow-key "<") ;; (kbd "C-+")
-
-  ;; Optionally make narrowing help available in the minibuffer.
-  ;; You may want to use `embark-prefix-help-command' or which-key instead.
-  ;; (define-key consult-narrow-map (vconcat consult-narrow-key "?") #'consult-narrow-help)
-
-  ;; Optionally configure a function which returns the project root directory.
-  ;; There are multiple reasonable alternatives to chose from.
-  ;;;; 1. project.el (project-roots)
   (setq consult-project-root-function
         (lambda ()
           (when-let (project (project-current))
-            (car (project-roots project)))))
-  ;;;; 2. projectile.el (projectile-project-root)
-  ;; (autoload 'projectile-project-root "projectile")
-  ;; (setq consult-project-root-function #'projectile-project-root)
-  ;;;; 3. vc.el (vc-root-dir)
-  ;; (setq consult-project-root-function #'vc-root-dir)
-  ;;;; 4. locate-dominating-file
-  ;; (setq consult-project-root-function (lambda () (locate-dominating-file "." ".git")))
-  )
+            (car (project-roots project))))))
 
 (use-package consult-dir
   :ensure t
@@ -375,22 +358,17 @@
    ("C-;" . embark-dwim)        ;; good alternative: M-.
    ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
   :init
-  ;; Optionally replace the key help with a completing-read interface
   (setq prefix-help-command #'embark-prefix-help-command)
   :config
-  ;; Hide the mode line of the Embark live/completions buffers
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
                  (window-parameters (mode-line-format . none)))))
 
-;; Consult users will also want the embark-consult package.
 (use-package embark-consult
   :ensure t
   :after (embark consult)
-  :demand t ; only necessary if you have the hook below
-  ;; if you want to have consult previews as you move around an
-  ;; auto-updating embark collect buffer
+  :demand t
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
@@ -404,9 +382,9 @@
          ("C-<return>" . crux-smart-open-line)
          ("S-<f1>" . crux-find-user-init-file)))
 
-(add-hook 'find-file-hook (lambda ()
-                                               (unless (file-exists-p (file-truename buffer-file-name))
-                                                 (set-buffer-file-coding-system 'utf-8))))
+;;;;;;;;;;;
+;; Fonts ;;
+;;;;;;;;;;;
 
 (use-package cnfonts
   :ensure t
@@ -423,7 +401,7 @@
 
 (use-package ligature
   :defer t
-  :if (>= emacs-major-version 28)
+  :if (and (>= emacs-major-version 28) window-system)
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode) major-mode) (require 'ligature) (ligature-mode +1))))
   :quelpa (ligature :fetcher github :repo "mickeynp/ligature.el")
   :config
@@ -440,7 +418,15 @@
                                       "__" "~~" "~~>" "~>" "~-" "~@" "$>" "^=" "]#")))
 
 
+;;;;;;;;
+;; UI ;;
+;;;;;;;;
+
 (defalias 'window-buffer-change-hook 'window-buffer-change-functions)
+
+(use-package posframe
+  :ensure t
+  :defer t)
 
 (use-package popper
   :defer nil
@@ -544,16 +530,9 @@
          ("M-<left>" . drag-stuff-left))
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode common-lisp-mode) major-mode) (drag-stuff-mode +1)))))
 
-(use-package repeat
-  :if (version<= "28.0.60" emacs-version)
-  :ensure nil
-  :defer nil
-  :config
-  (repeat-mode +1))
-
 (use-package good-scroll
   :ensure t
-  :defer nil
+  :defer 0.5
   :custom (good-scroll-step 100)
   :config
   (good-scroll-mode +1))
@@ -627,10 +606,6 @@
   :defer t
   :hook ((c++-mode java-mode scala-mode) . subword-mode))
 
-;; (use-package flycheck
-;;   :ensure t
-;;   :init (global-flycheck-mode))
-
 (use-package tree-sitter
   :ensure t
   :defer t
@@ -659,10 +634,20 @@
   (company-dabbrev-downcase nil)
   (company-dabbrev-ignore-case t))
 
-(use-package posframe
+(use-package yasnippet
   :ensure t
-  :defer t)
+  :defer t
+  :hook
+  ((prog-mode org-mode latex-mode) . yas-minor-mode)
+  :custom
+  (yas-triggers-in-field t)
+  :config
+  (yas-reload-all))
 
+(use-package yasnippet-snippets
+  :ensure t
+  :defer t
+  :hook (yas-minor-mode . (lambda () (require 'yasnippet-snippets)))) 
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Language Supports ;;
@@ -771,6 +756,9 @@
      :hook ((scala-mode rustic-mode c++-mode c-mode objc-mode java-mode python-mode) . eglot-ensure)
      :defer t
      :ensure t
+     :bind (:map prog-mode-map
+                 ("C-c l r" . eglot-rename)
+                 ("C-c l a" . eglot-code-actions))
      :config
      (setf (cdr (assoc 'python-mode eglot-server-programs)) '("pyright-langserver" "--stdio")
            (cdr (assoc 'scala-mode eglot-server-programs)) '("metals"))))
@@ -902,21 +890,6 @@
 (use-package magit
   :defer t
   :ensure t)
-
-(use-package yasnippet
-  :ensure t
-  :defer t
-  :hook
-  ((prog-mode org-mode latex-mode) . yas-minor-mode)
-  :custom
-  (yas-triggers-in-field t)
-  :config
-  (yas-reload-all))
-
-(use-package yasnippet-snippets
-  :ensure t
-  :defer t
-  :hook (yas-minor-mode . (lambda () (require 'yasnippet-snippets)))) 
 
 (use-package binary-jump
   :load-path "custom-lisp"
@@ -1140,10 +1113,10 @@
       org-noter-notes-search-path '((expand-file-name "org-noter" org-directory)))
 
 (use-package org-roam
-  :init
-  (setq org-roam-v2-ack t)
   :ensure t
   :defer t
+  :init
+  (setq org-roam-v2-ack t)
   :custom
   (org-roam-directory (expand-file-name "org-roam" org-directory))
   (org-roam-graph-link-hidden-types '("file" "attachment"))
@@ -1285,7 +1258,8 @@
 (use-package quickrun
   :ensure t
   :defer t
-  :init (defalias 'qr 'quickrun))
+  :init (defalias 'qr 'quickrun)
+  :custom (quickrun-timeout-seconds -1))
 
 (use-package command-log-mode
   :ensure t
@@ -1389,4 +1363,4 @@ Saves to a temp file and puts the filename in the kill ring."
   (global-set-key (kbd "C-x ;") #'comment-line))
 
 (provide 'init)
-;;;
+;;; init.el
