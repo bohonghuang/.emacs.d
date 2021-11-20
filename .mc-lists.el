@@ -12,6 +12,7 @@
         crux-eval-and-replace
         dap-breakpoint-toggle
         delete-horizontal-space
+        dired-mark
         eval-last-sexp
         forward-sexp
         ibuffer-do-delete

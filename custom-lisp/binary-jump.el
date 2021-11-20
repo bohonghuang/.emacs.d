@@ -35,13 +35,13 @@
        (unless (and binary-jump-vertical-range continue)
          (setq binary-jump-vertical-range (cons (- screen-lines-from-top 1) (- screen-lines-to-bottom 1))))
        (pcase dir
-         (`up (setf (cdr binary-jump-vertical-range) (/ (+ (car binary-jump-vertical-range) 1) 2)
+         (`up (setf (cdr binary-jump-vertical-range) (/ (+ (car binary-jump-vertical-range) (if binary-jump-round-up 1 0)) 2)
                     (car binary-jump-vertical-range) (- (car binary-jump-vertical-range) (cdr binary-jump-vertical-range)))
-              (previous-line (max (cdr binary-jump-vertical-range) 1))
+              (forward-line (- (max (cdr binary-jump-vertical-range) 1)))
               (when (= screen-lines-from-top (if beginning-of-visual-line-p 0 1)) (setq binary-jump-vertical-range nil)))
-         (`down (setf (car binary-jump-vertical-range) (/ (+ (cdr binary-jump-vertical-range) 1) 2)
+         (`down (setf (car binary-jump-vertical-range) (/ (+ (cdr binary-jump-vertical-range) (if binary-jump-round-up 1 0)) 2)
                       (cdr binary-jump-vertical-range) (- (cdr binary-jump-vertical-range) (car binary-jump-vertical-range)))
-                (next-line (max (car binary-jump-vertical-range) 1))
+                (forward-line (max (car binary-jump-vertical-range) 1))
                 (when (= screen-lines-to-bottom (if beginning-of-visual-line-p 0 1)) (setq binary-jump-vertical-range nil))))))))
 
 (defmacro binary-jump-with-mark-set (&rest body)

@@ -76,6 +76,14 @@
   (show-paren-mode t)
   (indent-tabs-mode nil))
 
+(use-package simple-ext
+  :load-path "custom-lisp"
+  :defer t
+  :bind (:map prog-mode-map
+              ("C-y" . yank-with-indent)))
+
+
+
 (use-package subr
   :ensure nil
   :defer t
@@ -761,7 +769,9 @@
                  ("C-c l a" . eglot-code-actions))
      :config
      (setf (cdr (assoc 'python-mode eglot-server-programs)) '("pyright-langserver" "--stdio")
-           (cdr (assoc 'scala-mode eglot-server-programs)) '("metals"))))
+           (cdr (assoc 'scala-mode eglot-server-programs)) '("metals")
+           (cdr (assoc 'rust-mode eglot-server-programs)) '("rust-analyzer")
+           (cdr (assoc 'java-mode eglot-server-programs)) '("jdtls"))))
   (`lsp-mode
    (use-package lsp-mode
      ;; Optional - enable lsp-mode automatically in scala files
@@ -969,9 +979,6 @@
   (org-adapt-indentation nil)
   (org-attach-use-inheritance t)
   (org-export-with-tags nil)
-  (org-format-latex-options
-   '(:foreground default :background default :scale 1.5 :html-foreground "Black" :html-background "Transparent" :html-scale 1.0 :matchers
-                 ("begin" "$1" "$" "$$" "\\(" "\\[")))
   (org-attach-id-dir (expand-file-name "org-attach/data" org-directory))
 
   (org-default-notes-file (expand-file-name "org-capture/captures.org" org-directory))
