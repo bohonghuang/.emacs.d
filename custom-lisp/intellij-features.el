@@ -35,8 +35,7 @@
   (if (region-active-p)
       (progn
         (indent-region-line-by-line (region-beginning) (region-end))
-        (setq deactivate-mark nil)
-        )
+        (setq deactivate-mark nil))
     (indent-for-tab-command)))
 
 (defun line-indentation ()
@@ -123,7 +122,6 @@
           (previous-line)
           (indent-for-tab-command))
       (call-interactively #'newline)))
-
 
 (add-hook 'drag-stuff-after-drag-hook #'intellij-after-drag)
 

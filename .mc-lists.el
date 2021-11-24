@@ -5,8 +5,10 @@
       '(
         backward-sexp
         c-electric-delete-forward
+        c-electric-paren
         c-electric-semi&comma
         c-electric-slash
+        c-electric-star
         c-indent-line-or-region
         comment-line
         crux-eval-and-replace
@@ -24,6 +26,7 @@
         kill-visual-line
         kmacro-start-macro-or-insert-counter
         list-buffers
+        lsp-signature-activate
         lsp-ui-doc--handle-mouse-movement
         org-beginning-of-line
         org-ctrl-c-ctrl-c
@@ -31,6 +34,7 @@
         org-delete-char
         org-end-of-line
         org-force-self-insert
+        org-freeplane-metaright
         org-kill-line
         org-latex-preview
         org-metadown

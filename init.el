@@ -76,14 +76,6 @@
   (show-paren-mode t)
   (indent-tabs-mode nil))
 
-(use-package simple-ext
-  :load-path "custom-lisp"
-  :defer t
-  :bind (:map prog-mode-map
-              ("C-y" . yank-with-indent)))
-
-
-
 (use-package subr
   :ensure nil
   :defer t
@@ -507,6 +499,11 @@
   (sp-highlight-wrap-overlay nil)
   (sp-highlight-wrap-tag-overlay nil))
 
+(use-package indent-yank
+  :quelpa (indent-yank :fetcher github :repo "HuangBoHong/indent-yank")
+  :defer t
+  :hook (prog-mode . indent-yank-mode))
+
 (use-package separedit
   :ensure t
   :defer t
@@ -612,7 +609,7 @@
 (use-package subword
   :ensure nil
   :defer t
-  :hook ((c++-mode java-mode scala-mode) . subword-mode))
+  :hook ((c++-mode java-mode scala-mode rust-mode) . subword-mode))
 
 (use-package tree-sitter
   :ensure t
