@@ -273,6 +273,7 @@
 (use-package consult
   :ensure t
   :defer t
+  :custom (completion-in-region-function #'consult-completion-in-region)
   ;; Replace bindings. Lazily loaded due by `use-package'.
   :bind (;; C-c bindings (mode-specific-map)
          ("C-c h" . consult-history)
