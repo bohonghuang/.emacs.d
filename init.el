@@ -95,6 +95,7 @@
 (use-package window
   :ensure nil
   :defer nil
+  :init (defalias 'window-buffer-change-hook 'window-buffer-change-functions)
   :config
   (global-set-key (kbd "C-x O") (lambda ()
                           (interactive)
@@ -422,8 +423,6 @@
 ;;;;;;;;
 ;; UI ;;
 ;;;;;;;;
-
-(defalias 'window-buffer-change-hook 'window-buffer-change-functions)
 
 (use-package posframe
   :ensure t

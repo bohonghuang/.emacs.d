@@ -18,4 +18,12 @@
   (let ((window (selected-window)))
     (set-window-dedicated-p window (not (window-dedicated-p window)))))
 
+(defun compile-user-emacs-directory ()
+  (interactive)
+  (mapc (lambda (file)
+          (byte-compile-file file)
+          (if (and (version<= "28" emacs-version) (native-comp-available-p))
+              (native-compile file)))
+        (directory-files "~/.emacs.d/" t ".el$")))
+
 (provide 'emacs-ext)

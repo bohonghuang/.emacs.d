@@ -32,3 +32,5 @@ games
 ido.last
 history
 quelpa
+*.elc
+*.eln
