@@ -120,6 +120,11 @@
   :defer nil
   :hook (prog-mode . hl-line-mode))
 
+(use-package hideshow
+  :ensure nil
+  :defer t
+  :hook (prog-mode . hs-minor-mode))
+
 (use-package paragraphs
   :ensure nil
   :defer nil
@@ -440,6 +445,7 @@
                               "\\*Async Shell Command\\*"
                               "\\*rustic-compilation\\*"
                               "\\*Go-Translate\\*"
+                              "\\*Compile-Log\\*"
                               eshell-mode
                               vterm-mode
                               help-mode
@@ -609,7 +615,7 @@
 (use-package subword
   :ensure nil
   :defer t
-  :hook ((c++-mode java-mode scala-mode rust-mode) . subword-mode))
+  :hook ((c++-mode java-mode scala-mode rustic-mode) . subword-mode))
 
 (use-package tree-sitter
   :ensure t
@@ -767,7 +773,7 @@
      :config
      (setf (cdr (assoc 'python-mode eglot-server-programs)) '("pyright-langserver" "--stdio")
            (cdr (assoc 'scala-mode eglot-server-programs)) '("metals")
-           (cdr (assoc 'rust-mode eglot-server-programs)) '("rust-analyzer")
+           (cdr (assoc 'rustic-mode eglot-server-programs)) '("rust-analyzer")
            (cdr (assoc 'java-mode eglot-server-programs)) '("jdtls"))))
   (`lsp-mode
    (use-package lsp-mode
@@ -828,6 +834,8 @@
    (use-package lsp-rust
      :defer t
      :hook (rustic-mode . lsp)
+     :custom
+     (lsp-rust-analyzer-proc-macro-enable t)
      :config
      (lsp-register-client
       (make-lsp-client :new-connection (lsp-tramp-connection "rust-analyzer")
@@ -1070,6 +1078,7 @@
   ;; use as-is if you don't have an existing org-agenda setup
   ;; otherwise push the directory to the existing list
   (org-agenda-files (list (expand-file-name "org-agenda" org-directory) org-gtd-directory))
+  (org-agenda-window-setup 'current-window)
   ;; (org-agenda-files `(,org-gtd-directory))
   ;; a useful view to see what can be accomplished today
   (org-agenda-custom-commands '(("g" "Scheduled today and all NEXT items" ((agenda "" ((org-agenda-span 1))) (todo "NEXT")))))
@@ -1113,8 +1122,57 @@
   (org-download-display-inline-images nil)
   (org-download-method 'attach))
 
-(setq org-noter-default-notes-file-names '("notes.org")
-      org-noter-notes-search-path '((expand-file-name "org-noter" org-directory)))
+(use-package org-noter
+  :defer t
+  :ensure t
+  :custom
+  (org-noter-default-notes-file-names '("notes.org"))
+  (org-noter-notes-search-path '((expand-file-name "org-noter" org-directory))))
+
+(when (and (boundp 'use-pdf-tools) use-pdf-tools)
+  (use-package pdf-tools
+    :ensure t
+    :defer t
+    :mode ("\\.pdf\\'" . (lambda ()
+                           (require 'pdf-tools)
+                           (pdf-tools-install)
+                           (pdf-view-mode))))
+
+  (use-package org-pdftools
+    :hook (org-mode . org-pdftools-setup-link))
+
+  (use-package org-noter-pdftools
+    :after org-noter
+    :config
+    ;; Add a function to ensure precise note is inserted
+    (defun org-noter-pdftools-insert-precise-note (&optional toggle-no-questions)
+      (interactive "P")
+      (org-noter--with-valid-session
+       (let ((org-noter-insert-note-no-questions (if toggle-no-questions
+                                                     (not org-noter-insert-note-no-questions)
+                                                   org-noter-insert-note-no-questions))
+             (org-pdftools-use-isearch-link t)
+             (org-pdftools-use-freestyle-annot t))
+         (org-noter-insert-note (org-noter--get-precise-info)))))
+
+    ;; fix https://github.com/weirdNox/org-noter/pull/93/commits/f8349ae7575e599f375de1be6be2d0d5de4e6cbf
+    (defun org-noter-set-start-location (&optional arg)
+      "When opening a session with this document, go to the current location.
+With a prefix ARG, remove start location."
+      (interactive "P")
+      (org-noter--with-valid-session
+       (let ((inhibit-read-only t)
+             (ast (org-noter--parse-root))
+             (location (org-noter--doc-approx-location (when (called-interactively-p 'any) 'interactive))))
+         (with-current-buffer (org-noter--session-notes-buffer session)
+           (org-with-wide-buffer
+            (goto-char (org-element-property :begin ast))
+            (if arg
+                (org-entry-delete nil org-noter-property-note-location)
+              (org-entry-put nil org-noter-property-note-location
+                             (org-noter--pretty-print-location location))))))))
+    (with-eval-after-load 'pdf-annot
+      (add-hook 'pdf-annot-activate-handler-functions #'org-noter-pdftools-jump-to-note))))
 
 (use-package org-roam
   :ensure t
@@ -1123,7 +1181,7 @@
   (setq org-roam-v2-ack t)
   :custom
   (org-roam-directory (expand-file-name "org-roam" org-directory))
-  (org-roam-graph-link-hidden-types '("file" "attachment"))
+  (org-roam-graph-link-den-types '("file" "attachment"))
   :bind (("C-c r l" . org-roam-buffer-toggle)
          ("C-c r f" . org-roam-node-find)
          ("C-c r g" . org-roam-graph)

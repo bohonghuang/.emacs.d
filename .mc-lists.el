@@ -59,12 +59,15 @@
         sp-unwrap-sexp
         vhdl-electric-semicolon
         vhdl-electric-space
+        vhdl-electric-tab
         wdired--self-insert
         wdired-abort-changes
         ))
 
 (setq mc/cmds-to-run-once
       '(
+        mouse-drag-mode-line
+        mouse-select-window
         rime--backspace
         suspend-frame
         toggle-input-method
