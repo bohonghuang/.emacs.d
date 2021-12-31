@@ -34,3 +34,5 @@ history
 quelpa
 *.elc
 *.eln
+eclipse.jdt.ls
+workspace

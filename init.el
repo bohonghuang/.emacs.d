@@ -105,6 +105,17 @@
 ;; Theme ;;
 ;;;;;;;;;;;
 
+(use-package term/xterm
+  :if (string-equal (getenv "TERM") "fbterm")
+  :ensure nil
+  :demand t
+  :config
+  (unless (terminal-coding-system)
+    (set-terminal-coding-system 'utf-8-unix))
+  (tty-no-underline)
+  (ignore-errors (when gpm-mouse-mode (require 't-mouse) (gpm-mouse-enable)))
+  (xterm-register-default-colors xterm-standard-colors))
+
 (use-package monokai-theme
   :quelpa (monokai-theme :fetcher github :repo "HuangBoHong/monokai-emacs")
   :if (null custom-enabled-themes)
@@ -160,6 +171,7 @@
   :defer t
   :custom
   (dired-dwim-target t)
+  (dired-listing-switches "-alh")
   (browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
   :config
   (put 'dired-find-alternate-file 'disabled nil))
@@ -170,10 +182,22 @@
   :after dired
   :config (dired-async-mode +1))
 
+(use-package dired-ext
+  :load-path "custom-lisp"
+  :after dired
+  :demand t)
+
 (use-package diredfl
+  :after dired
   :ensure t
   :defer t
   :hook (dired-mode . diredfl-mode))
+
+(use-package dired-narrow
+  :ensure t
+  :defer t
+  :bind (:map dired-mode-map
+              ("/" . dired-narrow)))
 
 (use-package fd-dired
   :ensure t
@@ -237,6 +261,10 @@
   :defer t
   :bind (("M-o" . ace-window))
   :custom (aw-dispatch-always t))
+
+(use-package pretty-hydra
+  :ensure t
+  :defer t)
 
 (use-package which-key
   :ensure t
@@ -446,8 +474,7 @@
                               "\\*rustic-compilation\\*"
                               "\\*Go-Translate\\*"
                               "\\*Compile-Log\\*"
-                              eshell-mode
-                              vterm-mode
+                              "^\\*lsp-install"
                               help-mode
                               compilation-mode
                               dap-server-log-mode
@@ -541,12 +568,18 @@
          ("M-<left>" . drag-stuff-left))
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode common-lisp-mode) major-mode) (drag-stuff-mode +1)))))
 
-(use-package good-scroll
-  :ensure t
-  :defer 0.5
-  :custom (good-scroll-step 100)
-  :config
-  (good-scroll-mode +1))
+(if (version<= "29" emacs-version)
+    (use-package pixel-scroll
+      :ensure nil
+      :defer nil
+      :config
+      (pixel-scroll-precision-mode +1))
+  (use-package good-scroll
+    :ensure t
+    :defer 0.5
+    :custom (good-scroll-step 100)
+    :config
+    (good-scroll-mode +1)))
 
 (use-package projectile
   :ensure t
@@ -649,7 +682,7 @@
   :ensure t
   :defer t
   :hook
-  ((prog-mode org-mode latex-mode) . yas-minor-mode)
+  ((prog-mode org-mode) . yas-minor-mode)
   :custom
   (yas-triggers-in-field t)
   :config
@@ -764,7 +797,7 @@
 (pcase (and (boundp 'lsp-client) lsp-client)
   ((or `nil `eglot)
    (use-package eglot
-     :hook ((scala-mode rustic-mode c++-mode c-mode objc-mode java-mode python-mode) . eglot-ensure)
+     :hook ((scala-mode rustic-mode c++-mode c-mode objc-mode java-mode python-mode tex-mode) . eglot-ensure)
      :defer t
      :ensure t
      :bind (:map prog-mode-map
@@ -773,8 +806,9 @@
      :config
      (setf (cdr (assoc 'python-mode eglot-server-programs)) '("pyright-langserver" "--stdio")
            (cdr (assoc 'scala-mode eglot-server-programs)) '("metals")
-           (cdr (assoc 'rustic-mode eglot-server-programs)) '("rust-analyzer")
-           (cdr (assoc 'java-mode eglot-server-programs)) '("jdtls"))))
+           (cdr (assoc 'rust-mode eglot-server-programs)) '("rust-analyzer")
+           (cdr (assoc 'java-mode eglot-server-programs)) '("jdtls")
+           (cdr (assoc '(tex-mode context-mode texinfo-mode bibtex-mode) eglot-server-programs)) '("texlab"))))
   (`lsp-mode
    (use-package lsp-mode
      ;; Optional - enable lsp-mode automatically in scala files
@@ -816,7 +850,7 @@
    (use-package consult-lsp
      :ensure t
      :demand t
-     :after lsp consult)
+     :after lsp cponsult)
 
    (use-package lsp-metals
      :ensure t
@@ -900,7 +934,11 @@
       (make-lsp-client :new-connection (lsp-tramp-connection "ghdl-ls")
                        :major-modes '(vhdl-mode)
                        :remote? t
-                       :server-id 'ghdl-ls-remote)))))
+                       :server-id 'ghdl-ls-remote)))
+   (use-package lsp-tex
+     :defer t
+     :hook
+     (tex-mode . lsp))))
 
 (use-package magit
   :defer t
@@ -939,13 +977,12 @@
     scala-mode
     rust-mode
     rustic-mode
-    js-mode)
+    js-mode
+    tex-mode)
    .
    (lambda ()
      (require 'intellij-features)
      (local-set-key (kbd "DEL") #'intellij-backspace)
-     (when (not (-contains-p '(rust-mode rustic-mode) major-mode))
-       (local-set-key (kbd "{") #'intellij-left-bracket))
      (when (-contains-p '(java-mode rust-mode rustic-mode js-mode) major-mode)
        (local-set-key (kbd "RET") #'intellij-return))))
   (python-mode . (lambda ()
@@ -1038,76 +1075,46 @@
   :bind (:map org-mode-map
          ("C-c C-S-L" . org-link-make-from-region)))
 
-(use-package org-gtd
+(use-package org-pomodoro
   :ensure t
   :defer t
-  :hook (org-agenda-mode . (lambda () (require 'org-gtd)))
-  ;; :demand t ;; without this, the package won't be loaded, so org-agenda won't be configured
-  :custom
-  ;; where org-gtd will put its files. This value is also the default one.
-  (org-gtd-directory (expand-file-name "org-gtd" org-directory))
-  ;; package: https://github.com/Malabarba/org-agenda-property
-  ;; this is so you can see who an item was delegated to in the agenda
-  (org-agenda-property-list '("DELEGATED_TO"))
-  ;; I think this makes the agenda easier to read
-  (org-agenda-property-position 'next-line)
-  ;; package: https://www.nongnu.org/org-edna-el/
-  ;; org-edna is used to make sure that when a project task gets DONE,
-  ;; the next TODO is automatically changed to NEXT.
-  (org-edna-use-inheritance t)
-  :config
-  (org-edna-load)
-  :bind
-  (("C-c g c" . org-gtd-capture) ;; add item to inbox
-   ("C-c g a" . org-agenda-list) ;; see what's on your plate today
-   ("C-c g p" . org-gtd-process-inbox) ;; process entire inbox
-   ("C-c g n" . org-gtd-show-all-next) ;; see all NEXT items
-   ("C-c g s" . org-gtd-show-stuck-projects)) ;; see projects that don't have a NEXT item
-  :init
-  (bind-key "C-c g g" 'org-gtd-clarify-finalize)) ;; the keybinding to hit when you're done editing an item in the processing phase
+  :bind (("C-c g f" . org-pomodoro))
+  :custom (org-pomodoro-keep-killed-pomodoro-time t))
 
 (use-package org-agenda
-  :ensure nil ;; this is how you tell use-package to manage a sub-package
-  :after org-gtd ;; because we need to add the org-gtd directory to the agenda files
+  :ensure nil
+  :defer t
   :bind (:map org-mode-map
               ("C-c C-x C-S-o" . org-resolve-clocks)
               ("<mouse-8>" . org-mark-ring-goto)
          :map org-agenda-mode-map
               ("C-c C-x C-S-o" . org-resolve-clocks))
   :custom
-  ;; use as-is if you don't have an existing org-agenda setup
-  ;; otherwise push the directory to the existing list
-  (org-agenda-files (list (expand-file-name "org-agenda" org-directory) org-gtd-directory))
+  (org-agenda-files (list (expand-file-name "org-agenda" org-directory)))
   (org-agenda-window-setup 'current-window)
-  ;; (org-agenda-files `(,org-gtd-directory))
-  ;; a useful view to see what can be accomplished today
-  (org-agenda-custom-commands '(("g" "Scheduled today and all NEXT items" ((agenda "" ((org-agenda-span 1))) (todo "NEXT")))))
   :config
   (require 'recentf)
+  (require 'org-gtd)
   (nconc recentf-exclude (org-agenda-files)))
 
-
-(use-package org-capture
-  :ensure nil
-  ;; note that org-gtd has to be loaded before this
-  :after org-gtd
-  :custom (org-capture-templates `(("i" "Inbox"
-                                    entry (file ,(org-gtd--path org-gtd-inbox-file-basename))
-                                    "* %?\n%U\n\n  %i"
-                                    :kill-buffer t)
-                                   ("l" "Todo with link"
-                                    entry (file ,(org-gtd--path org-gtd-inbox-file-basename))
-                                    "* %?\n%U\n\n  %i\n  %a"
-                                    :kill-buffer t)
-                                   ("e" "English sentence"
-                                    entry (file ,(expand-file-name "org-capture/english.org" org-directory))
-                                    "* %?\n%U\n\n  %i\n  %a"
-                                    :kill-buffer t)))
+(use-package org-gtd
+  :ensure t
+  :defer t
+  :custom
+  (org-gtd-directory (expand-file-name "org-gtd" org-directory))
+  (org-edna-use-inheritance t)
+  :bind
+  (("C-c g c" . org-gtd-capture)
+   ("C-c g e" . org-gtd-engage)
+   ("C-c g p" . org-gtd-process-inbox)
+   ("C-c g n" . org-gtd-show-all-next)
+   ("C-c g s" . org-gtd-show-stuck-projects)
+   ("C-c g a" . org-agenda-list)
+   :map org-gtd-process-map
+   ("C-c C-c" . org-gtd-choose))
   :config
-  ;; use as-is if you don't have an existing set of org-capture templates
-  ;; otherwise add to existing setup
-  ;; you can of course change the letters, too
-  )
+  (org-edna-mode +1)
+  (add-to-list 'org-agenda-files org-gtd-directory))
 
 (use-package org-protocol
   :ensure nil
@@ -1194,13 +1201,6 @@ With a prefix ARG, remove start location."
   (org-roam-setup)
   (require 'org-roam-protocol))
 
-(use-package org-transclusion
-  :quelpa (org-transclusion :fetcher github :repo "nobiot/org-transclusion")
-  :defer t
-  :bind (:map org-mode-map
-         ("C-c t a" . org-transclusion-add)
-         ("C-c t t" . org-transclusion-mode)))
-
 (use-package org-journal
   :ensure t
   :defer t
@@ -1236,10 +1236,6 @@ With a prefix ARG, remove start location."
   :defer t
   :hook (org-mode . org-indent-mode))
 
-(use-package htmlize
-  :ensure t
-  :defer t)
-
 (use-package ox-md
   :ensure nil
   :defer t
@@ -1249,15 +1245,6 @@ With a prefix ARG, remove start location."
   :ensure t
   :defer t
   :hook (org-mode . (lambda () (require 'ox-reveal))))
-
-(use-package pretty-hydra
-  :ensure t
-  :defer t)
-
-(use-package mpv
-  :ensure t
-  :defer t
-  :custom (mpv-default-options '("--volume-max=300")))
 
 (use-package org-media-note
   :quelpa (org-media-note :fetcher github :repo "yuchen-lea/org-media-note")
@@ -1271,24 +1258,50 @@ With a prefix ARG, remove start location."
 
 (use-package org-tree-slide
   :ensure t
+  :after org
   :defer t
   :bind (:map org-mode-map
-         ("<f8>" . org-tree-slide-mode)
-         ("S-<f8>" . 'org-tree-slide-skip-done-toggle)
+         ("C-c s s" . org-tree-slide-mode)
+         ("C-c s S-s" . 'org-tree-slide-skip-done-toggle)
          :map org-tree-slide-mode-map
-              ("<f9>" . org-tree-slide-move-previous-tree)
-              ("<f10>" . org-tree-slide-move-next-tree)))
+              ("C-c s p" . org-tree-slide-move-previous-tree)
+              ("C-c s n" . org-tree-slide-move-next-tree)))
 
 (use-package org-englearn
   :quelpa (org-englearn :fetcher github :repo "HuangBoHong/org-englearn")
-  :after org-capture
   :demand t
   :commands org-englearn-capture org-englearn-process-inbox org-englearn-capture-process-region
   :bind
   (("C-c e c" . org-englearn-capture)
    ("C-c e p" . org-englearn-process-inbox)
    :map org-capture-mode-map
-   ("C-c e r" . org-englearn-capture-process-region)))
+   ("C-c e r" . org-englearn-capture-process-region))
+  :config
+  (add-to-list 'org-capture-templates `("e" "English sentence"
+   entry (file ,(expand-file-name "org-capture/english.org" org-directory))
+   "* %?\n%U\n\n  %i\n  %a"
+   :kill-buffer t)))
+
+;;;;;;;;;;;;
+;; AUCTeX ;;
+;;;;;;;;;;;;
+
+(use-package tex
+  :ensure auctex
+  :defer t
+  :hook
+  (TeX-mode . company-mode)
+  (TeX-mode . yas-minor-mode)
+  :custom
+  (TeX-auto-save t)
+  (TeX-parse-self t)
+  (TeX-master nil)
+  (TeX-electric-math nil);'("$" . "$"))
+  :config
+  (when (boundp 'tex-mode-hook)
+    (dolist (hook tex-mode-hook) (add-to-list 'TeX-mode-hook hook)))
+  (when (boundp 'latex-mode-hook)
+    (dolist (hook latex-mode-hook) (add-to-list 'LaTeX-mode-hook hook))))
 
 (use-package go-translate
   :ensure t
@@ -1299,15 +1312,16 @@ With a prefix ARG, remove start location."
   :config
   (defalias 'subseq 'cl-subseq))
 
-(use-package calc-textrail
-  :quelpa (calc-textrail :fetcher github :repo "HuangBoHong/calc-textrail")
-  :commands calc-textrail-mode calc-textrail-preview
-  :after calc
+(use-package em-term
+  :ensure nil
   :defer t
-  :bind (:map calc-mode-map
-              ("<f5>" . calc-textrail-preview)
-              ("S-<f5>" . calc-textrail-mode)))
+  :config
+  (dolist (it '("nvtop" "bashtop" "vim" "nvim" "cmatrix" "neofetch"))
+    (add-to-list 'eshell-visual-commands it)))
 
+(use-package eshell
+  :ensure nil
+  :defer t)
 
 (use-package vterm
   :ensure t
@@ -1315,7 +1329,14 @@ With a prefix ARG, remove start location."
   :bind (:map vterm-mode-map
               ("C-x C-q" . vterm-copy-mode)
          :map vterm-copy-mode-map
-              ("C-x C-q" . vterm-copy-mode)))
+         ("C-x C-q" . vterm-copy-mode)))
+
+(use-package eshell-vterm
+  :ensure t
+  :demand t
+  :after eshell
+  :config
+  (eshell-vterm-mode +1))
 
 (use-package quickrun
   :ensure t
@@ -1346,13 +1367,18 @@ With a prefix ARG, remove start location."
   (default-input-method "rime")
   (rime-show-candidate 'posframe)
   :config
-  (--each '("C-v" "M-v" "S-<delete>") (add-to-list 'rime-translate-keybindings it)))
+  (--each '("C-v" "M-v" "S-<delete>" "<tab>") (add-to-list 'rime-translate-keybindings it)))
 
 (use-package secret-mode
   :quelpa (secret-mode :fetcher github :repo "bkaestner/secret-mode.el")
   :defer t
   :commands secret-mode
   :bind (("<pause>" . secret-mode)))
+
+(use-package mpv
+  :ensure t
+  :defer t
+  :custom (mpv-default-options '("--volume-max=300")))
 
 (use-package emms
   :ensure t
@@ -1363,6 +1389,9 @@ With a prefix ARG, remove start location."
   (emms-playlist-buffer-name "*Music*")
   (emms-info-asynchronously t)
   (emms-info-functions '(emms-info-libtag))
+  :bind (:map emms-mark-mode-map
+              ("n" . next-line)
+              ("p" . previous-line))
   :config
   (require 'emms-setup)
   (require 'emms-info-libtag)
@@ -1394,6 +1423,10 @@ With a prefix ARG, remove start location."
                   (minibuffer . t)
                   (menu-bar-lines . t))))
 
+(use-package htmlize
+  :ensure t
+  :defer t)
+
 (use-package frameshot
   :ensure t
   :defer t
@@ -1410,15 +1443,6 @@ Saves to a temp file and puts the filename in the kill ring."
         (insert data))
       (kill-new filename)
       (message (format "Frameshot saved: %s" filename)))))
-
-(use-package bar-cursor
-  :if (daemonp)
-  :ensure t
-  :config
-  (bar-cursor-mode +1)
-  (menu-bar-mode +1)
-  (global-tab-line-mode +1)
-  (scroll-bar-mode +1))
 
 (when (not window-system)
   (global-set-key (kbd "M-=") #'er/expand-region)

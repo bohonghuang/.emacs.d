@@ -15,6 +15,7 @@
         dap-breakpoint-toggle
         delete-horizontal-space
         dired-mark
+        electric-newline-and-maybe-indent
         eval-last-sexp
         forward-sexp
         ibuffer-do-delete
@@ -51,6 +52,7 @@
         phi-autopair-delete-backward
         phi-autopair-delete-forward
         pycharm-backspace
+        repeat
         sgml-slash
         sis--prefix-override-handler
         sp-backward-sexp
@@ -66,6 +68,7 @@
 
 (setq mc/cmds-to-run-once
       '(
+        kmacro-end-or-call-macro
         mouse-drag-mode-line
         mouse-select-window
         rime--backspace
