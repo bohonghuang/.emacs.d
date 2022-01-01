@@ -227,6 +227,19 @@
   :custom
   (compilation-scroll-output t))
 
+(use-package project
+  :if (version<= "27.1" emacs-version)
+  :ensure nil
+  :defer t
+  :config
+  (put 'compile-command 'safe-local-variable #'stringp)
+  (put 'compilation-read-command 'safe-local-variable #'booleanp))
+
+(use-package project-ext
+  :load-path "custom-lisp"
+  :defer t
+  :bind ("C-x p u" . project-run))
+
 (use-package winner
   :ensure nil
   :defer t
@@ -581,18 +594,6 @@
     :config
     (good-scroll-mode +1)))
 
-(use-package projectile
-  :ensure t
-  :defer t
-  :hook
-  (find-file . projectile-mode)
-  (dired-mode . (lambda () (require 'projectile)))
-  :config
-  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
-  (put 'projectile-project-run-cmd 'safe-local-variable #'stringp)
-  (put 'projectile-project-compilation-cmd 'safe-local-variable #'stringp)
-  (put 'compilation-read-command 'safe-local-variable #'booleanp))
-
 (use-package elisp-mode
   :ensure nil
   :defer t
@@ -747,10 +748,6 @@
   :defer t)
 
 (use-package qml-mode
-  :ensure t
-  :defer t)
-
-(use-package platformio-mode
   :ensure t
   :defer t)
 
@@ -1130,11 +1127,11 @@
   (org-download-method 'attach))
 
 (use-package org-noter
-  :defer t
   :ensure t
+  :defer t
   :custom
   (org-noter-default-notes-file-names '("notes.org"))
-  (org-noter-notes-search-path '((expand-file-name "org-noter" org-directory))))
+  (org-noter-notes-search-path (list (expand-file-name "org-noter" org-directory))))
 
 (when (and (boundp 'use-pdf-tools) use-pdf-tools)
   (use-package pdf-tools
@@ -1146,10 +1143,15 @@
                            (pdf-view-mode))))
 
   (use-package org-pdftools
+    :ensure t
+    :defer t
     :hook (org-mode . org-pdftools-setup-link))
 
   (use-package org-noter-pdftools
-    :after org-noter
+    :after (pdf-tools org-noter)
+    :ensure t
+    :defer t
+    :hook (pdf-tools-enabled . (lambda () (require 'org-noter-pdftools)))
     :config
     ;; Add a function to ensure precise note is inserted
     (defun org-noter-pdftools-insert-precise-note (&optional toggle-no-questions)
@@ -1269,7 +1271,7 @@ With a prefix ARG, remove start location."
 
 (use-package org-englearn
   :quelpa (org-englearn :fetcher github :repo "HuangBoHong/org-englearn")
-  :demand t
+  :defer t
   :commands org-englearn-capture org-englearn-process-inbox org-englearn-capture-process-region
   :bind
   (("C-c e c" . org-englearn-capture)
