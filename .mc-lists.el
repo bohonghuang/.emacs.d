@@ -3,6 +3,7 @@
 
 (setq mc/cmds-to-run-for-all
       '(
+        TeX-insert-backslash
         backward-sexp
         c-electric-delete-forward
         c-electric-paren
@@ -14,6 +15,7 @@
         crux-eval-and-replace
         dap-breakpoint-toggle
         delete-horizontal-space
+        dired-do-delete
         dired-mark
         electric-newline-and-maybe-indent
         eval-last-sexp
@@ -23,6 +25,7 @@
         ignore
         indent-for-tab-command
         intellij-backspace
+        intellij-return
         kill-region
         kill-visual-line
         kmacro-start-macro-or-insert-counter
@@ -36,8 +39,10 @@
         org-end-of-line
         org-force-self-insert
         org-freeplane-metaright
+        org-insert-heading-respect-content
         org-kill-line
         org-latex-preview
+        org-meta-return
         org-metadown
         org-metaleft
         org-metaright
@@ -51,6 +56,7 @@
         org-yank
         phi-autopair-delete-backward
         phi-autopair-delete-forward
+        picture-self-insert
         pycharm-backspace
         repeat
         sgml-slash

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: org-reveal Notes
+# key: <n
+# --
+#+BEGIN_NOTES
+  $0
+#+END_NOTES

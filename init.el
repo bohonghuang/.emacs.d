@@ -97,9 +97,20 @@
   :defer nil
   :init (defalias 'window-buffer-change-hook 'window-buffer-change-functions)
   :config
-  (global-set-key (kbd "C-x O") (lambda ()
-                          (interactive)
-                          (other-window -1))))
+  (defun previous-other-window ()
+    (interactive)
+    (other-window -1))
+  (global-set-key (kbd "C-x O") #'previous-other-window)
+  (define-key other-window-repeat-map (kbd "O") #'previous-other-window)
+  (put #'previous-other-window 'repeat-map 'other-window-repeat-map)
+  (defvar buffer-switch-repeat-map
+      (let ((map (make-sparse-keymap)))
+        (define-key map (kbd "<left>") #'previous-buffer)
+        (define-key map (kbd "<right>") #'next-buffer)
+        (dolist (it '(previous-buffer next-buffer))
+          (put it 'repeat-map 'buffer-switch-repeat-map))
+        map)
+      "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."))
 
 ;;;;;;;;;;;
 ;; Theme ;;
@@ -117,7 +128,7 @@
   (xterm-register-default-colors xterm-standard-colors))
 
 (use-package monokai-theme
-  :quelpa (monokai-theme :fetcher github :repo "HuangBoHong/monokai-emacs")
+  :quelpa (monokai-theme :fetcher github :repo "BohongHuang/monokai-emacs")
   :if (null custom-enabled-themes)
   :config
   (load-theme 'monokai t))
@@ -265,6 +276,11 @@
   :config
   (repeat-mode +1))
 
+(use-package picture-mode
+  :ensure nil
+  :defer t
+  :bind (("C-c v" . picture-movement-down)))
+
 ;;;;;;;;;;;;;;;;;
 ;; Interaction ;;
 ;;;;;;;;;;;;;;;;;
@@ -325,7 +341,6 @@
   :bind (;; C-c bindings (mode-specific-map)
          ("C-c h" . consult-history)
          ("C-x M-x" . consult-mode-command)
-         ("C-c r b" . consult-bookmark)
          ("C-x C-k C-c" . consult-kmacro)
          ;; C-x bindings (ctl-x-map)
          ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
@@ -340,6 +355,7 @@
          ("M-y" . consult-yank-pop)                ;; orig. yank-pop
          ("<help> a" . consult-apropos)            ;; orig. apropos-command
          ;; M-g bindings (goto-map)
+         ("M-g b" . consult-bookmark)
          ("M-g e" . consult-compile-error)
          ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
          ("M-g g" . consult-goto-line)             ;; orig. goto-line
@@ -430,6 +446,15 @@
          ("C-<return>" . crux-smart-open-line)
          ("S-<f1>" . crux-find-user-init-file)))
 
+;;;;;;;;;;
+;; File ;;
+;;;;;;;;;;
+
+(use-package vlf
+  :ensure t
+  :defer t
+  :init (require 'vlf-setup))
+
 ;;;;;;;;;;;
 ;; Fonts ;;
 ;;;;;;;;;;;
@@ -485,6 +510,7 @@
                               "Output\\*$"
                               "\\*Async Shell Command\\*"
                               "\\*rustic-compilation\\*"
+                              "\\*cargo-run\\*"
                               "\\*Go-Translate\\*"
                               "\\*Compile-Log\\*"
                               "^\\*lsp-install"
@@ -543,10 +569,20 @@
   :custom
   (sp-highlight-pair-overlay nil)
   (sp-highlight-wrap-overlay nil)
-  (sp-highlight-wrap-tag-overlay nil))
+  (sp-highlight-wrap-tag-overlay nil)
+  :config
+  (use-package smartparens
+    :after org
+    :demand t
+    :config
+    (sp-local-pair 'org-mode "（" "）")
+    (sp-local-pair 'org-mode "【" "】")
+    (sp-local-pair 'org-mode "《" "》")
+    (sp-local-pair 'org-mode "\\[" "\\]")
+    (sp-local-pair 'org-mode "“" "”")))
 
 (use-package indent-yank
-  :quelpa (indent-yank :fetcher github :repo "HuangBoHong/indent-yank")
+  :quelpa (indent-yank :fetcher github :repo "BohongHuang/indent-yank")
   :defer t
   :hook (prog-mode . indent-yank-mode))
 
@@ -640,8 +676,8 @@
     (let ((map (make-sparse-keymap)))
       (define-key map (kbd "C-n") #'flymake-goto-next-error)
       (define-key map (kbd "C-p") #'flymake-goto-prev-error)
-      (--each '(flymake-goto-next-error
-                flymake-goto-prev-error)
+      (dolist (it '(flymake-goto-next-error
+                flymake-goto-prev-error))
         (put it 'repeat-map 'flymake-navigation-repeat-map))
       map)
     "Keymap to repeat flymake navigation key sequences.  Used in `repeat-mode'."))
@@ -735,7 +771,7 @@
     (let ((map (make-sparse-keymap)))
       (define-key map (kbd "<") #'python-indent-shift-left)
       (define-key map (kbd ">") #'python-indent-shift-right)
-      (--each '(python-indent-shift-left python-indent-shift-right) (put it 'repeat-map 'python-indent-repeat-map))
+      (dolist (it '(python-indent-shift-left python-indent-shift-right)) (put it 'repeat-map 'python-indent-repeat-map))
       map)
     "Keymap to repeat Python indentation key sequences.  Used in `repeat-mode'."))
 
@@ -747,7 +783,7 @@
   :ensure t
   :defer t)
 
-(use-package qml-mode
+(use-package json-mode
   :ensure t
   :defer t)
 
@@ -815,6 +851,7 @@
      (setq lsp-keymap-prefix "C-c l")
      :hook (lsp-mode . lsp-lens-mode)
      :custom
+     (lsp-ui-doc-show-with-cursor t)
      (lsp-eldoc-hook nil)
      (lsp-eldoc-enable-hover nil)
      (lsp-completion-provider :capf)
@@ -824,7 +861,15 @@
      (lsp-idle-delay 0.5)
      (lsp-log-io nil))
 
+   (use-package lsp-lens
+     :after lsp-mode
+     :ensure nil
+     :defer t
+     :bind (:map lsp-mode-map
+                 ("C-c l l" . lsp-avy-lens)))
+   
    (use-package dap-mode
+     :after lsp-mode
      :ensure t
      :defer t
      :bind(:map prog-mode-map
@@ -1005,7 +1050,16 @@
   :defer t
   :custom
   (calendar-mark-today t)
+  (calendar-mark-holidays-flag t)
   (calendar-chinese-all-holidays-flag t))
+
+(use-package cal-china-x
+  :ensure t
+  :demand t
+  :after calendar
+  :config
+  (setq mark-holidays-in-calendar t)
+  (setq calendar-holidays cal-china-x-chinese-holidays))
 
 ;;;;;;;;;
 ;; Org ;;
@@ -1016,10 +1070,7 @@
   :defer t
   :custom
   (org-adapt-indentation nil)
-  (org-attach-use-inheritance t)
   (org-export-with-tags nil)
-  (org-attach-id-dir (expand-file-name "org-attach/data" org-directory))
-
   (org-default-notes-file (expand-file-name "org-capture/captures.org" org-directory))
   (org-latex-compiler "xelatex")
   (org-latex-custom-lang-environments '((Chinese "")))
@@ -1044,7 +1095,22 @@
      ("" "ctex" nil nil)
      ("" "svg" nil nil)))
   (org-latex-image-default-width nil)
-  (org-latex-image-default-height "120pt"))
+  (org-latex-image-default-height "120pt")
+  :bind (:map org-mode-map
+              ("M-," . org-mark-ring-goto)
+              ("M-." . org-open-at-point)))
+
+(use-package org-attach
+  :after org
+  :demand t
+  :custom
+  (org-attach-use-inheritance t)
+  (org-attach-id-dir (expand-file-name "org-attach/data" org-directory)))
+
+(use-package org-attach-refactor
+  :quelpa (org-attach-refactor :fetcher github :repo "BohongHuang/org-attach-refactor")
+  :defer t
+  :commands org-attach-refactor-remove-id org-attach-refactor-add-id)
 
 (use-package ob
   :ensure nil
@@ -1066,9 +1132,9 @@
   :hook (org-pomodoro-started . (lambda () (require 'org-pomodoro-ext))))
 
 (use-package org-ext
-  :defer t
   :load-path "custom-lisp"
-  :hook (org-mode . (lambda () (require 'org-ext)))
+  :after org
+  :demand t
   :bind (:map org-mode-map
          ("C-c C-S-L" . org-link-make-from-region)))
 
@@ -1083,7 +1149,6 @@
   :defer t
   :bind (:map org-mode-map
               ("C-c C-x C-S-o" . org-resolve-clocks)
-              ("<mouse-8>" . org-mark-ring-goto)
          :map org-agenda-mode-map
               ("C-c C-x C-S-o" . org-resolve-clocks))
   :custom
@@ -1131,7 +1196,8 @@
   :defer t
   :custom
   (org-noter-default-notes-file-names '("notes.org"))
-  (org-noter-notes-search-path (list (expand-file-name "org-noter" org-directory))))
+  (org-noter-notes-search-path (list (expand-file-name "org-noter" org-directory)))
+  (org-noter-always-create-frame nil))
 
 (when (and (boundp 'use-pdf-tools) use-pdf-tools)
   (use-package pdf-tools
@@ -1148,10 +1214,15 @@
     :hook (org-mode . org-pdftools-setup-link))
 
   (use-package org-noter-pdftools
-    :after (pdf-tools org-noter)
+    :after pdf-tools
+    :init
+    (use-package org-noter-pdftools
+        :after (pdf-tools org-noter)
+        :demand t)
     :ensure t
     :defer t
-    :hook (pdf-tools-enabled . (lambda () (require 'org-noter-pdftools)))
+    :bind (:map pdf-view-mode-map
+                          ("i" . org-noter))
     :config
     ;; Add a function to ensure precise note is inserted
     (defun org-noter-pdftools-insert-precise-note (&optional toggle-no-questions)
@@ -1270,19 +1341,28 @@ With a prefix ARG, remove start location."
               ("C-c s n" . org-tree-slide-move-next-tree)))
 
 (use-package org-englearn
-  :quelpa (org-englearn :fetcher github :repo "HuangBoHong/org-englearn")
+  :quelpa (org-englearn :fetcher github :repo "BohongHuang/org-englearn")
   :defer t
   :commands org-englearn-capture org-englearn-process-inbox org-englearn-capture-process-region
   :bind
   (("C-c e c" . org-englearn-capture)
    ("C-c e p" . org-englearn-process-inbox)
    :map org-capture-mode-map
-   ("C-c e r" . org-englearn-capture-process-region))
+   ("C-c e c" . org-englearn-capture-process-region))
   :config
   (add-to-list 'org-capture-templates `("e" "English sentence"
    entry (file ,(expand-file-name "org-capture/english.org" org-directory))
    "* %?\n%U\n\n  %i\n  %a"
    :kill-buffer t)))
+
+(use-package org-englearn-pdf-view
+  :ensure nil
+  :defer t
+  :after pdf-view
+  :custom (org-englearn-pdf-view-disable-org-pdftools-link t)
+  :bind
+  (:map pdf-view-mode-map
+        ("C-c e c" . org-englearn-capture-pdf-view)))
 
 ;;;;;;;;;;;;
 ;; AUCTeX ;;
@@ -1369,7 +1449,7 @@ With a prefix ARG, remove start location."
   (default-input-method "rime")
   (rime-show-candidate 'posframe)
   :config
-  (--each '("C-v" "M-v" "S-<delete>" "<tab>") (add-to-list 'rime-translate-keybindings it)))
+  (dolist (it '("C-v" "M-v" "S-<delete>" "<tab>")) (add-to-list 'rime-translate-keybindings it)))
 
 (use-package secret-mode
   :quelpa (secret-mode :fetcher github :repo "bkaestner/secret-mode.el")
@@ -1386,12 +1466,16 @@ With a prefix ARG, remove start location."
   :ensure t
   :defer t
   :commands emms
+  :hook (emms-player-started . emms-show)
   :custom
   (emms-player-list '(emms-player-mpv))
   (emms-playlist-buffer-name "*Music*")
   (emms-info-asynchronously t)
   (emms-info-functions '(emms-info-libtag))
-  :bind (:map emms-mark-mode-map
+  :bind (("C-c m m" . emms)
+         ("C-c m n" . emms-next)
+         ("C-c m p" . emms-previous)
+         :map emms-mark-mode-map
               ("n" . next-line)
               ("p" . previous-line))
   :config
@@ -1403,7 +1487,7 @@ With a prefix ARG, remove start location."
   (emms-playing-time-disable-display))
 
 (use-package rsync-mode
-  :quelpa (rsync-mode :fetcher github :repo "HuangBoHong/rsync-mode")
+  :quelpa (rsync-mode :fetcher github :repo "BohongHuang/rsync-mode")
   :ensure t
   :defer t)
 
