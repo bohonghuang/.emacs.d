@@ -9,10 +9,9 @@
 
 (when (>= emacs-major-version 24)
   (require 'package)
-  (add-to-list
-   'package-archives
-   '("melpa" . "https://melpa.org/packages/")
-   t))
+  (dolist (archive '(("melpa" . "https://melpa.org/packages/")
+                     ("gnu-devel" . "https://elpa.gnu.org/devel/")))
+    (push archive package-archives)))
 
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
@@ -33,6 +32,10 @@
   :init (setq quelpa-update-melpa-p nil
               quelpa-use-package-inhibit-loading-quelpa t))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Internal Packages (Basic) ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (use-package emacs
   :defer nil
   :ensure nil
@@ -42,9 +45,10 @@
   :load-path "custom-lisp"
   :demand t)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Internal Packages (Basic) ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package minibuffer
+  :ensure nil
+  :defer nil
+  :custom (history-length 1000))
 
 (use-package package
   :ensure nil
@@ -88,6 +92,11 @@
   :hook (find-file . (lambda ()
                        (unless (file-exists-p (file-truename buffer-file-name))
                          (set-buffer-file-coding-system 'utf-8)))))
+
+(use-package url-handlers
+  :ensure nil
+  :defer nil
+  :config (url-handler-mode +1))
 
 (setq local-file (expand-file-name "local.el" user-emacs-directory))
 (if (file-exists-p local-file) (load-file local-file))
@@ -218,8 +227,7 @@
 (use-package savehist
   :ensure nil
   :defer nil
-  :config
-  (savehist-mode +1))
+  :config (savehist-mode +1))
 
 (use-package display-line-numbers
   :ensure nil
@@ -276,10 +284,10 @@
   :config
   (repeat-mode +1))
 
-(use-package picture-mode
+(use-package picture
   :ensure nil
   :defer t
-  :bind (("C-c v" . picture-movement-down)))
+  :bind (:map picture-mode-map ("C-c v" . picture-movement-down)))
 
 ;;;;;;;;;;;;;;;;;
 ;; Interaction ;;
@@ -519,7 +527,8 @@
                               dap-server-log-mode
                               xref--xref-buffer-mode
                               quickrun--mode
-                              flymake-diagnostics-buffer-mode))
+                              flymake-diagnostics-buffer-mode
+                              flymake-project-diagnostics-mode))
   :config
   (popper-mode +1)
   (popper-echo-mode +1))
@@ -668,16 +677,15 @@
   :hook (emacs-lisp-mode . flymake-mode)
   :bind
   ("C-c f f" . flymake-show-buffer-diagnostics)
-  ("C-c f p" . flymake-show-project-diagnostics)
-  ("C-c f C-n" . flymake-goto-next-error)
-  ("C-c f C-p" . flymake-goto-prev-error)
+  ("C-c f P" . flymake-show-project-diagnostics)
+  ("C-c f n" . flymake-goto-next-error)
+  ("C-c f p" . flymake-goto-prev-error)
   :config
   (defvar flymake-navigation-repeat-map
     (let ((map (make-sparse-keymap)))
-      (define-key map (kbd "C-n") #'flymake-goto-next-error)
-      (define-key map (kbd "C-p") #'flymake-goto-prev-error)
-      (dolist (it '(flymake-goto-next-error
-                flymake-goto-prev-error))
+      (define-key map (kbd "n") #'flymake-goto-next-error)
+      (define-key map (kbd "p") #'flymake-goto-prev-error)
+      (dolist (it '(flymake-goto-next-error flymake-goto-prev-error))
         (put it 'repeat-map 'flymake-navigation-repeat-map))
       map)
     "Keymap to repeat flymake navigation key sequences.  Used in `repeat-mode'."))
@@ -887,12 +895,15 @@
    (use-package lsp-ui
      :ensure t
      :defer t
-     :after lsp)
+     :after lsp-mode)
 
    (use-package consult-lsp
      :ensure t
-     :demand t
-     :after lsp cponsult)
+     :defer t
+     :after lsp-mode
+     :bind (:map lsp-mode-map
+                 ("M-g i" . consult-lsp-file-symbols)
+                 ("M-g F" . consult-lsp-diagnostics)))
 
    (use-package lsp-metals
      :ensure t
@@ -1074,6 +1085,7 @@
   (org-default-notes-file (expand-file-name "org-capture/captures.org" org-directory))
   (org-latex-compiler "xelatex")
   (org-latex-custom-lang-environments '((Chinese "")))
+  (org-hide-emphasis-markers t)
   (org-latex-pdf-process '("%latex -shell-escape -interaction nonstopmode -output-directory %o %f" "%latex -shell-escape -interaction nonstopmode -output-directory %o %f" "%latex -shell-escape -interaction nonstopmode -output-directory %o %f"))
   (org-latex-default-packages-alist
    '(("AUTO" "inputenc" t
@@ -1190,6 +1202,41 @@
   :custom
   (org-download-display-inline-images nil)
   (org-download-method 'attach))
+
+(use-package org-appear
+  :ensure t
+  :defer t
+  :hook (org-mode . org-appear-mode))
+
+(use-package org-remark
+  :when (and (boundp 'use-org-remark) use-org-remark)
+  :ensure t
+  :defer t
+  :init (require 'org-remark-global-tracking)
+  :custom
+  (org-remark-global-tracking-mode +1)
+  (org-remark-notes-file-path (expand-file-name "org-remark/notes.org" org-directory))
+  (org-remark-notes-display-buffer-action '((display-buffer-in-side-window)
+                                            (side . right)
+                                            (slot . 1)))
+  :bind (("C-c n m" . org-remark-mark)
+        :map org-remark-mode-map
+        ("C-c n o" . org-remark-open)
+        ("C-c n n" . org-remark-view-next)
+        ("C-c n p" . org-remark-view-prev)
+        ("C-c n r" . org-remark-remove)
+        ("C-c n c" . org-remark-change)
+        ("C-c n ." . org-remark-view))
+  :config
+  (defvar org-remark-repeat-map
+        (let ((map (make-sparse-keymap)))
+          (define-key map (kbd "n") #'org-remark-view-next)
+          (define-key map (kbd "p") #'org-remark-view-prev)
+          (define-key map (kbd ".") #'org-remark-view)
+          (dolist (it '(org-remark-view-next org-remark-view-prev org-remark-view))
+            (put it 'repeat-map 'org-remark-repeat-map))
+          map)
+        "Keymap to repeat note navigation key sequences.  Used in `repeat-mode'."))
 
 (use-package org-noter
   :ensure t
@@ -1398,7 +1445,7 @@ With a prefix ARG, remove start location."
   :ensure nil
   :defer t
   :config
-  (dolist (it '("nvtop" "bashtop" "vim" "nvim" "cmatrix" "neofetch"))
+  (dolist (it '("nvtop" "bashtop" "btop" "top" "vim" "nvim" "cmatrix"))
     (add-to-list 'eshell-visual-commands it)))
 
 (use-package eshell
@@ -1499,7 +1546,7 @@ With a prefix ARG, remove start location."
           (if after-init-time
               (edit-server-start)
             (add-hook 'after-init-hook
-                      #'(lambda() (edit-server-start)))))
+                      #'(lambda () (edit-server-start)))))
   :custom (edit-server-new-frame-alist
                 '((name . "Edit with Emacs FRAME")
                   (top . 200)

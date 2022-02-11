@@ -63,6 +63,7 @@
         sis--prefix-override-handler
         sp-backward-sexp
         sp-forward-sexp
+        sp-forward-slurp-sexp
         sp-join-sexp
         sp-unwrap-sexp
         vhdl-electric-semicolon
