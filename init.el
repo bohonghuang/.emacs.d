@@ -78,7 +78,10 @@
   (column-number-mode t)
   (visible-bell t)
   (show-paren-mode t)
-  (indent-tabs-mode nil))
+  (show-paren-when-point-inside-paren t)
+  (show-paren-when-point-inside-paren t)
+  (indent-tabs-mode nil)
+  (auto-hscroll-mode 'current-line))
 
 (use-package subr
   :ensure nil
@@ -313,6 +316,10 @@
   :defer nil
   :config
   (doom-modeline-mode +1))
+
+(use-package hide-mode-line
+  :ensure t
+  :defer t)
 
 (use-package vertico
   :ensure t
@@ -1441,6 +1448,20 @@ With a prefix ARG, remove start location."
   :config
   (defalias 'subseq 'cl-subseq))
 
+(use-package eshell
+  :ensure nil
+  :defer t
+  :custom
+  (eshell-highlight-prompt nil)
+  (eshell-banner-message "")
+  :config
+  (defun eshell--complete-commands-list@around (fun &rest _)
+    "Fix executable file completion for `eshell--complete-commands-list'"
+    (if (looking-back "/[[:graph:]]*")
+        (pcomplete-executables)
+      (funcall fun)))
+  (advice-add #'eshell--complete-commands-list :around #'eshell--complete-commands-list@around))
+
 (use-package em-term
   :ensure nil
   :defer t
@@ -1448,9 +1469,32 @@ With a prefix ARG, remove start location."
   (dolist (it '("nvtop" "bashtop" "btop" "top" "vim" "nvim" "cmatrix"))
     (add-to-list 'eshell-visual-commands it)))
 
-(use-package eshell
-  :ensure nil
-  :defer t)
+(use-package eshell-syntax-highlighting
+  :ensure t
+  :defer t
+  :hook (eshell-mode . eshell-syntax-highlighting-mode))
+
+(use-package eshell-outline
+  :ensure t
+  :defer t
+  :hook (eshell-mode . eshell-outline-mode)
+  :config
+  (setf (cdr eshell-outline-mode-map) nil))
+
+(use-package eshell-prompt-extras
+  :after eshell
+  :demand t
+  :custom (eshell-prompt-function 'epe-theme-pipeline)
+  :config
+  (defun eshell-prompt-make-read-only (ret)
+    (concat (propertize (substring ret 0 -1) 'read-only t) (propertize " " 'read-only t 'rear-nonsticky '(font-lock-face read-only))))
+  (dolist (prompt #'(epe-theme-lambda epe-theme-dakrone epe-theme-pipeline epe-theme-pipeline epe-theme-multiline-with-status))
+    (advice-add prompt :filter-return #'eshell-prompt-make-read-only)))
+
+(use-package esh-autosuggest
+  :ensure t
+  :defer t
+  :hook (eshell-mode . esh-autosuggest-mode))
 
 (use-package vterm
   :ensure t
