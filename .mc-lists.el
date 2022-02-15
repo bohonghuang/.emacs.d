@@ -75,6 +75,7 @@
 
 (setq mc/cmds-to-run-once
       '(
+        embark-act
         kmacro-end-or-call-macro
         mouse-drag-mode-line
         mouse-select-window

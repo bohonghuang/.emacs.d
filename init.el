@@ -7,7 +7,7 @@
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (if (file-exists-p custom-file) (load-file custom-file))
 
-(when (>= emacs-major-version 24)
+(when (version<= "24" emacs-version)
   (require 'package)
   (dolist (archive '(("melpa" . "https://melpa.org/packages/")
                      ("gnu-devel" . "https://elpa.gnu.org/devel/")))
@@ -82,6 +82,12 @@
   (show-paren-when-point-inside-paren t)
   (indent-tabs-mode nil)
   (auto-hscroll-mode 'current-line))
+
+(use-package simple-ext
+  :load-path "custom-lisp"
+  :after simple
+  :bind ("M-C" . filter-and-upcase-initials-region)
+  :demand t)
 
 (use-package subr
   :ensure nil
@@ -595,7 +601,15 @@
     (sp-local-pair 'org-mode "【" "】")
     (sp-local-pair 'org-mode "《" "》")
     (sp-local-pair 'org-mode "\\[" "\\]")
-    (sp-local-pair 'org-mode "“" "”")))
+    (sp-local-pair 'org-mode "“" "”"))
+  (use-package smartparens
+      :after tex
+      :demand t
+      :config
+      (sp-local-pair 'tex-mode "（" "）")
+      (sp-local-pair 'tex-mode "【" "】")
+      (sp-local-pair 'tex-mode "《" "》")
+      (sp-local-pair 'tex-mode "“" "”")))
 
 (use-package indent-yank
   :quelpa (indent-yank :fetcher github :repo "BohongHuang/indent-yank")
@@ -726,9 +740,15 @@
   :custom
   (company-minimum-prefix-length 1)
   (company-frontends '(company-pseudo-tooltip-frontend
-                          company-echo-metadata-frontend))
+                       company-echo-metadata-frontend))
   (company-dabbrev-downcase nil)
-  (company-dabbrev-ignore-case t))
+  (company-dabbrev-ignore-case t)
+  :config
+  (use-package company
+    :after tex
+    :ensure nil
+    :demand t
+    :config (add-hook 'TeX-mode-hook (lambda () (delete 'company-dabbrev company-backends)))))
 
 (use-package yasnippet
   :ensure t
@@ -1432,12 +1452,27 @@ With a prefix ARG, remove start location."
   (TeX-auto-save t)
   (TeX-parse-self t)
   (TeX-master nil)
-  (TeX-electric-math nil);'("$" . "$"))
+  (TeX-electric-math '("\\(" "\\)"));'("$" . "$"))
+  (LaTeX-math-list '((nil "operatorname" "Log-like")
+                     (nil "mathcal" "Log-like")
+                     (nil "mathfrak" "Log-like")
+                     (nil "mathbb" "Log-like")
+                     (nil "mathnormal" "Log-like")
+                     (nil "mathrm" "Log-like")
+                     (nil "mathit" "Log-like")
+                     (nil "mathbf" "Log-like")
+                     (nil "mathsf" "Log-like")
+                     (nil "mathtt" "Log-like")))
   :config
   (when (boundp 'tex-mode-hook)
     (dolist (hook tex-mode-hook) (add-to-list 'TeX-mode-hook hook)))
   (when (boundp 'latex-mode-hook)
     (dolist (hook latex-mode-hook) (add-to-list 'LaTeX-mode-hook hook))))
+
+(use-package cdlatex
+  :ensure t
+  :defer t
+  :hook (LaTeX-mode . turn-on-cdlatex))
 
 (use-package go-translate
   :ensure t
@@ -1482,6 +1517,7 @@ With a prefix ARG, remove start location."
   (setf (cdr eshell-outline-mode-map) nil))
 
 (use-package eshell-prompt-extras
+  :ensure t
   :after eshell
   :demand t
   :custom (eshell-prompt-function 'epe-theme-pipeline)
