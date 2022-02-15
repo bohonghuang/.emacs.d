@@ -525,7 +525,9 @@
   :ensure t
   :bind (("C-`"   . popper-toggle-latest)
          ("M-`"   . popper-cycle)
-         ("C-M-`" . popper-toggle-type))
+         ("C-M-`" . popper-toggle-type)
+         ("C-x 1" . popper-delete-other-windows))
+  :commands popper-delete-other-windows
   :custom
   (popper-reference-buffers '("\\*Messages\\*"
                               "Output\\*$"
@@ -542,9 +544,57 @@
                               quickrun--mode
                               flymake-diagnostics-buffer-mode
                               flymake-project-diagnostics-mode))
-  :config
   (popper-mode +1)
-  (popper-echo-mode +1))
+  (popper-echo-mode +1)
+  :config
+  (defun popper-delete-other-windows (&optional window interactive)
+    (interactive "i\np")
+    (let ((buffer (window-buffer window)))
+      (when (popper-display-control-p buffer)
+        (popper-toggle-type buffer)))
+    (delete-other-windows window interactive))
+  
+  (defun popper--fit-window-height (win)
+      (fit-window-to-buffer
+         win
+         (floor (frame-height) 3)
+         (floor (frame-height) 4)))
+  
+  (use-package popper
+    :ensure nil
+    :defer t
+    :bind ("C-<tab>" . eshell-popper-request)
+    :config
+    (require 'eshell)
+    
+    (defun popper-popup-buffer (buffer)
+      (unless (window-dedicated-p (selected-window))
+        (switch-to-buffer buffer))
+      (popper-lower-to-popup buffer))
+    
+    (defun project-eshell@around (fun &rest _)
+      (popper-popup-buffer (funcall fun)))
+    
+    (advice-add #'project-eshell :around #'project-eshell@around)
+    
+    (defun eshell-popper-buffer-p (buffer)
+      (and (with-current-buffer buffer eshell-mode) (popper-display-control-p buffer) (string-match-p "\\*eshell-popper\\*\\(<[0-9]+>\\)\\{0,1\\}" (buffer-name buffer))))
+    
+    (defun eshell-popper-request ()
+      (interactive)
+      (if (eshell-popper-buffer-p (current-buffer))
+          (delete-window)
+        (let ((request-default-directory default-directory)
+              (eshell-buffer-name "*eshell-popper*"))
+          (if (catch 'break
+                (dolist (buffer (buffer-list))
+                  (when (and (eshell-popper-buffer-p buffer) (not (get-buffer-process buffer)))
+                    (popper-popup-buffer buffer)
+                    (throw 'break t))))
+              (unless (string-equal default-directory request-default-directory)
+                (progn (eshell/cd request-default-directory)
+                       (eshell-interrupt-process)))
+            (popper-lower-to-popup (eshell t))))))))
 
 (use-package smartparens
   :ensure t
@@ -609,7 +659,12 @@
       (sp-local-pair 'tex-mode "（" "）")
       (sp-local-pair 'tex-mode "【" "】")
       (sp-local-pair 'tex-mode "《" "》")
-      (sp-local-pair 'tex-mode "“" "”")))
+      (sp-local-pair 'tex-mode "“" "”"))
+  (use-package smartparens
+        :after eshell
+        :demand t
+        :config
+        (sp-local-pair 'eshell-mode "#<" ">")))
 
 (use-package indent-yank
   :quelpa (indent-yank :fetcher github :repo "BohongHuang/indent-yank")
