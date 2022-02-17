@@ -52,8 +52,7 @@
 
 (use-package package
   :ensure nil
-  :defer nil
-  :init (defalias 'ls-pkg 'list-packages))
+  :defer nil)
 
 (use-package comp
   :ensure nil
@@ -288,10 +287,14 @@
 
 (use-package repeat
   :if (version<= "28.0.60" emacs-version)
+  :init (defun require-repeat () (require 'repeat))
   :ensure nil
-  :defer nil
+  :defer t
+  :hook (pre-command . require-repeat)
   :config
-  (repeat-mode +1))
+  (repeat-mode +1)
+  (remove-hook 'pre-command-hook #'require-repeat)
+  (fmakunbound #'require-repeat))
 
 (use-package picture
   :ensure nil
@@ -314,8 +317,13 @@
 
 (use-package which-key
   :ensure t
-  :defer 0.5
-  :config (which-key-mode t))
+  :defer t
+  :init (defun require-which-key () (require 'which-key))
+  :hook (pre-command . require-which-key)
+  :config
+  (which-key-mode t)
+  (remove-hook 'pre-command-hook #'require-which-key)
+  (fmakunbound #'require-which-key))
 
 (use-package doom-modeline
   :ensure t
@@ -343,31 +351,28 @@
   :hook
   (rfn-eshadow-update-overlay . vertico-directory-tidy))
 
-;; Enable richer annotations using the Marginalia package
 (use-package marginalia
   :ensure t
-  ;; Either bind `marginalia-cycle` globally or only in the minibuffer
   :bind (("M-A" . marginalia-cycle)
          :map minibuffer-local-map
          ("M-A" . marginalia-cycle))
   :defer t
   :hook (minibuffer-mode . marginalia-mode))
 
-;; Example configuration for Consult
 (use-package consult
   :ensure t
   :defer t
   :custom (completion-in-region-function #'consult-completion-in-region)
-  ;; Replace bindings. Lazily loaded due by `use-package'.
   :bind (;; C-c bindings (mode-specific-map)
          ("C-c h" . consult-history)
          ("C-x M-x" . consult-mode-command)
-         ("C-x C-k C-c" . consult-kmacro)
+         ("C-c k" . consult-kmacro)
          ;; C-x bindings (ctl-x-map)
          ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
          ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
          ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
          ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
          ;; Custom M-# bindings for fast register access
          ("M-#" . consult-register-load)
          ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
@@ -376,7 +381,6 @@
          ("M-y" . consult-yank-pop)                ;; orig. yank-pop
          ("<help> a" . consult-apropos)            ;; orig. apropos-command
          ;; M-g bindings (goto-map)
-         ("M-g b" . consult-bookmark)
          ("M-g e" . consult-compile-error)
          ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
          ("M-g g" . consult-goto-line)             ;; orig. goto-line
@@ -387,8 +391,8 @@
          ("M-g i" . consult-imenu)
          ("M-g I" . consult-imenu-multi)
          ;; M-s bindings (search-map)
-         ("M-s f" . consult-find)
-         ("M-s F" . consult-locate)
+         ("M-s d" . consult-find)
+         ("M-s D" . consult-locate)
          ("M-s g" . consult-grep)
          ("M-s G" . consult-git-grep)
          ("M-s r" . consult-ripgrep)
@@ -418,13 +422,9 @@
    :preview-key '(:debounce 0.2 any)
    consult-ripgrep consult-git-grep consult-grep
    consult-bookmark consult-recent-file consult-xref
-   consult--source-file consult--source-project-file consult--source-bookmark
+   consult--source-recent-file consult--source-project-recent-file consult--source-bookmark
    :preview-key (kbd "M-."))
-  (setq consult-narrow-key "<") ;; (kbd "C-+")
-  (setq consult-project-root-function
-        (lambda ()
-          (when-let (project (project-current))
-            (car (project-roots project))))))
+  (setq consult-narrow-key "<"))
 
 (use-package consult-dir
   :ensure t
@@ -525,8 +525,7 @@
   :ensure t
   :bind (("C-`"   . popper-toggle-latest)
          ("M-`"   . popper-cycle)
-         ("C-M-`" . popper-toggle-type)
-         ("C-x 1" . popper-delete-other-windows))
+         ("C-M-`" . popper-toggle-type))
   :commands popper-delete-other-windows
   :custom
   (popper-reference-buffers '("\\*Messages\\*"
@@ -547,12 +546,11 @@
   (popper-mode +1)
   (popper-echo-mode +1)
   :config
-  (defun popper-delete-other-windows (&optional window interactive)
-    (interactive "i\np")
+  (defun delete-other-windows@before (&optional window &rest _)
     (let ((buffer (window-buffer window)))
       (when (popper-display-control-p buffer)
-        (popper-toggle-type buffer)))
-    (delete-other-windows window interactive))
+        (popper-toggle-type buffer))))
+  (advice-add #'delete-other-windows :before #'delete-other-windows@before)
   
   (defun popper--fit-window-height (win)
       (fit-window-to-buffer
@@ -560,12 +558,11 @@
          (floor (frame-height) 3)
          (floor (frame-height) 4)))
   
-  (use-package popper
+  (use-package eshell
     :ensure nil
     :defer t
     :bind ("C-<tab>" . eshell-popper-request)
     :config
-    (require 'eshell)
     
     (defun popper-popup-buffer (buffer)
       (unless (window-dedicated-p (selected-window))
@@ -624,7 +621,7 @@
               ("C-(" . sp-select-previous-thing-exchange)
               ("C-M-(" . sp-select-previous-thing)
               ("C-M-SPC" . sp-mark-sexp)
-          :map emacs-lisp-mode-map
+              :map emacs-lisp-mode-map
               ("M-<right>" . sp-forward-slurp-sexp)
               ("M-<left>" . sp-forward-barf-sexp)
               ("C-M-t" . sp-transpose-sexp)
@@ -643,28 +640,20 @@
   (sp-highlight-wrap-overlay nil)
   (sp-highlight-wrap-tag-overlay nil)
   :config
+  (sp-pair "（" "）")
+  (sp-pair "【" "】")
+  (sp-pair "《" "》")
+  (sp-pair "“" "”")
   (use-package smartparens
     :after org
     :demand t
     :config
-    (sp-local-pair 'org-mode "（" "）")
-    (sp-local-pair 'org-mode "【" "】")
-    (sp-local-pair 'org-mode "《" "》")
-    (sp-local-pair 'org-mode "\\[" "\\]")
-    (sp-local-pair 'org-mode "“" "”"))
+    (sp-local-pair 'org-mode "\\[" "\\]"))
   (use-package smartparens
-      :after tex
-      :demand t
-      :config
-      (sp-local-pair 'tex-mode "（" "）")
-      (sp-local-pair 'tex-mode "【" "】")
-      (sp-local-pair 'tex-mode "《" "》")
-      (sp-local-pair 'tex-mode "“" "”"))
-  (use-package smartparens
-        :after eshell
-        :demand t
-        :config
-        (sp-local-pair 'eshell-mode "#<" ">")))
+    :after eshell
+    :demand t
+    :config
+    (sp-local-pair 'eshell-mode "#<" ">")))
 
 (use-package indent-yank
   :quelpa (indent-yank :fetcher github :repo "BohongHuang/indent-yank")
@@ -710,10 +699,14 @@
       (pixel-scroll-precision-mode +1))
   (use-package good-scroll
     :ensure t
-    :defer 0.5
+    :defer t
+    :init (defun require-good-scroll () (require 'good-scroll))
+    :hook (pre-command . require-good-scroll)
     :custom (good-scroll-step 100)
     :config
-    (good-scroll-mode +1)))
+    (good-scroll-mode +1)
+    (remove-hook 'pre-command-hook #'require-good-scroll)
+    (fmakunbound #'require-good-scroll)))
 
 (use-package elisp-mode
   :ensure nil
@@ -1129,13 +1122,9 @@
   :ensure t
   :defer t
   :config
-  ;; For MacOS
   (sis-ism-lazyman-config "1" "2" 'fcitx5)
-  ;; enable the /cursor color/ mode
   (sis-global-cursor-color-mode t)
-  ;; enable the /respect/ mode
   (sis-global-respect-mode t)
-  ;; enable the /context/ mode for all buffers
   (sis-global-context-mode t))
 
 (use-package calendar
@@ -1152,7 +1141,17 @@
   :after calendar
   :config
   (setq mark-holidays-in-calendar t)
-  (setq calendar-holidays cal-china-x-chinese-holidays))
+  (setq cal-china-x-general-holidays '((holiday-lunar 1 15 "元宵节")
+                                       (holiday-lunar 12 8 "腊八节")
+                                       (holiday-fixed 2 14 "情人节")
+                                       (holiday-fixed 3 8 "妇女节")
+                                       (holiday-fixed 4 1 "愚人节")
+                                       (holiday-fixed 9 10 "教师节")
+                                       (holiday-fixed 11 26 "感恩节")
+                                       (holiday-fixed 11 1 "万圣节")
+                                       (holiday-fixed 12 25 "圣诞节")
+                                       (holiday-fixed 12 24 "平安夜")))
+  (setq calendar-holidays (append cal-china-x-chinese-holidays cal-china-x-general-holidays cal-china-x-important-holidays)))
 
 ;;;;;;;;;
 ;; Org ;;
@@ -1551,6 +1550,35 @@ With a prefix ARG, remove start location."
         (pcomplete-executables)
       (funcall fun)))
   (advice-add #'eshell--complete-commands-list :around #'eshell--complete-commands-list@around))
+
+(use-package em-hist
+  :ensure nil
+  :defer t
+  :custom
+  (eshell-history-size 1000)
+  :config
+  (defun eshell-hist-write-after-command (&rest _)
+    (eshell-read-history)
+    (let ((input (buffer-substring-no-properties
+                  eshell-last-input-start (1- eshell-last-input-end)))
+          index
+          earliest)
+      (while (setq index (ring-member eshell-history-ring input)) (ring-remove eshell-history-ring index))
+      (when (>= (ring-length eshell-history-ring) (ring-size eshell-history-ring))
+        (setq earliest (ring-ref eshell-history-ring (1- (ring-length eshell-history-ring))))
+        (with-temp-buffer
+          (insert earliest)
+          (newline)
+          (write-region (point-min) (point-max) (concat eshell-history-file-name ".old") 'append)))
+      (eshell-add-input-to-history (string-trim input)))
+    (eshell-write-history))
+  (add-hook 'eshell-exec-hook #'eshell-hist-write-after-command)
+  ;; (add-hook 'eshell-kill-hook #'eshell-hist-write-after-command)
+  (defun eshell-hist-initialize@after (&rest _)
+    (remove-hook 'eshell-input-filter-functions #'eshell-add-to-history t)
+    (remove-hook 'eshell-exit-hook #'eshell-write-history)
+    (remove-hook 'kill-emacs-query-functions #'eshell-save-some-history t))
+  (advice-add #'eshell-hist-initialize :after #'eshell-hist-initialize@after))
 
 (use-package em-term
   :ensure nil
