@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t -*-
+
 (defun dired-copy-filename-as-kill (&optional arg)
   "Copy names of marked (or next ARG) files into the kill ring.
 The names are separated by a space.

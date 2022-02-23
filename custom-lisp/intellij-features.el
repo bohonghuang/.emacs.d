@@ -1,3 +1,7 @@
+;;; -*- lexical-binding: t -*-
+
+(require 'smartparens)
+
 (defun intellij-backspace (arg)
   (interactive "*P")
   (if (or (region-active-p) (not (looking-back "^[[:space:]]*" (line-beginning-position))))
@@ -5,7 +9,7 @@
     (let* ((beg (point))
            (end (progn (indent-for-tab-command) (point))))
       (when (<= beg end)
-        (if (save-excursion (previous-line) (line-blank-p))
+        (if (save-excursion (forward-line -1) (line-blank-p))
             (progn (delete-region (line-beginning-position 0) (line-beginning-position)) (back-to-indentation))
           (delete-indentation))))))
 
@@ -59,12 +63,12 @@
                     (newline-and-indent)
                     (insert "}"))
                   (goto-char begin)
-                  (if (looking-back "^[[:space:]]*")
-                      (if (save-excursion (previous-line)
+                  (if (looking-back "^[[:space:]]*" nil)
+                      (if (save-excursion (forward-line -1)
                                            (end-of-line)
-                                           (looking-back ")[[:space:]]*"))
+                                           (looking-back ")[[:space:]]*" nil))
                           (progn
-                            (previous-line)
+                            (forward-line -1)
                             (end-of-line)
                             (delete-horizontal-space)
                             (insert " {"))
@@ -79,27 +83,26 @@
                                       (back-to-indentation)
                                       (looking-at "\\(if\\|\\(\\(\\}[[:space:]]*\\)*else\\)\\|for\\|while\\)"))
                       (let ((indent-current (line-indentation))
-                            (indent-next (save-excursion (ignore-errors (next-line) (current-line-indent))))
-                            (beg (point))
+                            (indent-next (save-excursion (ignore-errors (forward-line) (line-indentation))))
                             (line-count 0))
                         (if (and indent-next (>= indent-current indent-next))
                             (throw 'exit nil)
                           (save-excursion
                             (while (catch 'continue
                                      (ignore-errors
-                                       (next-line)
+                                       (forward-line)
                                        (throw 'continue (> (line-indentation) indent-current)))
                                      nil)
                               (setq line-count (+ line-count 1))))
                           (if (= line-count 0)
                               (throw 'exit nil)
                             (insert "{")
-                            (next-line line-count)
+                            (forward-line line-count)
                             (end-of-line)
                             (newline)
                             (insert "}")
                             (indent-for-tab-command)
-                            (previous-line)
+                            (forward-line -1)
                             (end-of-line)
                             t))))
                 (insert "{")
@@ -118,8 +121,8 @@
     (if (and (looking-back "{[[:space:]]*" (line-beginning-position))
              (looking-at "[[:space:]]*}"))
         (progn
-          (newline-and-indent (+ (or arg 1) 1))          
-          (previous-line)
+          (newline-and-indent (+ (or arg 1) 1))
+          (forward-line -1)
           (indent-for-tab-command))
       (call-interactively #'newline)))
 

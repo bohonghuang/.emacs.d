@@ -1,7 +1,10 @@
 ;;;  -*- lexical-binding: t; -*-
+
 (eval-when-compile (require 'subr-x)
                    (require 'cl-lib))
 (require 'org)
+(require 'org-agenda)
+;; (require 'dash)
 
 (defun org-yank-fdef-cpp()
   (interactive)
@@ -43,7 +46,7 @@ Excludes the heading and any child subtrees."
     (save-excursion
       ;; If inside heading contents, move the point back to the heading
       ;; otherwise `org-agenda-get-some-entry-text' won't work.
-      (unless (org-on-heading-p) (org-previous-visible-heading 1))
+      (unless (org-at-heading-p) (org-previous-visible-heading 1))
       (substring-no-properties
        (org-agenda-get-some-entry-text
         (point-marker)
@@ -141,8 +144,8 @@ the documentation of `org-diary'."
     (error "Your org-version(< 9.5) is not supported!")))
 
 (defun org-get-media-link-export-function (media-type)
-  (lambda (path desc backend)
-    (let ((ext (file-name-extension path)))
+  (lambda (path _desc backend)
+    (let ((_:ext (file-name-extension path)))
       (cond
        ((eq 'html backend)
         (format "<%s src='%s' controls/>" media-type (url-encode-url (replace-regexp-in-string "~" (expand-file-name "~") path))))
@@ -166,7 +169,7 @@ the documentation of `org-diary'."
 (org-link-set-parameters "audio" :export (org-get-media-link-export-function "audio"))
 (org-link-set-parameters "file" :export #'org-media-file-link-export)
 
-(defun org--deadline-or-schedule@after-scheduled (arg type time)
+(defun org--deadline-or-schedule@after-scheduled (_arg type _time)
   (when (eq type 'scheduled) (org-todo (org-get-todo-sequence-head org-todo-heads))))
 
 (advice-add #'org--deadline-or-schedule :after #'org--deadline-or-schedule@after-scheduled)
@@ -179,7 +182,8 @@ the documentation of `org-diary'."
          (time-end-string (format-time-string time-format time-end))
          (time-end-inclusive-string (format-time-string time-format (encode-time (--map-indexed (pcase it-index
                                                                                                   (`3 (- it 1))
-                                                                                                  (_ it)) (decode-time time-end))))))
+                                                                                                  (_ it))
+                                                                                                (decode-time time-end))))))
     (pcase (get-buffer-window buffer)
       (`nil (switch-to-buffer-other-window buffer))
       (window (select-window window)))
@@ -192,18 +196,18 @@ the documentation of `org-diary'."
                     time-start-string time-end-string))
     (org-ctrl-c-ctrl-c)
     (let ((beg (point)))
-      (beginning-of-buffer)
+      (goto-char (point-min))
       (org-indent-region (point) beg))  ;有先后顺序
-    (next-line)
+    (forward-line)
     (let ((beg (point)))
-      (next-line 2)
+      (forward-line 2)
       (delete-region beg (point)))
-    (end-of-buffer)
+    (goto-char (point-max))
     (let ((beg (point)))
-      (previous-line)
+      (forward-line -1)
       (end-of-line)
       (delete-region beg (point)))
-    (beginning-of-buffer)
+    (goto-char (point-min))
     (read-only-mode +1)
     (let ((map (copy-keymap org-mode-map)))
       (define-key map (kbd "q") #'quit-window)
@@ -223,7 +227,8 @@ the documentation of `org-diary'."
                         (--map-indexed
                          (pcase it-index 
                            (`3 (+ it 1))
-                           (_ it)) (decode-time time))))
+                           (_ it))
+                         (decode-time time))))
     (local-set-key (kbd "f") (lambda () (interactive) (org-agenda-daily-review
                                                        (encode-time
                                                         (--map-indexed (pcase it-index
@@ -339,12 +344,13 @@ the documentation of `org-diary'."
     (define-key map (kbd "C-i") #'org-down-heading)
     (--each '(org-next-visible-heading org-previous-visible-heading org-forward-heading-same-level org-backward-heading-same-level org-up-heading org-down-heading) (put it 'repeat-map 'org-mode-navigation-repeat-map))
     map)
-  "Keymap to repeat org-mode navigation key sequences.  Used in `repeat-mode'.")
+  "Keymap to repeat `org-mode' navigation key sequences.  Used in `repeat-mode'.")
 
-(defun org-link-make-from-region (beg end &optional desc)
+(defun org-link-make-from-region (beg end &optional _desc)
   (interactive "*r\n")
   (let ((link (buffer-substring beg end)))
     (delete-region beg end)
     (insert "[[" link "][" link "]]")))
 
 (provide 'org-ext)
+;;; org-ext.el ends here

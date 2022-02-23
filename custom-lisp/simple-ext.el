@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t -*-
+
 (defun filter-initials-region (&optional beg end)
   (interactive)
   (let ((letters nil)

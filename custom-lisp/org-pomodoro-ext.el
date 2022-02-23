@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t -*-
+
 (require 'org)
 
 (defmacro org-pomodoro-with-current-drawer (&rest body)

@@ -48,7 +48,10 @@
 (use-package minibuffer
   :ensure nil
   :defer nil
-  :custom (history-length 1000))
+  :custom
+  (history-length 1000)
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package package
   :ensure nil
@@ -78,9 +81,10 @@
   (visible-bell t)
   (show-paren-mode t)
   (show-paren-when-point-inside-paren t)
-  (show-paren-when-point-inside-paren t)
   (indent-tabs-mode nil)
-  (auto-hscroll-mode 'current-line))
+  (auto-hscroll-mode t)
+  (word-wrap-by-category t)
+  (read-extended-command-predicate #'command-completion-default-include-p))
 
 (use-package simple-ext
   :load-path "custom-lisp"
@@ -118,8 +122,9 @@
     (interactive)
     (other-window -1))
   (global-set-key (kbd "C-x O") #'previous-other-window)
-  (define-key other-window-repeat-map (kbd "O") #'previous-other-window)
-  (put #'previous-other-window 'repeat-map 'other-window-repeat-map)
+  (when (version<= "28" emacs-version)
+    (define-key other-window-repeat-map (kbd "O") #'previous-other-window)
+    (put #'previous-other-window 'repeat-map 'other-window-repeat-map))
   (defvar buffer-switch-repeat-map
       (let ((map (make-sparse-keymap)))
         (define-key map (kbd "<left>") #'previous-buffer)
@@ -167,7 +172,8 @@
 (use-package paragraphs
   :ensure nil
   :defer nil
-  :custom (sentence-end-double-space nil))
+  :custom
+  (sentence-end-double-space nil))
 
 (use-package menu-bar
   :ensure nil
@@ -234,7 +240,8 @@
 
 (use-package savehist
   :ensure nil
-  :defer nil
+  :defer t
+  :hook (minibuffer-setup . (lambda () (require 'savehist)))
   :config (savehist-mode +1))
 
 (use-package display-line-numbers
@@ -274,7 +281,6 @@
   (winner-mode +1))
 
 (use-package recentf
-  :init (defalias 'reopfs 'recentf-open-files)
   :defer t
   :hook (find-file . (lambda () (require 'recentf)))
   :commands recentf-open-files
@@ -310,6 +316,10 @@
   :defer t
   :bind (("M-o" . ace-window))
   :custom (aw-dispatch-always t))
+
+(use-package hydra
+  :ensure t
+  :defer t)
 
 (use-package pretty-hydra
   :ensure t
@@ -351,13 +361,21 @@
   :hook
   (rfn-eshadow-update-overlay . vertico-directory-tidy))
 
+(use-package orderless
+  :ensure t
+  :defer t
+  :custom (orderless-matching-styles '(orderless-prefixes))
+  :hook
+  (minibuffer-setup . (lambda () (setq-local completion-styles '(orderless)))))
+
+
 (use-package marginalia
   :ensure t
   :bind (("M-A" . marginalia-cycle)
          :map minibuffer-local-map
          ("M-A" . marginalia-cycle))
   :defer t
-  :hook (minibuffer-mode . marginalia-mode))
+  :hook (minibuffer-setup . marginalia-mode))
 
 (use-package consult
   :ensure t
@@ -597,7 +615,7 @@
   :ensure t
   :defer t
   :hook
-  ((prog-mode text-mode minibuffer-mode eshell-mode lisp-mode ielm-mode mermaid-mode) . smartparens-mode)
+  ((prog-mode text-mode minibuffer-setup eshell-mode lisp-mode ielm-mode mermaid-mode) . smartparens-mode)
   :bind (:map smartparens-mode-map
               ("C-*" . sp-join-sexp)
               ("C-|" . sp-split-sexp)
@@ -691,7 +709,7 @@
          ("M-<left>" . drag-stuff-left))
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode common-lisp-mode) major-mode) (drag-stuff-mode +1)))))
 
-(if (version<= "29" emacs-version)
+(if (and (version<= "29" emacs-version))
     (use-package pixel-scroll
       :ensure nil
       :defer nil
@@ -1125,7 +1143,22 @@
   (sis-ism-lazyman-config "1" "2" 'fcitx5)
   (sis-global-cursor-color-mode t)
   (sis-global-respect-mode t)
-  (sis-global-context-mode t))
+  (sis-global-context-mode t)  
+  (when (package-installed-p 'doom-modeline)
+    (defvar sis-global-respect-mode-before-kbd-macro nil)
+    (defvar sis-global-respect-mode-previous-defining-kbd-macro nil)
+    
+    (defun sis-defining-kbd-macro-watcher (&rest _)
+      (when (not (eq sis-global-respect-mode-previous-defining-kbd-macro defining-kbd-macro))
+        (if defining-kbd-macro
+            (when sis-global-respect-mode
+              (setq sis-global-respect-mode-before-kbd-macro sis-global-respect-mode)
+              (sis-global-respect-mode -1))
+          (when sis-global-respect-mode-before-kbd-macro
+            (setq sis-global-respect-mode-before-kbd-macro nil)
+            (sis-global-respect-mode +1)))
+        (setq sis-global-respect-mode-previous-defining-kbd-macro defining-kbd-macro)))
+    (advice-add #'doom-modeline-segment--matches :before #'sis-defining-kbd-macro-watcher)))
 
 (use-package calendar
   :ensure nil
@@ -1252,12 +1285,17 @@
   (require 'org-gtd)
   (nconc recentf-exclude (org-agenda-files)))
 
+(use-package org-edna
+  :ensure t
+  :defer t
+  :custom (org-edna-use-inheritance t)
+  :config (org-edna-mode +1))
+
 (use-package org-gtd
   :ensure t
   :defer t
   :custom
   (org-gtd-directory (expand-file-name "org-gtd" org-directory))
-  (org-edna-use-inheritance t)
   :bind
   (("C-c g c" . org-gtd-capture)
    ("C-c g e" . org-gtd-engage)
@@ -1268,7 +1306,7 @@
    :map org-gtd-process-map
    ("C-c C-c" . org-gtd-choose))
   :config
-  (org-edna-mode +1)
+  (setq org-gtd-default-file-name "tasks")
   (add-to-list 'org-agenda-files org-gtd-directory))
 
 (use-package org-protocol
@@ -1430,7 +1468,14 @@ With a prefix ARG, remove start location."
   :if window-system
   :quelpa (org-bars :fetcher github :repo "tonyaldon/org-bars")
   :defer t
-  :hook (org-mode . org-bars-mode))
+  :hook (org-mode . org-bars-mode)
+  :config
+  (use-package org-bars
+    :after org-tree-slide-ext
+    :ensure nil
+    :demand t
+    :config
+    (push '(org-bars-mode . nil) org-tree-slide-minor-mode-alist)))
 
 (use-package org-indent
   :ensure nil
@@ -1462,11 +1507,23 @@ With a prefix ARG, remove start location."
   :after org
   :defer t
   :bind (:map org-mode-map
-         ("C-c s s" . org-tree-slide-mode)
-         ("C-c s S-s" . 'org-tree-slide-skip-done-toggle)
+          ("<f5> <f5>" . org-tree-slide-mode)
          :map org-tree-slide-mode-map
-              ("C-c s p" . org-tree-slide-move-previous-tree)
-              ("C-c s n" . org-tree-slide-move-next-tree)))
+          ("<prior>" . org-tree-slide-move-previous-tree)
+          ("<next>" . org-tree-slide-move-next-tree)
+          ("<f5> t" . org-tree-slide-skip-done-toggle)
+          ("<f5> ;" . org-tree-slide-skip-comments-toggle)
+          ("<f5> T" . org-tree-slide-display-header-toggle)
+          ("<f5> a" . org-tree-slide-slide-in-effect-toggle)))
+
+(use-package org-tree-slide-ext
+  :load-path "custom-lisp"
+  :after org-tree-slide
+  :demand t
+  :custom
+  (org-tree-slide-header 'breadcrumbs-only)
+  (org-tree-slide-line-spacing 10)
+  (org-tree-slide-text-scale 4))
 
 (use-package org-englearn
   :quelpa (org-englearn :fetcher github :repo "BohongHuang/org-englearn")
@@ -1572,8 +1629,7 @@ With a prefix ARG, remove start location."
           (write-region (point-min) (point-max) (concat eshell-history-file-name ".old") 'append)))
       (eshell-add-input-to-history (string-trim input)))
     (eshell-write-history))
-  (add-hook 'eshell-exec-hook #'eshell-hist-write-after-command)
-  ;; (add-hook 'eshell-kill-hook #'eshell-hist-write-after-command)
+  (add-hook 'eshell-input-filter-functions #'eshell-hist-write-after-command)
   (defun eshell-hist-initialize@after (&rest _)
     (remove-hook 'eshell-input-filter-functions #'eshell-add-to-history t)
     (remove-hook 'eshell-exit-hook #'eshell-write-history)
@@ -1675,16 +1731,14 @@ With a prefix ARG, remove start location."
 (use-package emms
   :ensure t
   :defer t
-  :commands emms
+  :commands (emms hydra-emms/body)
   :hook (emms-player-started . emms-show)
   :custom
   (emms-player-list '(emms-player-mpv))
   (emms-playlist-buffer-name "*Music*")
   (emms-info-asynchronously t)
   (emms-info-functions '(emms-info-libtag))
-  :bind (("C-c m m" . emms)
-         ("C-c m n" . emms-next)
-         ("C-c m p" . emms-previous)
+  :bind (("C-c m" . hydra-emms/body)
          :map emms-mark-mode-map
               ("n" . next-line)
               ("p" . previous-line))
@@ -1694,7 +1748,26 @@ With a prefix ARG, remove start location."
   (emms-all)
   (emms-default-players)
   (emms-mode-line-disable)
-  (emms-playing-time-disable-display))
+  (emms-playing-time-disable-display)
+  (pretty-hydra-define hydra-emms
+    (:color red
+     :title (if-let ((track (emms-playlist-current-selected-track)))
+                (emms-track-description track)
+              "No playing track")
+     :hint nil)
+    ("File"
+     (("l"     (call-interactively #'emms-play-playlist)       "Play Playlist")
+      ("o"     (call-interactively #'emms-play-file)           "Play File")
+      ("O"     (call-interactively #'emms-play-directory-tree) "Play Directory"))
+     "Playback"
+     (("<SPC>" (emms-pause)                                    "Pause/Resume")
+      ("n"     (emms-next)                                     "Next")
+      ("p"     (emms-previous)                                 "Previous")
+      ("f"     (emms-seek-forward)                             "Seek Forward")
+      ("b"     (emms-seek-backward)                            "Seek Backward")
+      ("k"     (emms-stop)                                     "Stop"))
+     "Other"
+     (("m"     (emms)                                          "Emms Buffer")))))
 
 (use-package rsync-mode
   :quelpa (rsync-mode :fetcher github :repo "BohongHuang/rsync-mode")

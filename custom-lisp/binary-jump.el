@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t -*-
+
 (require 'hl-line)
 
 (defvar binary-jump-vertical-range nil)
