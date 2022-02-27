@@ -1,12 +1,5 @@
 ;;;  -*- lexical-binding: t; -*-
 
-(defun change-theme ()
-  "Disable all themes and then load a single theme interactively."
-  (interactive)
-  (while custom-enabled-themes
-    (disable-theme (car custom-enabled-themes)))
-  (call-interactively 'load-theme))
-
 (defmacro with-suppressed-message (&rest body)
   "Suppress new messages while BODY is evaluated."
   (declare (indent 0))

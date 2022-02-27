@@ -284,7 +284,9 @@
   :defer t
   :hook (find-file . (lambda () (require 'recentf)))
   :commands recentf-open-files
-  :custom (recentf-exclude '("~$" "/tmp/" "/ssh:" "/sshx:" "/sudo:"))
+  :custom
+  (recentf-exclude '("~$" "/tmp/" "/ssh:" "/sshx:" "/sudo:"))
+  (recentf-max-saved-items 100)
   :config
   (recentf-mode +1)
   (let ((file-name (buffer-file-name)))
@@ -366,7 +368,12 @@
   :defer t
   :custom (orderless-matching-styles '(orderless-prefixes))
   :hook
-  (minibuffer-setup . (lambda () (setq-local completion-styles '(orderless)))))
+  (minibuffer-setup . (lambda () (setq-local completion-styles '(orderless))))
+  :config
+  (defun orderless-literal-if-unicode (pattern _index _total)
+    (when (-some (lambda (char) (> char 255)) (string-to-list pattern))
+      #'orderless-literal))
+  (push #'orderless-literal-if-unicode orderless-style-dispatchers))
 
 
 (use-package marginalia
@@ -606,7 +613,7 @@
                   (when (and (eshell-popper-buffer-p buffer) (not (get-buffer-process buffer)))
                     (popper-popup-buffer buffer)
                     (throw 'break t))))
-              (unless (string-equal default-directory request-default-directory)
+              (unless (string-equal (expand-file-name default-directory) (expand-file-name request-default-directory))
                 (progn (eshell/cd request-default-directory)
                        (eshell-interrupt-process)))
             (popper-lower-to-popup (eshell t))))))))
@@ -1242,7 +1249,7 @@
   :ensure nil
   :defer t
   :config
-  (org-babel-do-load-languages 'org-babel-load-languages '((shell . t) (python . t))))
+  (org-babel-do-load-languages 'org-babel-load-languages '((shell . t) (python . t) (C . t))))
 
 (use-package org-pomodoro
   :ensure t
@@ -1717,11 +1724,11 @@ With a prefix ARG, remove start location."
   :config
   (dolist (it '("C-v" "M-v" "S-<delete>" "<tab>")) (add-to-list 'rime-translate-keybindings it)))
 
-(use-package secret-mode
-  :quelpa (secret-mode :fetcher github :repo "bkaestner/secret-mode.el")
+(use-package redacted
+  :quelpa (redacted :fetcher github :repo "bkaestner/redacted.el")
   :defer t
-  :commands secret-mode
-  :bind (("<pause>" . secret-mode)))
+  :commands redacted-mode
+  :bind (("<pause>" . redacted-mode)))
 
 (use-package mpv
   :ensure t
@@ -1738,6 +1745,9 @@ With a prefix ARG, remove start location."
   (emms-playlist-buffer-name "*Music*")
   (emms-info-asynchronously t)
   (emms-info-functions '(emms-info-libtag))
+  (emms-lyrics-scroll-p nil)
+  (emms-lyrics-display-on-modeline nil)
+  (emms-lyrics-display-on-minibuffer t)
   :bind (("C-c m" . hydra-emms/body)
          :map emms-mark-mode-map
               ("n" . next-line)
@@ -1759,6 +1769,8 @@ With a prefix ARG, remove start location."
      (("l"     (call-interactively #'emms-play-playlist)       "Play Playlist")
       ("o"     (call-interactively #'emms-play-file)           "Play File")
       ("O"     (call-interactively #'emms-play-directory-tree) "Play Directory"))
+     "Playlist"
+     (("S"     (emms-shuffle)                                  "Shuffle"))
      "Playback"
      (("<SPC>" (emms-pause)                                    "Pause/Resume")
       ("n"     (emms-next)                                     "Next")
@@ -1766,6 +1778,8 @@ With a prefix ARG, remove start location."
       ("f"     (emms-seek-forward)                             "Seek Forward")
       ("b"     (emms-seek-backward)                            "Seek Backward")
       ("k"     (emms-stop)                                     "Stop"))
+     "Score"
+     (("s"     (call-interactively #'emms-score-set-playing)   "Set Score"))
      "Other"
      (("m"     (emms)                                          "Emms Buffer")))))
 
@@ -1819,3 +1833,4 @@ Saves to a temp file and puts the filename in the kill ring."
 
 (provide 'init)
 ;;; init.el
+(put 'narrow-to-region 'disabled nil)
