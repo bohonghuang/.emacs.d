@@ -6,7 +6,8 @@ tutorial
 eln-cache
 webkit
 recentf
-eshell
+eshell/history*
+eshell/lastdir
 request
 tramp
 bookmarks
@@ -22,7 +23,6 @@ transient
 projects
 projectile-bookmarks.eld
 bookmarks
-eshell
 local.el
 custom.el
 cnfonts

@@ -1725,9 +1725,8 @@ With a prefix ARG, remove start location."
   (dolist (it '("C-v" "M-v" "S-<delete>" "<tab>")) (add-to-list 'rime-translate-keybindings it)))
 
 (use-package redacted
-  :quelpa (redacted :fetcher github :repo "bkaestner/redacted.el")
+  :ensure t
   :defer t
-  :commands redacted-mode
   :bind (("<pause>" . redacted-mode)))
 
 (use-package mpv
