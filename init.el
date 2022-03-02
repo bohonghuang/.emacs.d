@@ -1491,13 +1491,18 @@ With a prefix ARG, remove start location."
 
 (use-package ox-md
   :ensure nil
-  :defer t
-  :hook (org-mode . (lambda () (require 'ox-md))))
+  :demand t
+  :after ox)
 
 (use-package ox-reveal
   :ensure t
-  :defer t
-  :hook (org-mode . (lambda () (require 'ox-reveal))))
+  :demand t
+  :after ox)
+
+(use-package ox-hugo
+  :ensure t
+  :demand t
+  :after ox)
 
 (use-package org-media-note
   :quelpa (org-media-note :fetcher github :repo "yuchen-lea/org-media-note")
