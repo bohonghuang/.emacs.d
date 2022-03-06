@@ -621,6 +621,7 @@
 (use-package smartparens
   :ensure t
   :defer t
+  :init (defalias 'sp-mode #'smartparens-mode)
   :hook
   ((prog-mode text-mode minibuffer-setup eshell-mode lisp-mode ielm-mode mermaid-mode) . smartparens-mode)
   :bind (:map smartparens-mode-map
@@ -1228,7 +1229,7 @@
      ("" "ctex" nil nil)
      ("" "svg" nil nil)))
   (org-latex-image-default-width nil)
-  (org-latex-image-default-height "120pt")
+  (org-latex-image-default-height ".2\\linewidth")
   :bind (:map org-mode-map
               ("M-," . org-mark-ring-goto)
               ("M-." . org-open-at-point)))
@@ -1249,7 +1250,9 @@
   :ensure nil
   :defer t
   :config
-  (org-babel-do-load-languages 'org-babel-load-languages '((shell . t) (python . t) (C . t))))
+  (defun org-babel-check-evaluate@before (info)
+    (ignore-errors (org-babel-do-load-languages 'org-babel-load-languages (list (cons (intern (car info)) t)))))
+  (advice-add #'org-babel-check-evaluate :before #'org-babel-check-evaluate@before))
 
 (use-package org-pomodoro
   :ensure t
@@ -1509,7 +1512,7 @@ With a prefix ARG, remove start location."
   :defer t
   :hook (org-mode . org-media-note-mode)
   :bind(:map org-mode-map
-             ("C-c m" . org-media-note-hydra/body-with-sis-set-english))
+        ("C-c v" . org-media-note-hydra/body))
   :custom
   (org-media-note-display-inline-images nil)
   (org-media-note-screenshot-image-dir (expand-file-name "org-media-note" org-directory)))
@@ -1762,35 +1765,31 @@ With a prefix ARG, remove start location."
   (emms-all)
   (emms-default-players)
   (emms-mode-line-disable)
-  (emms-playing-time-disable-display)
-  (pretty-hydra-define hydra-emms
-    (:color red
-     :title (if-let ((track (emms-playlist-current-selected-track)))
-                (emms-track-description track)
-              "No playing track")
-     :hint nil)
-    ("File"
-     (("l"     (call-interactively #'emms-play-playlist)       "Play Playlist")
-      ("o"     (call-interactively #'emms-play-file)           "Play File")
-      ("O"     (call-interactively #'emms-play-directory-tree) "Play Directory"))
-     "Playlist"
-     (("S"     (emms-shuffle)                                  "Shuffle"))
-     "Playback"
-     (("<SPC>" (emms-pause)                                    "Pause/Resume")
-      ("n"     (emms-next)                                     "Next")
-      ("p"     (emms-previous)                                 "Previous")
-      ("f"     (emms-seek-forward)                             "Seek Forward")
-      ("b"     (emms-seek-backward)                            "Seek Backward")
-      ("k"     (emms-stop)                                     "Stop"))
-     "Score"
-     (("s"     (call-interactively #'emms-score-set-playing)   "Set Score"))
-     "Other"
-     (("m"     (emms)                                          "Emms Buffer")))))
+  (emms-playing-time-disable-display))
+
+(use-package emms-ext
+  :load-path "custom-lisp"
+  :demand t
+  :after emms)
 
 (use-package rsync-mode
   :quelpa (rsync-mode :fetcher github :repo "BohongHuang/rsync-mode")
   :ensure t
   :defer t)
+
+(use-package mu4e
+  :when (and (boundp 'use-mu4e) use-mu4e)
+  :defer t
+  :commands (mu4e)
+  :config
+  (setq mu4e-get-mail-command       "mbsync -a"
+        mail-user-agent             'mu4e-user-agent
+        message-send-mail-function  'message-send-mail-with-sendmail
+        sendmail-program            (executable-find "msmtp"))
+  (setq mu4e-contexts nil)
+  (dolist (file (directory-files
+                 (expand-file-name "mu4e/accounts" (or (getenv "XDG_CONFIG_HOME") "~/.config")) t "\\.el$" nil))
+    (load file)))
 
 (use-package edit-server
   :defer t

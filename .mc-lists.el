@@ -58,6 +58,7 @@
         phi-autopair-delete-forward
         picture-self-insert
         pycharm-backspace
+        pycharm-return
         repeat
         sgml-slash
         sis--prefix-override-handler

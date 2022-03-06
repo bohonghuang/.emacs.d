@@ -1,0 +1,12 @@
+# key: <octfg
+# name: Octave Figure
+# --
+#+BEGIN_SRC octave :results value file :exports both
+  figure(1, "visible", "off");
+  figurefile = "${1:/tmp/`(random)`.png}";
+
+  $0
+
+  print(figurefile, "-dpng");
+  ans = figurefile;
+#+END_SRC
