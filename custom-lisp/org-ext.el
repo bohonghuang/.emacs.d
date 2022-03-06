@@ -52,96 +52,78 @@ Excludes the heading and any child subtrees."
         (point-marker)
         most-positive-fixnum)))))
 
-(require 'cal-iso)
-
-(defun iso-week-to-time (iso-week)
-  (pcase-let ((`(,m ,d ,y)
-               (calendar-gregorian-from-absolute
-                (calendar-iso-to-absolute iso-week))))
-    (encode-time 0 0 0 d m y)))
-
-(defun iso-week-to-date (iso-week)      ;week day year
-  (calendar-gregorian-from-absolute
-   (calendar-iso-to-absolute iso-week)))
-
-(defun iso-week-from-date (date)
-  (calendar-iso-from-absolute
-   (calendar-absolute-from-gregorian date))) ;week day year
-
-(defun time-to-date (time)
-  (let ((decoded-time (decode-time time)))
-    (list (nth 4 decoded-time) (nth 3 decoded-time) (nth 5 decoded-time))))
-
-(with-eval-after-load 'org-agenda
-  (if (version<= "9.5" (org-version))
-      (defun org-agenda-get-day-entries (file date &rest args)
-    "Does the work for `org-diary' and `org-agenda'.
+(defun org-agenda-get-day-entries-with-macro-expanded (file date &rest args)
+  "Does the work for `org-diary' and `org-agenda'.
 FILE is the path to a file to be checked for entries.  DATE is date like
 the one returned by `calendar-current-date'.  ARGS are symbols indicating
 which kind of entries should be extracted.  For details about these, see
 the documentation of `org-diary'."
-    (let* ((org-startup-folded nil)
-	   (org-startup-align-all-tables nil)
-	   (buffer (if (file-exists-p file) (org-get-agenda-file-buffer file)
-		     (error "No such file %s" file))))
-      (if (not buffer)
-	  ;; If file does not exist, signal it in diary nonetheless.
-	  (list (format "ORG-AGENDA-ERROR: No such org-file %s" file))
-        (with-current-buffer buffer
-	  (unless (derived-mode-p 'org-mode)
-	    (error "Agenda file %s is not in Org mode" file))
-	  (setq org-agenda-buffer (or org-agenda-buffer buffer))
-	  (setf org-agenda-current-date date)
-          (undo-boundary)
-          (org-macro-replace-all org-macro-templates)
-          (let ((ret (save-excursion
-	               (save-restriction
-	                 (if (eq buffer org-agenda-restrict)
-		             (narrow-to-region org-agenda-restrict-begin
-				               org-agenda-restrict-end)
-	                   (widen))
-	                 ;; Rationalize ARGS.  Also make sure `:deadline' comes
-	                 ;; first in order to populate DEADLINES before passing it.
-	                 ;;
-	                 ;; We use `delq' since `org-uniquify' duplicates ARGS,
-	                 ;; guarding us from modifying `org-agenda-entry-types'.
-	                 (setf args (org-uniquify (or args org-agenda-entry-types)))
-	                 (when (and (memq :scheduled args) (memq :scheduled* args))
-	                   (setf args (delq :scheduled* args)))
-	                 (cond
-	                  ((memq :deadline args)
-	                   (setf args (cons :deadline
-			                    (delq :deadline (delq :deadline* args)))))
-	                  ((memq :deadline* args)
-	                   (setf args (cons :deadline* (delq :deadline* args)))))
-	                 ;; Collect list of headlines.  Return them flattened.
-	                 (let ((case-fold-search nil) results deadlines)
-                           (org-dlet
-                               ((date date))
-	                     (dolist (arg args (apply #'nconc (nreverse results)))
-		               (pcase arg
-		                 ((and :todo (guard (org-agenda-today-p date)))
-		                  (push (org-agenda-get-todos) results))
-		                 (:timestamp
-		                  (push (org-agenda-get-blocks) results)
-		                  (push (org-agenda-get-timestamps deadlines) results))
-		                 (:sexp
-		                  (push (org-agenda-get-sexps) results))
-		                 (:scheduled
-		                  (push (org-agenda-get-scheduled deadlines) results))
-		                 (:scheduled*
-		                  (push (org-agenda-get-scheduled deadlines t) results))
-		                 (:closed
-		                  (push (org-agenda-get-progress) results))
-		                 (:deadline
-		                  (setf deadlines (org-agenda-get-deadlines))
-		                  (push deadlines results))
-		                 (:deadline*
-		                  (setf deadlines (org-agenda-get-deadlines t))
-		                  (push deadlines results))))))))))
-            (primitive-undo 1 buffer-undo-list)
-            ret)))))
-    (error "Your org-version(< 9.5) is not supported!")))
+  (let* ((org-startup-folded nil)
+	 (org-startup-align-all-tables nil)
+	 (buffer (if (file-exists-p file) (org-get-agenda-file-buffer file)
+		   (error "No such file %s" file))))
+    (if (not buffer)
+	;; If file does not exist, signal it in diary nonetheless.
+	(list (format "ORG-AGENDA-ERROR: No such org-file %s" file))
+      (with-current-buffer buffer
+	(unless (derived-mode-p 'org-mode)
+	  (error "Agenda file %s is not in Org mode" file))
+	(setq org-agenda-buffer (or org-agenda-buffer buffer))
+	(setf org-agenda-current-date date)
+        (undo-boundary)
+        (org-macro-replace-all org-macro-templates)
+        (let ((ret (save-excursion
+	             (save-restriction
+	               (if (eq buffer org-agenda-restrict)
+		           (narrow-to-region org-agenda-restrict-begin
+				             org-agenda-restrict-end)
+	                 (widen))
+	               ;; Rationalize ARGS.  Also make sure `:deadline' comes
+	               ;; first in order to populate DEADLINES before passing it.
+	               ;;
+	               ;; We use `delq' since `org-uniquify' duplicates ARGS,
+	               ;; guarding us from modifying `org-agenda-entry-types'.
+	               (setf args (org-uniquify (or args org-agenda-entry-types)))
+	               (when (and (memq :scheduled args) (memq :scheduled* args))
+	                 (setf args (delq :scheduled* args)))
+	               (cond
+	                ((memq :deadline args)
+	                 (setf args (cons :deadline
+			                  (delq :deadline (delq :deadline* args)))))
+	                ((memq :deadline* args)
+	                 (setf args (cons :deadline* (delq :deadline* args)))))
+	               ;; Collect list of headlines.  Return them flattened.
+	               (let ((case-fold-search nil) results deadlines)
+                         (org-dlet
+                             ((date date))
+	                   (dolist (arg args (apply #'nconc (nreverse results)))
+		             (pcase arg
+		               ((and :todo (guard (org-agenda-today-p date)))
+		                (push (org-agenda-get-todos) results))
+		               (:timestamp
+		                (push (org-agenda-get-blocks) results)
+		                (push (org-agenda-get-timestamps deadlines) results))
+		               (:sexp
+		                (push (org-agenda-get-sexps) results))
+		               (:scheduled
+		                (push (org-agenda-get-scheduled deadlines) results))
+		               (:scheduled*
+		                (push (org-agenda-get-scheduled deadlines t) results))
+		               (:closed
+		                (push (org-agenda-get-progress) results))
+		               (:deadline
+		                (setf deadlines (org-agenda-get-deadlines))
+		                (push deadlines results))
+		               (:deadline*
+		                (setf deadlines (org-agenda-get-deadlines t))
+		                (push deadlines results))))))))))
+          (primitive-undo 1 buffer-undo-list)
+          ret)))))
+
+(with-eval-after-load 'org-agenda
+  (if (version<= "9.5" (org-version))
+      (advice-add #'org-agenda-get-day-entries :override #'org-agenda-get-day-entries-with-macro-expanded)
+    (error "Org < 9.5 is not supported!")))
 
 (defun org-get-media-link-export-function (media-type)
   (lambda (path _desc backend)

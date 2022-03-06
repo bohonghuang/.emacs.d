@@ -1176,6 +1176,11 @@
   (calendar-mark-holidays-flag t)
   (calendar-chinese-all-holidays-flag t))
 
+(use-package calendar-ext
+  :load-path "custom-lisp"
+  :demand t
+  :after calendar)
+
 (use-package cal-china-x
   :ensure t
   :demand t
@@ -1191,7 +1196,9 @@
                                        (holiday-fixed 11 26 "感恩节")
                                        (holiday-fixed 11 1 "万圣节")
                                        (holiday-fixed 12 25 "圣诞节")
-                                       (holiday-fixed 12 24 "平安夜")))
+                                       (holiday-fixed 12 24 "平安夜")
+                                       (holiday-month-week-day 6 3 7 "父亲节")
+                                       (holiday-month-week-day 5 2 7 "母亲节")))
   (setq calendar-holidays (append cal-china-x-chinese-holidays cal-china-x-general-holidays cal-china-x-important-holidays)))
 
 ;;;;;;;;;
@@ -1745,8 +1752,8 @@ With a prefix ARG, remove start location."
 (use-package emms
   :ensure t
   :defer t
-  :commands (emms hydra-emms/body)
   :hook (emms-player-started . emms-show)
+  :commands emms
   :custom
   (emms-player-list '(emms-player-mpv))
   (emms-playlist-buffer-name "*Music*")
@@ -1770,7 +1777,8 @@ With a prefix ARG, remove start location."
 (use-package emms-ext
   :load-path "custom-lisp"
   :demand t
-  :after emms)
+  :after emms
+  :commands hydra-emms/body)
 
 (use-package rsync-mode
   :quelpa (rsync-mode :fetcher github :repo "BohongHuang/rsync-mode")
