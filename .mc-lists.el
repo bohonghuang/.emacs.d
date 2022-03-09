@@ -66,6 +66,7 @@
         sp-forward-sexp
         sp-forward-slurp-sexp
         sp-join-sexp
+        sp-kill-sexp
         sp-unwrap-sexp
         vhdl-electric-semicolon
         vhdl-electric-space

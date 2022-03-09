@@ -208,7 +208,9 @@
   (dired-listing-switches "-alh")
   (browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
   :config
-  (put 'dired-find-alternate-file 'disabled nil))
+  (put 'dired-find-alternate-file 'disabled nil)
+  :bind
+  (:map dired-mode-map ("/" . dired-narrow)))
 
 (use-package dired-async
   :ensure nil
@@ -253,7 +255,8 @@
 (use-package xref
   :ensure nil
   :defer t
-  :bind (("<mouse-8>" . xref-pop-marker-stack)))
+  :bind (("<mouse-8>" . xref-pop-marker-stack))
+  :custom (xref-backend-functions '(t)))
 
 (use-package compile
   :ensure nil
@@ -866,7 +869,10 @@
   :ensure t
   :defer t
   :custom
-  (rustic-lsp-client (if (boundp 'lsp-client) lsp-client 'eglot)))
+  (rustic-lsp-client (if (boundp 'language-support)
+                         (pcase language-support
+                           ((and lsp-based (or 'lsp-mode 'eglot)) lsp-based)
+                           (_ nil)))))
 
 (use-package groovy-mode
   :ensure t
@@ -936,22 +942,61 @@
 ;; LSP ;;
 ;;;;;;;;;
 
-(pcase (and (boundp 'lsp-client) lsp-client)
-  ((or `nil `eglot)
+(pcase (and (boundp 'language-support) language-support)
+  ('citre
+   (use-package citre
+     :ensure t
+     :defer t
+     :init (require 'citre-config)
+     :hook ((after-save . citre-auto-update-tags-after-save))
+     :bind (("C-M-?" . citre-peek))
+     :custom
+     (citre-auto-enable-citre-mode-modes '(prog-mode))
+     (citre-project-root-function (lambda  () (project-root (project-current t))))
+     (citre-gtags-args '("--compact"))
+     :config
+     (defun citre-global-auto-objdir ()
+       (kill-local-variable 'citre-gtags-args)
+       (setq-local citre-gtags-args (append citre-gtags-args (list "--objdir" (file-name-directory citre--tags-file)))))
+     (defun citre-global-update-database-this-file ()
+       (interactive)
+       (when-let* ((file (buffer-file-name (current-buffer)))
+                   (project (project-current t))
+                   (root (project-root project))
+                   (global-executable (executable-find "global"))
+                   (ctags-file citre--tags-file)
+                   (gtags-directory (file-name-directory ctags-file))
+                   (default-directory root))
+         (let ((process-environment (cons (concat "GTAGSOBJDIR=" "./" (file-relative-name gtags-directory root)) process-environment)))
+           (make-process
+            :name "global"
+            :buffer (get-buffer-create "*citre-global-update*")
+            :command (list (or citre-global-program "global") "--single-update" file)))))
+     (defun citre-auto-update-tags-after-save ()
+       (when citre-mode
+         (when citre--tags-file
+           (citre-update-this-tags-file))
+         (citre-global-update-database-this-file)))
+     (defun citre-init-in-project ()
+       (interactive)
+       (let ((citre-default-create-tags-file-location 'project-cache)
+             (citre-use-project-root-when-creating-tags t))
+         (citre-create-tags-file)))))
+  ('eglot
    (use-package eglot
      :hook ((scala-mode rustic-mode c++-mode c-mode objc-mode java-mode python-mode tex-mode) . eglot-ensure)
      :defer t
      :ensure t
      :bind (:map prog-mode-map
-                 ("C-c l r" . eglot-rename)
-                 ("C-c l a" . eglot-code-actions))
+                 ("C-c l r r" . eglot-rename)
+                 ("C-c l a a" . eglot-code-actions))
      :config
      (setf (cdr (assoc 'python-mode eglot-server-programs)) '("pyright-langserver" "--stdio")
            (cdr (assoc 'scala-mode eglot-server-programs)) '("metals")
            (cdr (assoc 'rust-mode eglot-server-programs)) '("rust-analyzer")
            (cdr (assoc 'java-mode eglot-server-programs)) '("jdtls")
            (cdr (assoc '(tex-mode context-mode texinfo-mode bibtex-mode) eglot-server-programs)) '("texlab"))))
-  (`lsp-mode
+  ('lsp-mode
    (use-package lsp-mode
      ;; Optional - enable lsp-mode automatically in scala files
      :ensure t
