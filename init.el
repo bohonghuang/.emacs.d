@@ -948,40 +948,17 @@
      :ensure t
      :defer t
      :init (require 'citre-config)
-     :hook ((after-save . citre-auto-update-tags-after-save))
      :bind (("C-M-?" . citre-peek))
      :custom
      (citre-auto-enable-citre-mode-modes '(prog-mode))
      (citre-project-root-function (lambda  () (project-root (project-current t))))
-     (citre-gtags-args '("--compact"))
-     :config
-     (defun citre-global-auto-objdir ()
-       (kill-local-variable 'citre-gtags-args)
-       (setq-local citre-gtags-args (append citre-gtags-args (list "--objdir" (file-name-directory citre--tags-file)))))
-     (defun citre-global-update-database-this-file ()
-       (interactive)
-       (when-let* ((file (buffer-file-name (current-buffer)))
-                   (project (project-current t))
-                   (root (project-root project))
-                   (global-executable (executable-find "global"))
-                   (ctags-file citre--tags-file)
-                   (gtags-directory (file-name-directory ctags-file))
-                   (default-directory root))
-         (let ((process-environment (cons (concat "GTAGSOBJDIR=" "./" (file-relative-name gtags-directory root)) process-environment)))
-           (make-process
-            :name "global"
-            :buffer (get-buffer-create "*citre-global-update*")
-            :command (list (or citre-global-program "global") "--single-update" file)))))
-     (defun citre-auto-update-tags-after-save ()
-       (when citre-mode
-         (when citre--tags-file
-           (citre-update-this-tags-file))
-         (citre-global-update-database-this-file)))
-     (defun citre-init-in-project ()
-       (interactive)
-       (let ((citre-default-create-tags-file-location 'project-cache)
-             (citre-use-project-root-when-creating-tags t))
-         (citre-create-tags-file)))))
+     (citre-gtags-args '("--compact")))
+   (use-package citre-ext
+     :load-path "custom-lisp"
+     :demand t
+     :hook ((after-save . citre-auto-update-tags-after-save)
+            (citre-mode . citre-global-auto-objdir))
+     :after citre))
   ('eglot
    (use-package eglot
      :hook ((scala-mode rustic-mode c++-mode c-mode objc-mode java-mode python-mode tex-mode) . eglot-ensure)
