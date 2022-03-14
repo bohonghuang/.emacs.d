@@ -27,6 +27,7 @@
         intellij-backspace
         intellij-return
         kill-region
+        kill-sexp
         kill-visual-line
         kmacro-start-macro-or-insert-counter
         list-buffers

@@ -200,6 +200,13 @@
   :defer t
   :init (defalias 'list-buffers 'ibuffer))
 
+(use-package all-the-icons-ibuffer
+  :ensure t
+  :defer t
+  :when (and (boundp 'use-all-the-icons) use-all-the-icons)
+  :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
+  :custom (all-the-icons-dired-monochrome nil))
+
 (use-package dired
   :ensure nil
   :defer t
@@ -222,6 +229,12 @@
   :load-path "custom-lisp"
   :after dired
   :demand t)
+
+(use-package all-the-icons-dired
+  :when (and (boundp 'use-all-the-icons) use-all-the-icons)
+  :ensure t
+  :defer t
+  :hook (dired-mode . all-the-icons-dired-mode))
 
 (use-package diredfl
   :after dired
@@ -298,14 +311,16 @@
 
 (use-package repeat
   :if (version<= "28.0.60" emacs-version)
-  :init (defun require-repeat () (require 'repeat))
   :ensure nil
   :defer t
+  :init
+  (defun require-repeat ()
+    (require 'repeat)
+    (remove-hook 'pre-command-hook #'require-repeat)
+    (fmakunbound #'require-repeat))
   :hook (pre-command . require-repeat)
   :config
-  (repeat-mode +1)
-  (remove-hook 'pre-command-hook #'require-repeat)
-  (fmakunbound #'require-repeat))
+  (repeat-mode +1))
 
 (use-package picture
   :ensure nil
@@ -333,16 +348,25 @@
 (use-package which-key
   :ensure t
   :defer t
-  :init (defun require-which-key () (require 'which-key))
+  :init
+  (defun require-which-key ()
+    (require 'which-key)
+    (fmakunbound #'require-which-key)
+    (remove-hook 'pre-command-hook #'require-which-key))
   :hook (pre-command . require-which-key)
   :config
-  (which-key-mode t)
-  (remove-hook 'pre-command-hook #'require-which-key)
-  (fmakunbound #'require-which-key))
+  (which-key-mode t))
 
 (use-package doom-modeline
   :ensure t
   :defer nil
+  :init
+  (defun doom-modeline-refresh-after-command ()
+    (doom-modeline-refresh-font-width-cache)
+    (fmakunbound #'doom-modeline-refresh-after-command)
+    (remove-hook 'post-command-hook #'doom-modeline-refresh-after-command))
+  :hook (post-command . doom-modeline-refresh-after-command)
+  :custom (doom-modeline-icon (and (boundp 'use-all-the-icons) use-all-the-icons))
   :config
   (doom-modeline-mode +1))
 
@@ -485,6 +509,12 @@
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
+(use-package all-the-icons-completion
+  :when (and (boundp 'use-all-the-icons) use-all-the-icons)
+  :ensure t
+  :defer t
+  :hook (marginalia-mode . all-the-icons-completion-mode))
+
 (use-package crux
   :ensure t
   :defer t
@@ -517,9 +547,7 @@
   :custom
   (cnfonts-personal-fontnames '(("JetBrains Mono" "JetBrainsMono Nerd Font") nil nil))
   (cnfonts-use-face-font-rescale t)
-  (cnfonts-use-cache t)
-  :config
-  (advice-add #'cnfonts--step-fontsize :after (lambda (&rest _) (and (boundp 'doom-modeline-mode) doom-modeline-mode (doom-modeline-refresh-font-width-cache)))))
+  (cnfonts-use-cache t))
 
 (use-package ligature
   :defer t
@@ -677,7 +705,8 @@
     :after org
     :demand t
     :config
-    (sp-local-pair 'org-mode "\\[" "\\]"))
+    (sp-local-pair 'org-mode "\\[" "\\]")
+    (sp-local-pair 'org-mode "+" "+" :unless '(sp-point-after-word-p)))
   (use-package smartparens
     :after eshell
     :demand t
@@ -1283,31 +1312,12 @@
     (ignore-errors (org-babel-do-load-languages 'org-babel-load-languages (list (cons (intern (car info)) t)))))
   (advice-add #'org-babel-check-evaluate :before #'org-babel-check-evaluate@before))
 
-(use-package org-pomodoro
-  :ensure t
-  :defer t
-  :bind (("<f12>" . org-pomodoro))
-  :custom (org-pomodoro-keep-killed-pomodoro-time t)
-  :hook (org-agenda-mode . (lambda () (require 'org-pomodoro))))
-
-(use-package org-pomodoro-ext
-  :load-path "custom-lisp"
-  :defer t
-  :bind (("S-<f12>" . org-pomodoro-interrupt))
-  :hook (org-pomodoro-started . (lambda () (require 'org-pomodoro-ext))))
-
 (use-package org-ext
   :load-path "custom-lisp"
   :after org
   :demand t
   :bind (:map org-mode-map
          ("C-c C-S-L" . org-link-make-from-region)))
-
-(use-package org-pomodoro
-  :ensure t
-  :defer t
-  :bind (("C-c g f" . org-pomodoro))
-  :custom (org-pomodoro-keep-killed-pomodoro-time t))
 
 (use-package org-agenda
   :ensure nil
@@ -1386,6 +1396,9 @@
         ("C-c n c" . org-remark-change)
         ("C-c n ." . org-remark-view))
   :config
+  (org-remark-create "red"
+                     '(:underline "red" :background "dark red")
+                     '(CATEGORY "important"))
   (defvar org-remark-repeat-map
         (let ((map (make-sparse-keymap)))
           (define-key map (kbd "n") #'org-remark-view-next)
@@ -1676,13 +1689,13 @@ With a prefix ARG, remove start location."
   (add-hook 'eshell-input-filter-functions #'eshell-hist-write-after-command)
   (defun eshell-hist-initialize@after (&rest _)
     (remove-hook 'eshell-input-filter-functions #'eshell-add-to-history t)
-    (remove-hook 'eshell-exit-hook #'eshell-write-history)
+    (remove-hook 'eshell-exit-hook #'eshell-write-history t)
     (remove-hook 'kill-emacs-query-functions #'eshell-save-some-history t))
   (advice-add #'eshell-hist-initialize :after #'eshell-hist-initialize@after))
 
 (use-package em-term
   :ensure nil
-  :defer t
+  :defer tpppp 
   :config
   (dolist (it '("nvtop" "bashtop" "btop" "top" "vim" "nvim" "cmatrix"))
     (add-to-list 'eshell-visual-commands it)))
@@ -1698,6 +1711,7 @@ With a prefix ARG, remove start location."
   :hook (eshell-mode . eshell-outline-mode)
   :config
   (setf (cdr eshell-outline-mode-map) nil))
+
 
 (use-package eshell-prompt-extras
   :ensure t
@@ -1777,13 +1791,11 @@ With a prefix ARG, remove start location."
   :hook (emms-player-started . emms-show)
   :commands emms
   :custom
-  (emms-player-list '(emms-player-mpv))
+  (emms-player-list '(emms-player-vlc emms-player-mpv))
   (emms-playlist-buffer-name "*Music*")
   (emms-info-asynchronously t)
   (emms-info-functions '(emms-info-libtag))
   (emms-lyrics-scroll-p nil)
-  (emms-lyrics-display-on-modeline nil)
-  (emms-lyrics-display-on-minibuffer t)
   :bind (("C-c m" . hydra-emms/body)
          :map emms-mark-mode-map
               ("n" . next-line)
@@ -1792,7 +1804,6 @@ With a prefix ARG, remove start location."
   (require 'emms-setup)
   (require 'emms-info-libtag)
   (emms-all)
-  (emms-default-players)
   (emms-mode-line-disable)
   (emms-playing-time-disable-display))
 
@@ -1811,12 +1822,13 @@ With a prefix ARG, remove start location."
   :when (and (boundp 'use-mu4e) use-mu4e)
   :defer t
   :commands (mu4e)
+  :custom
+  (mu4e-get-mail-command       "mbsync -a")
+  (mail-user-agent             'mu4e-user-agent)
+  (message-send-mail-function  'message-send-mail-with-sendmail)
+  (sendmail-program            (executable-find "msmtp"))
   :config
-  (setq mu4e-get-mail-command       "mbsync -a"
-        mail-user-agent             'mu4e-user-agent
-        message-send-mail-function  'message-send-mail-with-sendmail
-        sendmail-program            (executable-find "msmtp"))
-  (setq mu4e-contexts nil)
+  ;; (setq mu4e-contexts nil)
   (dolist (file (directory-files
                  (expand-file-name "mu4e/accounts" (or (getenv "XDG_CONFIG_HOME") "~/.config")) t "\\.el$" nil))
     (load file)))
