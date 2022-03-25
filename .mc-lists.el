@@ -3,6 +3,7 @@
 
 (setq mc/cmds-to-run-for-all
       '(
+        LaTeX-babel-insert-hyphen
         TeX-insert-backslash
         backward-sexp
         c-electric-delete-forward
@@ -11,6 +12,7 @@
         c-electric-slash
         c-electric-star
         c-indent-line-or-region
+        cdlatex-tab
         comment-line
         crux-eval-and-replace
         dap-breakpoint-toggle
@@ -54,6 +56,7 @@
         org-self-insert-command
         org-shiftcontrolright
         org-shiftright
+        org-shifttab
         org-yank
         phi-autopair-delete-backward
         phi-autopair-delete-forward
@@ -68,6 +71,7 @@
         sp-forward-slurp-sexp
         sp-join-sexp
         sp-kill-sexp
+        sp-split-sexp
         sp-unwrap-sexp
         vhdl-electric-semicolon
         vhdl-electric-space

@@ -51,7 +51,10 @@
   :custom
   (history-length 1000)
   (completion-category-defaults nil)
-  (completion-category-overrides '((file (styles partial-completion)))))
+  (completion-category-overrides '((file (styles partial-completion))))
+  (enable-recursive-minibuffers t)
+  :config
+  (minibuffer-depth-indicate-mode +1))
 
 (use-package package
   :ensure nil
@@ -390,12 +393,80 @@
   :hook
   (rfn-eshadow-update-overlay . vertico-directory-tidy))
 
+(use-package company
+  :disabled (display-graphic-p)
+  :ensure t
+  :defer t
+  :hook
+  ((prog-mode ielm-mode) . company-mode)
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-frontends '(company-pseudo-tooltip-frontend
+                       company-echo-metadata-frontend))
+  (company-dabbrev-downcase nil)
+  (company-dabbrev-ignore-case t)
+  :config
+  (use-package company
+    :after tex
+    :ensure nil
+    :demand t
+    :config (add-hook 'TeX-mode-hook (lambda () (delete 'company-dabbrev company-backends)))))
+
+(use-package corfu
+  :when (display-graphic-p)
+  :ensure t
+  :defer t
+  :hook
+  ((prog-mode ielm-mode) . corfu-mode)
+  :bind (:map corfu-map ("C-M-i" . corfu-move-to-minibuffer))
+  :custom
+  (corfu-auto t)
+  (corfu-auto-prefix 1)
+  (corfu-separator ?\s)
+  (corfu-quit-no-match 'separator)
+  (corfu-on-exact-match nil)
+  (corfu-preview-current nil)
+  :config
+  (defun corfu-move-to-minibuffer ()
+    (interactive)
+    (let ((completion-extra-properties corfu--extra)
+          completion-cycle-threshold completion-cycling)
+      (apply #'consult-completion-in-region completion-in-region--data)))
+  (defalias 'company-mode 'corfu-mode)
+  (defvar company-backends nil))
+
+(use-package kind-icon
+  :when (version<= "28" emacs-version)
+  :ensure t
+  :demand t
+  :after corfu
+  :custom
+  (kind-icon-default-face 'corfu-default)
+  (kind-icon-use-icons nil)
+  :config
+  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+
+(use-package corfu-doc
+  :ensure t
+  :defer t
+  :after corfu
+  :custom
+  (corfu-doc-auto nil)
+  :hook (corfu-mode . corfu-doc-mode)
+  :bind (:map corfu-map ("M-." . corfu-doc-toggle)))
+
+(use-package dabbrev
+  :ensure nil
+  :defer t
+  :bind (("M-/" . dabbrev-completion)
+         ("C-M-/" . dabbrev-expand)))
+
 (use-package orderless
   :ensure t
   :defer t
   :custom (orderless-matching-styles '(orderless-prefixes))
   :hook
-  (minibuffer-setup . (lambda () (setq-local completion-styles '(orderless))))
+  ((minibuffer-setup corfu-mode) . (lambda () (setq-local completion-styles '(orderless))))
   :config
   (defun orderless-literal-if-unicode (pattern _index _total)
     (when (-some (lambda (char) (> char 255)) (string-to-list pattern))
@@ -414,7 +485,6 @@
 (use-package consult
   :ensure t
   :defer t
-  :custom (completion-in-region-function #'consult-completion-in-region)
   :bind (;; C-c bindings (mode-specific-map)
          ("C-c h" . consult-history)
          ("C-x M-x" . consult-mode-command)
@@ -462,6 +532,9 @@
          ("M-s L" . consult-line-multi))           ;; needed by consult-line to detect isearch
   :hook (completion-list-mode . consult-preview-at-point-mode)
   :init
+  (use-package minibuffer
+      :ensure nil
+      :custom (completion-in-region-function #'consult-completion-in-region))
   (setq register-preview-delay 0
         register-preview-function #'consult-register-format)
   (advice-add #'register-preview :override #'consult-register-window)
@@ -476,7 +549,11 @@
    consult-bookmark consult-recent-file consult-xref
    consult--source-recent-file consult--source-project-recent-file consult--source-bookmark
    :preview-key (kbd "M-."))
-  (setq consult-narrow-key "<"))
+  (setq consult-narrow-key "<")
+  (use-package consult-org
+    :after org
+    :defer t
+    :bind (:map org-mode-map ("M-g i" . consult-org-heading))))
 
 (use-package consult-dir
   :ensure t
@@ -551,7 +628,7 @@
 
 (use-package ligature
   :defer t
-  :if (and (>= emacs-major-version 28) window-system)
+  :if (and (version<= "28" emacs-major-version) window-system)
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode) major-mode) (require 'ligature) (ligature-mode +1))))
   :quelpa (ligature :fetcher github :repo "mickeynp/ligature.el")
   :config
@@ -656,40 +733,40 @@
   :hook
   ((prog-mode text-mode minibuffer-setup eshell-mode lisp-mode ielm-mode mermaid-mode) . smartparens-mode)
   :bind (:map smartparens-mode-map
-              ("C-*" . sp-join-sexp)
-              ("C-|" . sp-split-sexp)
-              ("C-M-f" . sp-forward-sexp)
-              ("C-M-b" . sp-backward-sexp)
-              ("C-M-d" . sp-down-sexp)
-              ("C-M-S-d" . sp-backward-down-sexp)
-              ("C-S-a" . sp-beginning-of-sexp)
-              ("C-S-e" . sp-end-of-sexp)
-              ("C-M-u" . sp-up-sexp)
-              ("C-M-S-u" . sp-backward-up-sexp)
-              ("C-M-n" . sp-next-sexp)
-              ("C-M-p" . sp-previous-sexp)
-              ("C-M-k" . sp-kill-sexp)
-              ("C-M-\"" . sp-backward-unwrap-sexp)
-              ("C-\"" . sp-unwrap-sexp)
-              ("M-\"" . sp-rewrap-sexp)
-              ("C-M-\"" . sp-splice-sexp)
-              ("C-)" . sp-select-next-thing-exchange)
-              ("C-M-)" . sp-select-next-thing)
-              ("C-(" . sp-select-previous-thing-exchange)
-              ("C-M-(" . sp-select-previous-thing)
-              ("C-M-SPC" . sp-mark-sexp)
-              :map emacs-lisp-mode-map
-              ("M-<right>" . sp-forward-slurp-sexp)
-              ("M-<left>" . sp-forward-barf-sexp)
-              ("C-M-t" . sp-transpose-sexp)
-              ("C-M-T" . sp-convolute-sexp)
-              ("C-M-<left>" . sp-backward-slurp-sexp)
-              ("C-M-<right>" . sp-backward-barf-sexp)
-              ("C-M-<delete>" . sp-splice-sexp-killing-forward)
-              ("C-M-<backspace>" . sp-splice-sexp-killing-backward)
-              ("C-M-S-<backspace>" . sp-splice-sexp-killing-around)
-              ("M-F" . sp-forward-symbol)
-              ("M-B" . sp-backward-symbol))
+         ("C-*"               . sp-join-sexp)
+         ("C-|"               . sp-split-sexp)
+         ("C-M-f"             . sp-forward-sexp)
+         ("C-M-b"             . sp-backward-sexp)
+         ("C-M-d"             . sp-down-sexp)
+         ("C-M-S-d"           . sp-backward-down-sexp)
+         ("C-S-a"             . sp-beginning-of-sexp)
+         ("C-S-e"             . sp-end-of-sexp)
+         ("C-M-u"             . sp-up-sexp)
+         ("C-M-S-u"           . sp-backward-up-sexp)
+         ("C-M-n"             . sp-next-sexp)
+         ("C-M-p"             . sp-previous-sexp)
+         ("C-M-k"             . sp-kill-sexp)
+         ("C-M-\""            . sp-backward-unwrap-sexp)
+         ("C-\""              . sp-unwrap-sexp)
+         ("M-\""              . sp-rewrap-sexp)
+         ("C-M-\""            . sp-splice-sexp)
+         ("C-)"               . sp-select-next-thing-exchange)
+         ("C-M-)"             . sp-select-next-thing)
+         ("C-("               . sp-select-previous-thing-exchange)
+         ("C-M-("             . sp-select-previous-thing)
+         ("C-M-SPC"           . sp-mark-sexp)
+         :map emacs-lisp-mode-map
+         ("M-<right>"         . sp-forward-slurp-sexp)
+         ("M-<left>"          . sp-forward-barf-sexp)
+         ("C-M-t"             . sp-transpose-sexp)
+         ("C-M-T"             . sp-convolute-sexp)
+         ("C-M-<left>"        . sp-backward-slurp-sexp)
+         ("C-M-<right>"       . sp-backward-barf-sexp)
+         ("C-M-<delete>"      . sp-splice-sexp-killing-forward)
+         ("C-M-<backspace>"   . sp-splice-sexp-killing-backward)
+         ("C-M-S-<backspace>" . sp-splice-sexp-killing-around)
+         ("M-F"               . sp-forward-symbol)
+         ("M-B"               . sp-backward-symbol))
   :init
   (require 'smartparens-config)
   :custom
@@ -706,6 +783,7 @@
     :demand t
     :config
     (sp-local-pair 'org-mode "\\[" "\\]")
+    (sp-local-pair 'org-mode "<<" ">>")
     (sp-local-pair 'org-mode "+" "+" :unless '(sp-point-after-word-p)))
   (use-package smartparens
     :after eshell
@@ -837,24 +915,6 @@
   :ensure t
   :defer t
   :if (not (eq system-type 'windows-nt)))
-
-(use-package company
-  :ensure t
-  :defer t
-  :hook
-  ((prog-mode ielm-mode) . company-mode)
-  :custom
-  (company-minimum-prefix-length 1)
-  (company-frontends '(company-pseudo-tooltip-frontend
-                       company-echo-metadata-frontend))
-  (company-dabbrev-downcase nil)
-  (company-dabbrev-ignore-case t)
-  :config
-  (use-package company
-    :after tex
-    :ensure nil
-    :demand t
-    :config (add-hook 'TeX-mode-hook (lambda () (delete 'company-dabbrev company-backends)))))
 
 (use-package yasnippet
   :ensure t
@@ -1048,6 +1108,13 @@
      :ensure t
      :defer t
      :after lsp-mode)
+
+   (use-package lsp-completion
+     :ensure nil
+     :defer t
+     :init
+     (defun lsp-completion-mode@after (&rest _) (kill-local-variable 'completion-category-defaults))
+     (advice-add #'lsp-completion-mode :after #'lsp-completion-mode@after))
 
    (use-package consult-lsp
      :ensure t
@@ -1332,7 +1399,30 @@
   :config
   (require 'recentf)
   (require 'org-gtd)
-  (nconc recentf-exclude (org-agenda-files)))
+  (nconc recentf-exclude (org-agenda-files))
+  (use-package appt
+    :when (and (boundp 'use-appt-org-agenda) use-appt-org-agenda)
+    :demand t
+    :config
+    (add-hook 'org-agenda-finalize-hook #'org-agenda-to-appt)
+    (appt-activate +1)))
+
+(use-package appt
+  :ensure nil
+  :defer t
+  :custom
+  (appt-message-warning-time 6)
+  (appt-display-interval 3)
+  (appt-display-format 'window)
+  (appt-disp-window-function #'appt-disp-window-and-notification)
+  :config
+  (defun appt-disp-window-and-notification (min-to-appt new-time appt-msg)
+    (require 'notifications)
+    (notifications-notify :timeout (* appt-display-interval 60000)
+                          :title (format "You have a task in %s minutes" min-to-appt)
+                          :body (string-trim (replace-regexp-in-string "\\([0-9]\\{1,2\\}:[0-9]\\{1,2\\}\\)\\(-[0-9]\\{1,2\\}:[0-9]\\{1,2\\}\\)\\{0,1\\}" "" (substring-no-properties appt-msg)))
+                          :sound-name "alarm-clock-elapsed")
+    (appt-disp-window min-to-appt new-time appt-msg)))
 
 (use-package org-edna
   :ensure t
@@ -1378,9 +1468,9 @@
 
 (use-package org-remark
   :when (and (boundp 'use-org-remark) use-org-remark)
+  :init (require 'org-remark-global-tracking)
   :ensure t
   :defer t
-  :init (require 'org-remark-global-tracking)
   :custom
   (org-remark-global-tracking-mode +1)
   (org-remark-notes-file-path (expand-file-name "org-remark/notes.org" org-directory))
@@ -1388,13 +1478,13 @@
                                             (side . right)
                                             (slot . 1)))
   :bind (("C-c n m" . org-remark-mark)
-        :map org-remark-mode-map
-        ("C-c n o" . org-remark-open)
-        ("C-c n n" . org-remark-view-next)
-        ("C-c n p" . org-remark-view-prev)
-        ("C-c n r" . org-remark-remove)
-        ("C-c n c" . org-remark-change)
-        ("C-c n ." . org-remark-view))
+         :map org-remark-mode-map
+         ("C-c n o" . org-remark-open)
+         ("C-c n n" . org-remark-view-next)
+         ("C-c n p" . org-remark-view-prev)
+         ("C-c n r" . org-remark-remove)
+         ("C-c n c" . org-remark-change)
+         ("C-c n ." . org-remark-view))
   :config
   (org-remark-create "red"
                      '(:underline "red" :background "dark red")
@@ -1613,14 +1703,11 @@ With a prefix ARG, remove start location."
 (use-package tex
   :ensure auctex
   :defer t
-  :hook
-  (TeX-mode . company-mode)
-  (TeX-mode . yas-minor-mode)
   :custom
   (TeX-auto-save t)
   (TeX-parse-self t)
   (TeX-master nil)
-  (TeX-electric-math '("\\(" "\\)"));'("$" . "$"))
+  (TeX-electric-math nil); '("\\(" "\\)"));'("$" . "$"))
   (LaTeX-math-list '((nil "operatorname" "Log-like")
                      (nil "mathcal" "Log-like")
                      (nil "mathfrak" "Log-like")
@@ -1630,7 +1717,9 @@ With a prefix ARG, remove start location."
                      (nil "mathit" "Log-like")
                      (nil "mathbf" "Log-like")
                      (nil "mathsf" "Log-like")
-                     (nil "mathtt" "Log-like")))
+                     (nil "mathtt" "Log-like")
+                     (nil "dots"   "Log-like")
+                     (nil "stackrel"   "Log-like")))
   :config
   (when (boundp 'tex-mode-hook)
     (dolist (hook tex-mode-hook) (add-to-list 'TeX-mode-hook hook)))
@@ -1640,7 +1729,10 @@ With a prefix ARG, remove start location."
 (use-package cdlatex
   :ensure t
   :defer t
-  :hook (LaTeX-mode . turn-on-cdlatex))
+  :hook (LaTeX-mode . turn-on-cdlatex)
+  :custom
+  (cdlatex-paired-parens "$[{(")
+  (cdlatex-env-alist '(("cases" "\\begin{cases}\n?\n\\end{cases}" nil))))
 
 (use-package go-translate
   :ensure t
