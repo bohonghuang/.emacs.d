@@ -417,7 +417,7 @@
   :ensure t
   :defer t
   :hook
-  ((prog-mode ielm-mode) . corfu-mode)
+  ((prog-mode ielm-mode tex-mode) . corfu-mode)
   :bind (:map corfu-map ("C-M-i" . corfu-move-to-minibuffer))
   :custom
   (corfu-auto t)
@@ -433,8 +433,12 @@
     (let ((completion-extra-properties corfu--extra)
           completion-cycle-threshold completion-cycling)
       (apply #'consult-completion-in-region completion-in-region--data)))
-  (defalias 'company-mode 'corfu-mode)
-  (defvar company-backends nil))
+  (use-package company
+    :init
+    (defalias 'company-mode 'corfu-mode)
+    (defvar company-backends nil)
+    :config
+    (defalias 'company-mode 'corfu-mode)))
 
 (use-package cape
   :ensure t
@@ -455,7 +459,6 @@
   :after corfu
   :custom
   (kind-icon-default-face 'corfu-default)
-  (kind-icon-use-icons nil)
   :config
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
@@ -935,7 +938,7 @@
   :ensure t
   :defer t
   :hook
-  ((prog-mode org-mode) . yas-minor-mode)
+  ((prog-mode org-mode tex-mode) . yas-minor-mode)
   :custom
   (yas-triggers-in-field t)
   :config
@@ -1076,7 +1079,8 @@
            (cdr (assoc 'scala-mode eglot-server-programs)) '("metals")
            (cdr (assoc 'rust-mode eglot-server-programs)) '("rust-analyzer")
            (cdr (assoc 'java-mode eglot-server-programs)) '("jdtls")
-           (cdr (assoc '(tex-mode context-mode texinfo-mode bibtex-mode) eglot-server-programs)) '("texlab"))))
+           (cdr (assoc '(tex-mode context-mode texinfo-mode bibtex-mode) eglot-server-programs)) '("texlab"))
+     (setq completion-category-defaults nil)))
   ('lsp-mode
    (use-package lsp-mode
      ;; Optional - enable lsp-mode automatically in scala files
@@ -1716,6 +1720,22 @@ With a prefix ARG, remove start location."
 ;; AUCTeX ;;
 ;;;;;;;;;;;;
 
+(use-package cdlatex
+  :ensure t
+  :defer t
+  :hook (latex-mode . turn-on-cdlatex)
+  :custom
+  (cdlatex-paired-parens "$[{(")
+  (cdlatex-env-alist '(("cases" "\\begin{cases}\n?\n\\end{cases}" nil)))
+  :config
+  (use-package yasnippet
+    :config
+    (defun cdlatex-yas-expand-from-trigger-key (fun &rest args)
+      (if cdlatex-mode
+          (cdlatex-tab)
+        (apply fun args)))
+    (advice-add #'yas-expand-from-trigger-key :around #'cdlatex-yas-expand-from-trigger-key)))
+
 (use-package tex
   :ensure auctex
   :defer t
@@ -1738,17 +1758,14 @@ With a prefix ARG, remove start location."
                      (nil "stackrel"   "Log-like")))
   :config
   (when (boundp 'tex-mode-hook)
-    (dolist (hook tex-mode-hook) (add-to-list 'TeX-mode-hook hook)))
+    (dolist (hook tex-mode-hook) (add-to-list 'TeX-mode-hook hook))))
+
+(use-package latex
+  :ensure auctex
+  :defer t
+  :config
   (when (boundp 'latex-mode-hook)
     (dolist (hook latex-mode-hook) (add-to-list 'LaTeX-mode-hook hook))))
-
-(use-package cdlatex
-  :ensure t
-  :defer t
-  :hook (LaTeX-mode . turn-on-cdlatex)
-  :custom
-  (cdlatex-paired-parens "$[{(")
-  (cdlatex-env-alist '(("cases" "\\begin{cases}\n?\n\\end{cases}" nil))))
 
 (use-package go-translate
   :ensure t
