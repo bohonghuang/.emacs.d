@@ -425,6 +425,7 @@
   (corfu-separator ?\s)
   (corfu-quit-no-match 'separator)
   (corfu-on-exact-match nil)
+  (corfu-max-width 60)
   (corfu-preview-current nil)
   :config
   (defun corfu-move-to-minibuffer ()
@@ -434,6 +435,18 @@
       (apply #'consult-completion-in-region completion-in-region--data)))
   (defalias 'company-mode 'corfu-mode)
   (defvar company-backends nil))
+
+(use-package cape
+  :ensure t
+  :demand t
+  :after corfu
+  :hook (corfu-mode . (lambda ()
+                        (setq-local completion-at-point-functions (--remove (eq it t) completion-at-point-functions))
+                        (add-to-list 'completion-at-point-functions #'cape-file)
+                        (add-to-list 'completion-at-point-functions #'cape-dabbrev t)))
+  :custom
+  (cape-dabbrev-check-other-buffers nil)
+  (cape-dabbrev-min-length 3))
 
 (use-package kind-icon
   :when (version<= "28" emacs-version)
@@ -459,7 +472,9 @@
   :ensure nil
   :defer t
   :bind (("M-/" . dabbrev-completion)
-         ("C-M-/" . dabbrev-expand)))
+         ("C-M-/" . dabbrev-expand))
+  :custom
+  (dabbrev-check-all-buffers nil))
 
 (use-package orderless
   :ensure t
@@ -628,7 +643,7 @@
 
 (use-package ligature
   :defer t
-  :if (and (version<= "28" emacs-major-version) window-system)
+  :if (and (version<= "28" emacs-version) window-system)
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode) major-mode) (require 'ligature) (ligature-mode +1))))
   :quelpa (ligature :fetcher github :repo "mickeynp/ligature.el")
   :config
@@ -1071,13 +1086,10 @@
      (setq lsp-keymap-prefix "C-c l")
      :hook (lsp-mode . lsp-lens-mode)
      :custom
-     (lsp-ui-doc-show-with-cursor t)
      (lsp-eldoc-hook nil)
      (lsp-eldoc-enable-hover nil)
      (lsp-completion-provider :capf)
      (read-process-output-max (* 1024 1024 16)) ;; 1mb
-     (lsp-ui-doc-position 'at-point)
-     (lsp-ui-doc-delay 0.5)
      (lsp-idle-delay 0.5)
      (lsp-log-io nil))
 
@@ -1107,7 +1119,11 @@
    (use-package lsp-ui
      :ensure t
      :defer t
-     :after lsp-mode)
+     :after lsp-mode
+     :custom
+     (lsp-ui-doc-show-with-cursor t)
+     (lsp-ui-doc-position 'at-point)
+     (lsp-ui-doc-delay 0.5))
 
    (use-package lsp-completion
      :ensure nil
