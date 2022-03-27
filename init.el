@@ -1366,11 +1366,24 @@
   :defer t
   :custom
   (org-adapt-indentation nil)
-  (org-export-with-tags nil)
+  (org-hide-emphasis-markers t)
   (org-default-notes-file (expand-file-name "org-capture/captures.org" org-directory))
+  :bind (:map org-mode-map
+              ("M-," . org-mark-ring-goto)
+              ("M-." . org-open-at-point)))
+
+(use-package ox
+  :ensure nil
+  :defer t
+  :custom
+  (org-export-with-tags nil))
+
+(use-package ox-latex
+  :ensure nil
+  :defer t
+  :custom
   (org-latex-compiler "xelatex")
   (org-latex-custom-lang-environments '((Chinese "")))
-  (org-hide-emphasis-markers t)
   (org-latex-pdf-process '("%latex -shell-escape -interaction nonstopmode -output-directory %o %f" "%latex -shell-escape -interaction nonstopmode -output-directory %o %f" "%latex -shell-escape -interaction nonstopmode -output-directory %o %f"))
   (org-latex-default-packages-alist
    '(("AUTO" "inputenc" t
@@ -1393,13 +1406,6 @@
      ("" "svg" nil nil)))
   (org-latex-image-default-width nil)
   (org-latex-image-default-height ".2\\linewidth")
-  :bind (:map org-mode-map
-              ("M-," . org-mark-ring-goto)
-              ("M-." . org-open-at-point)))
-
-(use-package ox-latex
-  :ensure nil
-  :defer t
   :config
   (push `(imagemagick-xelatex :programs ("xelatex" "convert")
                   :description "pdf > png"
