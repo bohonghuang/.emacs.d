@@ -291,7 +291,8 @@
 (use-package project-ext
   :load-path "custom-lisp"
   :defer t
-  :bind ("C-x p u" . project-run))
+  :bind
+  ("C-x p u" . project-run-or-quickrun))
 
 (use-package winner
   :ensure nil
@@ -442,15 +443,32 @@
 
 (use-package cape
   :ensure t
-  :demand t
-  :after corfu
-  :hook (corfu-mode . (lambda ()
-                        (setq-local completion-at-point-functions (--remove (eq it t) completion-at-point-functions))
-                        (add-to-list 'completion-at-point-functions #'cape-file)
-                        (add-to-list 'completion-at-point-functions #'cape-dabbrev t)))
+  :defer t
+  :bind (("C-c p p" . completion-at-point) ;; capf
+         ("C-c p t" . complete-tag)        ;; etags
+         ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
+         ("C-c p f" . cape-file)
+         ("C-c p k" . cape-keyword)
+         ("C-c p s" . cape-symbol)
+         ("C-c p a" . cape-abbrev)
+         ("C-c p i" . cape-ispell)
+         ("C-c p l" . cape-line)
+         ("C-c p w" . cape-dict)
+         ("C-c p \\" . cape-tex)
+         ("C-c p _" . cape-tex)
+         ("C-c p ^" . cape-tex)
+         ("C-c p &" . cape-sgml)
+         ("C-c p r" . cape-rfc1345))
+  :hook
+  (corfu-mode . (lambda () (require 'cape)))
   :custom
   (cape-dabbrev-check-other-buffers nil)
-  (cape-dabbrev-min-length 3))
+  (cape-dabbrev-min-length 3)
+  :config
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-tex)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-keyword))
 
 (use-package kind-icon
   :when (version<= "28" emacs-version)
@@ -1359,8 +1377,8 @@
       ("pdflatex"))
      ("T1" "fontenc" t
       ("pdflatex"))
-     ("" "graphicx" t nil)
-     ("" "grffile" t nil)
+     ("" "graphicx" nil nil)
+     ("" "grffile" nil nil)
      ("" "longtable" nil nil)
      ("" "wrapfig" nil nil)
      ("" "rotating" nil nil)
@@ -1378,6 +1396,31 @@
   :bind (:map org-mode-map
               ("M-," . org-mark-ring-goto)
               ("M-." . org-open-at-point)))
+
+(use-package ox-latex
+  :ensure nil
+  :defer t
+  :config
+  (push `(imagemagick-xelatex :programs ("xelatex" "convert")
+                  :description "pdf > png"
+                  :message "you need to install the programs: xelatex and imagemagick."
+                  :image-input-type "pdf"
+                  :image-output-type "png"
+                  :image-size-adjust (1.0 . 1.0)
+                  :latex-compiler ("xelatex -interaction nonstopmode -output-directory %o %f")
+                  :latex-header ,(string-join '("\\documentclass[crop,varwidth=\\maxdimen]{standalone}"
+                                                "\\usepackage[usenames]{color}"
+                                                "\\usepackage{amsmath}"
+                                                "\\usepackage{amssymb}"
+                                                "\\usepackage{ctex}")
+                                              "\n")
+                  :image-converter ("convert -density %D -trim -antialias %f -quality 100 %O"))
+        org-preview-latex-process-alist)
+  (defun org-create-formula-image-with-auto-processing-type (fun &rest args)
+    (when (string-match "[^[:ascii:]]" (car args))
+      (setf (nth 4 args) 'imagemagick-xelatex))
+    (apply fun args))
+  (advice-add #'org-create-formula-image :around #'org-create-formula-image-with-auto-processing-type))
 
 (use-package org-attach
   :after org
@@ -1734,12 +1777,16 @@ With a prefix ARG, remove start location."
       (if cdlatex-mode
           (cdlatex-tab)
         (apply fun args)))
-    (advice-add #'yas-expand-from-trigger-key :around #'cdlatex-yas-expand-from-trigger-key)))
+    (advice-add #'yas-expand-from-trigger-key :around #'cdlatex-yas-expand-from-trigger-key))
+  (use-package org
+    :defer t
+    :hook (org-mode . org-cdlatex-mode)))
 
 (use-package tex
   :ensure auctex
   :defer t
   :custom
+  (TeX-engine "xelatex")
   (TeX-auto-save t)
   (TeX-parse-self t)
   (TeX-master nil)
@@ -1996,6 +2043,17 @@ Saves to a temp file and puts the filename in the kill ring."
         (insert data))
       (kill-new filename)
       (message (format "Frameshot saved: %s" filename)))))
+
+(use-package xwidget
+  :ensure nil
+  :defer t
+  :bind (:map xwidget-webkit-edit-mode-map ("C-c '" . xwidget-webkit-insert-string))
+  :config
+  (defun xwidget-webkit-begin-edit-textarea-bind-key (&rest _)
+    (local-set-key (kbd "C-c C-c") #'xwidget-webkit-end-edit-textarea)
+    (local-set-key (kbd "C-c '") #'xwidget-webkit-end-edit-textarea))
+  (advice-add #'xwidget-webkit-begin-edit-textarea :after #'xwidget-webkit-begin-edit-textarea-bind-key)
+  (advice-add #'xwidget-webkit-end-edit-textarea :after #'kill-current-buffer))
 
 (when (not window-system)
   (global-set-key (kbd "M-=") #'er/expand-region)
