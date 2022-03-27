@@ -465,10 +465,12 @@
   (cape-dabbrev-check-other-buffers nil)
   (cape-dabbrev-min-length 3)
   :config
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-tex)
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-keyword))
+  (let ((completion-at-point-functions (default-value 'completion-at-point-functions)))
+    (add-to-list 'completion-at-point-functions #'cape-file)
+    (add-to-list 'completion-at-point-functions #'cape-tex)
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+    (add-to-list 'completion-at-point-functions #'cape-keyword)
+    (setq-default completion-at-point-functions completion-at-point-functions)))
 
 (use-package kind-icon
   :when (version<= "28" emacs-version)
