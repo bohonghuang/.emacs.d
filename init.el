@@ -395,12 +395,16 @@
   (rfn-eshadow-update-overlay . vertico-directory-tidy))
 
 (use-package company
-  :disabled (display-graphic-p)
   :ensure t
   :defer t
-  :hook
-  ((prog-mode ielm-mode) . company-mode)
+  :init
+  (use-package company
+    :disabled (display-graphic-p)
+    :defer t
+    :hook
+    ((prog-mode ielm-mode) . company-mode))
   :custom
+  (company-global-modes nil)
   (company-minimum-prefix-length 1)
   (company-frontends '(company-pseudo-tooltip-frontend
                        company-echo-metadata-frontend))
@@ -433,13 +437,7 @@
     (interactive)
     (let ((completion-extra-properties corfu--extra)
           completion-cycle-threshold completion-cycling)
-      (apply #'consult-completion-in-region completion-in-region--data)))
-  (use-package company
-    :init
-    (defalias 'company-mode 'corfu-mode)
-    (defvar company-backends nil)
-    :config
-    (defalias 'company-mode 'corfu-mode)))
+      (apply #'consult-completion-in-region completion-in-region--data))))
 
 (use-package cape
   :ensure t
@@ -463,14 +461,14 @@
   (corfu-mode . (lambda () (require 'cape)))
   :custom
   (cape-dabbrev-check-other-buffers nil)
-  (cape-dabbrev-min-length 3)
+  (cape-dabbrev-min-length 2)
   :config
-  (let ((completion-at-point-functions (default-value 'completion-at-point-functions)))
-    (add-to-list 'completion-at-point-functions #'cape-file)
-    (add-to-list 'completion-at-point-functions #'cape-tex)
-    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-    (add-to-list 'completion-at-point-functions #'cape-keyword)
-    (setq-default completion-at-point-functions completion-at-point-functions)))
+  (let ((capf (default-value 'completion-at-point-functions)))
+    (add-to-list 'capf #'cape-file)
+    (add-to-list 'capf #'cape-tex)
+    (add-to-list 'capf #'cape-dabbrev)
+    (add-to-list 'capf #'cape-keyword)
+    (setq-default completion-at-point-functions capf)))
 
 (use-package kind-icon
   :when (version<= "28" emacs-version)
@@ -1774,6 +1772,10 @@ With a prefix ARG, remove start location."
 (use-package cdlatex
   :ensure t
   :defer t
+  :init
+  (use-package org
+    :defer t
+    :hook (org-mode . org-cdlatex-mode))
   :hook (latex-mode . turn-on-cdlatex)
   :custom
   (cdlatex-paired-parens "$[{(")
@@ -1785,16 +1787,13 @@ With a prefix ARG, remove start location."
       (if cdlatex-mode
           (cdlatex-tab)
         (apply fun args)))
-    (advice-add #'yas-expand-from-trigger-key :around #'cdlatex-yas-expand-from-trigger-key))
-  (use-package org
-    :defer t
-    :hook (org-mode . org-cdlatex-mode)))
+    (advice-add #'yas-expand-from-trigger-key :around #'cdlatex-yas-expand-from-trigger-key)))
 
 (use-package tex
   :ensure auctex
   :defer t
   :custom
-  (TeX-engine "xelatex")
+  (TeX-engine 'xetex)
   (TeX-auto-save t)
   (TeX-parse-self t)
   (TeX-master nil)
