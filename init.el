@@ -376,12 +376,8 @@
 (use-package doom-modeline
   :ensure t
   :defer nil
-  :init
-  (defun doom-modeline-refresh-after-command ()
-    (doom-modeline-refresh-font-width-cache)
-    (fmakunbound #'doom-modeline-refresh-after-command)
-    (remove-hook 'post-command-hook #'doom-modeline-refresh-after-command))
-  :hook (post-command . doom-modeline-refresh-after-command)
+  :hook
+  (window-setup . doom-modeline-refresh-font-width-cache)
   :custom (doom-modeline-icon (and (boundp 'use-all-the-icons) use-all-the-icons))
   :config
   (doom-modeline-mode +1))
@@ -663,15 +659,18 @@
 ;;;;;;;;;;;
 
 (use-package cnfonts
+  :when (and (boundp 'use-cnfonts) use-cnfonts)
   :ensure t
-  :defer t
+  :defer nil
   :bind (("C-M-_" . cnfonts-decrease-fontsize)
          ("C-M-+" . cnfonts-increase-fontsize)
          ("C-M-)" . cnfonts-reset-fontsize))
   :custom
   (cnfonts-personal-fontnames '(("JetBrains Mono" "JetBrainsMono Nerd Font") nil nil))
   (cnfonts-use-face-font-rescale t)
-  (cnfonts-use-cache t))
+  (cnfonts-use-cache t)
+  :config
+  (cnfonts-enable))
 
 (use-package ligature
   :defer t
