@@ -5,6 +5,7 @@
       '(
         LaTeX-babel-insert-hyphen
         TeX-insert-backslash
+        asm-comment
         backward-sexp
         c-electric-delete-forward
         c-electric-paren
@@ -26,6 +27,7 @@
         ibuffer-mark-forward
         ignore
         indent-for-tab-command
+        insert-register
         intellij-backspace
         intellij-return
         kill-region
@@ -83,6 +85,7 @@
 (setq mc/cmds-to-run-once
       '(
         embark-act
+        find-file
         kmacro-end-or-call-macro
         mouse-drag-mode-line
         mouse-select-window

@@ -1,4 +1,7 @@
+;;; -*- lexical-binding: t -*-
+
 (require 'emms)
+(require 'emms-info-native)
 (require 'pretty-hydra)
 
 (pretty-hydra-define hydra-emms

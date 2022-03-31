@@ -1,4 +1,12 @@
-;;; -*- lexical-binding: t -*-
+;;; init.el --- Load the full configuration -*- lexical-binding: t -*-
+;;; Commentary:
+
+;; This is an Emacs configuration file, in which modules are loaded lazily by `use-package'.
+
+;;; Code:
+
+;; Produce backtraces when errors occur: can be helpful to diagnose startup issues
+;;(setq debug-on-error t)
 (progn
   (let ((original-gc-cons-threshold gc-cons-threshold))
     (setq gc-cons-threshold most-positive-fixnum)
@@ -24,7 +32,7 @@
   :ensure nil
   :custom
   (use-package-verbose t)
-  (use-package-minimum-reported-time 0.01))
+  (use-package-minimum-reported-time 0))
 
 (use-package quelpa-use-package
   :demand t
@@ -32,9 +40,9 @@
   :init (setq quelpa-update-melpa-p nil
               quelpa-use-package-inhibit-loading-quelpa t))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Internal Packages (Basic) ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;; Internal Packages (Basic) ;;
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package emacs
   :defer nil
@@ -82,8 +90,7 @@
   :custom
   (column-number-mode t)
   (visible-bell t)
-  (show-paren-mode t)
-  (show-paren-when-point-inside-paren t)
+  (show-paren-mode nil)
   (indent-tabs-mode nil)
   (auto-hscroll-mode t)
   (word-wrap-by-category t)
@@ -136,6 +143,12 @@
           (put it 'repeat-map 'buffer-switch-repeat-map))
         map)
       "Keymap to repeat window buffer navigation key sequences.  Used in `repeat-mode'."))
+
+(use-package password-cache
+  :ensure nil
+  :defer t
+  :custom
+  (password-cache-expiry (* 5 60)))
 
 ;;;;;;;;;;;
 ;; Theme ;;
@@ -271,7 +284,6 @@
 (use-package xref
   :ensure nil
   :defer t
-  :bind (("<mouse-8>" . xref-pop-marker-stack))
   :custom (xref-backend-functions '(t)))
 
 (use-package compile
@@ -404,7 +416,6 @@
     :hook
     ((prog-mode ielm-mode) . company-mode))
   :custom
-  (company-global-modes nil)
   (company-minimum-prefix-length 1)
   (company-frontends '(company-pseudo-tooltip-frontend
                        company-echo-metadata-frontend))
@@ -464,10 +475,10 @@
   (cape-dabbrev-min-length 2)
   :config
   (let ((capf (default-value 'completion-at-point-functions)))
-    (add-to-list 'capf #'cape-file)
-    (add-to-list 'capf #'cape-tex)
-    (add-to-list 'capf #'cape-dabbrev)
-    (add-to-list 'capf #'cape-keyword)
+    (push #'cape-file capf)
+    (push #'cape-tex capf)
+    (push #'cape-dabbrev capf)
+    (push #'cape-keyword capf)
     (setq-default completion-at-point-functions capf)))
 
 (use-package kind-icon
@@ -732,7 +743,7 @@
     :defer t
     :bind ("C-<tab>" . eshell-popper-request)
     :config
-    
+    (add-to-list 'eshell-modules-list 'eshell-tramp)
     (defun popper-popup-buffer (buffer)
       (unless (window-dedicated-p (selected-window))
         (switch-to-buffer buffer))
@@ -744,7 +755,7 @@
     (advice-add #'project-eshell :around #'project-eshell@around)
     
     (defun eshell-popper-buffer-p (buffer)
-      (and (with-current-buffer buffer eshell-mode) (popper-display-control-p buffer) (string-match-p "\\*eshell-popper\\*\\(<[0-9]+>\\)\\{0,1\\}" (buffer-name buffer))))
+      (and (eq (with-current-buffer buffer major-mode) 'eshell-mode) (popper-display-control-p buffer) (string-match-p "\\*eshell-popper\\*\\(<[0-9]+>\\)\\{0,1\\}" (buffer-name buffer))))
     
     (defun eshell-popper-request ()
       (interactive)
@@ -768,6 +779,7 @@
   :init (defalias 'sp-mode #'smartparens-mode)
   :hook
   ((prog-mode text-mode minibuffer-setup eshell-mode lisp-mode ielm-mode mermaid-mode) . smartparens-mode)
+  (smartparens-mode . show-smartparens-mode)
   :bind (:map smartparens-mode-map
          ("C-*"               . sp-join-sexp)
          ("C-|"               . sp-split-sexp)
@@ -987,8 +999,7 @@
    'minibuffer-complete-word
    'self-insert-command
    minibuffer-local-completion-map)
-   (setq sbt:program-options '("-Dsbt.supershell=false"))
-)
+   (setq sbt:program-options '("-Dsbt.supershell=false")))
 
 (use-package rustic
   :ensure t
@@ -1110,8 +1121,8 @@
      :custom
      (lsp-eldoc-hook nil)
      (lsp-eldoc-enable-hover nil)
-     (lsp-completion-provider :capf)
-     (read-process-output-max (* 1024 1024 16)) ;; 1mb
+     (lsp-completion-provider :none)
+     (read-process-output-max (* 1024 1024 16))
      (lsp-idle-delay 0.5)
      (lsp-log-io nil))
 
@@ -1300,30 +1311,6 @@
                    (local-set-key (kbd "RET") #'pycharm-return)
                    (local-set-key (kbd "DEL") #'pycharm-backspace))))
 
-(use-package sis
-  :ensure t
-  :defer t
-  :config
-  (sis-ism-lazyman-config "1" "2" 'fcitx5)
-  (sis-global-cursor-color-mode t)
-  (sis-global-respect-mode t)
-  (sis-global-context-mode t)  
-  (when (package-installed-p 'doom-modeline)
-    (defvar sis-global-respect-mode-before-kbd-macro nil)
-    (defvar sis-global-respect-mode-previous-defining-kbd-macro nil)
-    
-    (defun sis-defining-kbd-macro-watcher (&rest _)
-      (when (not (eq sis-global-respect-mode-previous-defining-kbd-macro defining-kbd-macro))
-        (if defining-kbd-macro
-            (when sis-global-respect-mode
-              (setq sis-global-respect-mode-before-kbd-macro sis-global-respect-mode)
-              (sis-global-respect-mode -1))
-          (when sis-global-respect-mode-before-kbd-macro
-            (setq sis-global-respect-mode-before-kbd-macro nil)
-            (sis-global-respect-mode +1)))
-        (setq sis-global-respect-mode-previous-defining-kbd-macro defining-kbd-macro)))
-    (advice-add #'doom-modeline-segment--matches :before #'sis-defining-kbd-macro-watcher)))
-
 (use-package calendar
   :ensure nil
   :defer t
@@ -1371,6 +1358,12 @@
   :bind (:map org-mode-map
               ("M-," . org-mark-ring-goto)
               ("M-." . org-open-at-point)))
+
+(use-package org-src
+  :ensure nil
+  :defer t
+  :custom
+  (org-src-window-setup 'current-window))
 
 (use-package ox
   :ensure nil
@@ -1490,8 +1483,9 @@
     (notifications-notify :timeout (* appt-display-interval 60000)
                           :title (format "You have a task in %s minutes" min-to-appt)
                           :body (string-trim (replace-regexp-in-string "\\([0-9]\\{1,2\\}:[0-9]\\{1,2\\}\\)\\(-[0-9]\\{1,2\\}:[0-9]\\{1,2\\}\\)\\{0,1\\}" "" (substring-no-properties appt-msg)))
-                          :sound-name "alarm-clock-elapsed")
-    (appt-disp-window min-to-appt new-time appt-msg)))
+                          :sound-name "alarm-clock-elapsed")    
+    (ignore-errors
+      (appt-disp-window min-to-appt new-time appt-msg))))
 
 (use-package org-edna
   :ensure t
@@ -1576,60 +1570,31 @@
   (org-noter-notes-search-path (list (expand-file-name "org-noter" org-directory)))
   (org-noter-always-create-frame nil))
 
-(when (and (boundp 'use-pdf-tools) use-pdf-tools)
-  (use-package pdf-tools
-    :ensure t
-    :defer t
-    :mode ("\\.pdf\\'" . (lambda ()
-                           (require 'pdf-tools)
-                           (pdf-tools-install)
-                           (pdf-view-mode))))
+(use-package pdf-tools
+  :when (and (boundp 'use-pdf-tools) use-pdf-tools)
+  :ensure t
+  :defer t
+  :mode ("\\.pdf\\'" . (lambda ()
+                         (require 'pdf-tools)
+                         (pdf-tools-install)
+                         (pdf-view-mode))))
 
-  (use-package org-pdftools
-    :ensure t
-    :defer t
-    :hook (org-mode . org-pdftools-setup-link))
+(use-package org-pdftools
+  :when (and (boundp 'use-pdf-tools) use-pdf-tools)
+  :ensure t
+  :defer t
+  :hook (org-mode . org-pdftools-setup-link))
 
+(use-package org-noter-pdftools
+  :when (and (boundp 'use-pdf-tools) use-pdf-tools)
+  :after pdf-tools
+  :init
   (use-package org-noter-pdftools
-    :after pdf-tools
-    :init
-    (use-package org-noter-pdftools
-        :after (pdf-tools org-noter)
-        :demand t)
-    :ensure t
-    :defer t
-    :bind (:map pdf-view-mode-map
-                          ("i" . org-noter))
-    :config
-    ;; Add a function to ensure precise note is inserted
-    (defun org-noter-pdftools-insert-precise-note (&optional toggle-no-questions)
-      (interactive "P")
-      (org-noter--with-valid-session
-       (let ((org-noter-insert-note-no-questions (if toggle-no-questions
-                                                     (not org-noter-insert-note-no-questions)
-                                                   org-noter-insert-note-no-questions))
-             (org-pdftools-use-isearch-link t)
-             (org-pdftools-use-freestyle-annot t))
-         (org-noter-insert-note (org-noter--get-precise-info)))))
-
-    ;; fix https://github.com/weirdNox/org-noter/pull/93/commits/f8349ae7575e599f375de1be6be2d0d5de4e6cbf
-    (defun org-noter-set-start-location (&optional arg)
-      "When opening a session with this document, go to the current location.
-With a prefix ARG, remove start location."
-      (interactive "P")
-      (org-noter--with-valid-session
-       (let ((inhibit-read-only t)
-             (ast (org-noter--parse-root))
-             (location (org-noter--doc-approx-location (when (called-interactively-p 'any) 'interactive))))
-         (with-current-buffer (org-noter--session-notes-buffer session)
-           (org-with-wide-buffer
-            (goto-char (org-element-property :begin ast))
-            (if arg
-                (org-entry-delete nil org-noter-property-note-location)
-              (org-entry-put nil org-noter-property-note-location
-                             (org-noter--pretty-print-location location))))))))
-    (with-eval-after-load 'pdf-annot
-      (add-hook 'pdf-annot-activate-handler-functions #'org-noter-pdftools-jump-to-note))))
+    :after (pdf-tools org-noter)
+    :demand t)
+  :ensure t
+  :defer t
+  :bind (:map pdf-view-mode-map ("i" . org-noter)))
 
 (use-package org-roam
   :ensure t
@@ -1648,7 +1613,7 @@ With a prefix ARG, remove start location."
          ("C-c r j" . org-roam-dailies-capture-today)
          ("C-c r t" . org-roam-buffer-toggle))
   :config
-  (org-roam-setup)
+  (org-roam-db-autosync-enable)
   (require 'org-roam-protocol))
 
 (use-package org-journal
@@ -1681,8 +1646,7 @@ With a prefix ARG, remove start location."
   :defer t
   :hook (org-mode . org-bars-mode)
   :config
-  (use-package org-bars
-    :after org-tree-slide-ext
+  (use-package org-tree-slide-ext
     :ensure nil
     :demand t
     :config
@@ -1839,7 +1803,7 @@ With a prefix ARG, remove start location."
   :config
   (defun eshell--complete-commands-list@around (fun &rest _)
     "Fix executable file completion for `eshell--complete-commands-list'"
-    (if (looking-back "/[[:graph:]]*")
+    (if (looking-back "/[[:graph:]]*" (point-min))
         (pcomplete-executables)
       (funcall fun)))
   (advice-add #'eshell--complete-commands-list :around #'eshell--complete-commands-list@around))
@@ -1975,16 +1939,20 @@ With a prefix ARG, remove start location."
   (emms-info-asynchronously t)
   (emms-info-functions '(emms-info-libtag))
   (emms-lyrics-scroll-p nil)
-  :bind (("C-c m" . hydra-emms/body)
-         :map emms-mark-mode-map
-              ("n" . next-line)
-              ("p" . previous-line))
+  :bind ("C-c m" . hydra-emms/body)
   :config
   (require 'emms-setup)
   (require 'emms-info-libtag)
   (emms-all)
   (emms-mode-line-disable)
-  (emms-playing-time-disable-display))
+  (emms-playing-time-mode -1))
+
+(use-package emms-mark
+  :ensure nil
+  :defer t
+  :bind (:map emms-mark-mode-map
+         ("n" . next-line)
+         ("p" . previous-line)))
 
 (use-package emms-ext
   :load-path "custom-lisp"
@@ -2066,6 +2034,30 @@ Saves to a temp file and puts the filename in the kill ring."
   (global-set-key (kbd "M-=") #'er/expand-region)
   (global-set-key (kbd "C-x ;") #'comment-line))
 
+(use-package sis
+  :when (and (boundp 'use-sis) use-sis)
+  :ensure t
+  :defer nil
+  :config
+  (sis-ism-lazyman-config "1" "2" 'fcitx5)
+  (sis-global-cursor-color-mode t)
+  (sis-global-respect-mode t)
+  (sis-global-context-mode t)
+  (when (package-installed-p 'doom-modeline)
+    (defvar sis-global-respect-mode-before-kbd-macro nil)
+    (defvar sis-global-respect-mode-previous-defining-kbd-macro nil)
+    
+    (defun sis-defining-kbd-macro-watcher (&rest _)
+      (when (not (eq sis-global-respect-mode-previous-defining-kbd-macro defining-kbd-macro))
+        (if defining-kbd-macro
+            (when sis-global-respect-mode
+              (setq sis-global-respect-mode-before-kbd-macro sis-global-respect-mode)
+              (sis-global-respect-mode -1))
+          (when sis-global-respect-mode-before-kbd-macro
+            (setq sis-global-respect-mode-before-kbd-macro nil)
+            (sis-global-respect-mode +1)))
+        (setq sis-global-respect-mode-previous-defining-kbd-macro defining-kbd-macro)))
+    (advice-add #'doom-modeline-segment--matches :before #'sis-defining-kbd-macro-watcher)))
+
 (provide 'init)
-;;; init.el
-(put 'narrow-to-region 'disabled nil)
+;;; init.el ends here
