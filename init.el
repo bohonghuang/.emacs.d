@@ -407,7 +407,7 @@
   :defer t
   :init
   (use-package company
-    :disabled (display-graphic-p)
+    :when (not (display-graphic-p))
     :defer t
     :hook
     ((prog-mode ielm-mode) . company-mode))
@@ -417,6 +417,7 @@
                        company-echo-metadata-frontend))
   (company-dabbrev-downcase nil)
   (company-dabbrev-ignore-case t)
+  (company-backends '(company-capf))
   :config
   (use-package company
     :after tex
@@ -464,18 +465,14 @@
          ("C-c p ^" . cape-tex)
          ("C-c p &" . cape-sgml)
          ("C-c p r" . cape-rfc1345))
-  :hook
-  (corfu-mode . (lambda () (require 'cape)))
   :custom
   (cape-dabbrev-check-other-buffers nil)
   (cape-dabbrev-min-length 2)
-  :config
-  (let ((capf (default-value 'completion-at-point-functions)))
-    (push #'cape-file capf)
-    (push #'cape-tex capf)
-    (push #'cape-dabbrev capf)
-    (push #'cape-keyword capf)
-    (setq-default completion-at-point-functions capf)))
+  :init
+  (push #'cape-file completion-at-point-functions)
+  (push #'cape-tex completion-at-point-functions)
+  (push #'cape-dabbrev completion-at-point-functions)
+  (push #'cape-keyword completion-at-point-functions))
 
 (use-package kind-icon
   :when (version<= "28" emacs-version)
@@ -2060,3 +2057,4 @@ Saves to a temp file and puts the filename in the kill ring."
 
 (provide 'init)
 ;;; init.el ends here
+(put 'narrow-to-region 'disabled nil)
