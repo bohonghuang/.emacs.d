@@ -951,9 +951,9 @@
   :hook ((c++-mode java-mode scala-mode rustic-mode) . subword-mode))
 
 (use-package tree-sitter
+  :when (member 'tree-sitter extra-features)
   :ensure t
   :defer t
-  :if (not (eq system-type 'windows-nt))
   :hook (prog-mode . (lambda ()
                        (require 'tree-sitter-langs)
                        (if (assoc major-mode tree-sitter-major-mode-language-alist)
