@@ -1749,6 +1749,7 @@
     (advice-add #'cape-dabbrev :filter-return #'cape-dabbrev-disable-in-cdlatex-mode)))
 
 (use-package tex
+  :when (member 'auctex extra-features)
   :ensure auctex
   :defer t
   :custom
