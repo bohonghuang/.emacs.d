@@ -1775,6 +1775,7 @@
     (dolist (hook tex-mode-hook) (add-to-list 'TeX-mode-hook hook))))
 
 (use-package latex
+  :when (member 'auctex extra-features)
   :ensure auctex
   :defer t
   :config
@@ -1875,7 +1876,7 @@
   :bind (:map vterm-mode-map
               ("C-x C-q" . vterm-copy-mode)
          :map vterm-copy-mode-map
-         ("C-x C-q" . vterm-copy-mode)))
+              ("C-x C-q" . vterm-copy-mode)))
 
 (use-package eshell-vterm
   :when (member 'vterm extra-features)
