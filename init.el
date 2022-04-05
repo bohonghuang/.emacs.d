@@ -120,6 +120,12 @@
   :defer nil
   :config (url-handler-mode +1))
 
+(defcustom extra-features nil
+  "Extra features enabled on Emacs startup.")
+
+(defcustom language-support nil
+  "The language support used in `prog-mode'.")
+
 (setq local-file (expand-file-name "local.el" user-emacs-directory))
 (if (file-exists-p local-file) (load-file local-file))
 
@@ -219,7 +225,7 @@
 (use-package all-the-icons-ibuffer
   :ensure t
   :defer t
-  :when (and (boundp 'use-all-the-icons) use-all-the-icons)
+  :when (member 'all-the-icons extra-features)
   :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
   :custom (all-the-icons-dired-monochrome nil))
 
@@ -247,7 +253,7 @@
   :demand t)
 
 (use-package all-the-icons-dired
-  :when (and (boundp 'use-all-the-icons) use-all-the-icons)
+  :when (member 'all-the-icons extra-features)
   :ensure t
   :defer t
   :hook (dired-mode . all-the-icons-dired-mode))
@@ -378,7 +384,7 @@
   :defer nil
   :hook
   (window-setup . doom-modeline-refresh-font-width-cache)
-  :custom (doom-modeline-icon (and (boundp 'use-all-the-icons) use-all-the-icons))
+  :custom (doom-modeline-icon (member 'all-the-icons extra-features))
   :config
   (doom-modeline-mode +1))
 
@@ -627,7 +633,7 @@
   (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package all-the-icons-completion
-  :when (and (boundp 'use-all-the-icons) use-all-the-icons)
+  :when (member 'all-the-icons extra-features)
   :ensure t
   :defer t
   :hook (marginalia-mode . all-the-icons-completion-mode))
@@ -656,7 +662,7 @@
 ;;;;;;;;;;;
 
 (use-package cnfonts
-  :when (and (boundp 'use-cnfonts) use-cnfonts)
+  :when (member 'cnfonts extra-features)
   :ensure t
   :defer nil
   :bind (("C-M-_" . cnfonts-decrease-fontsize)
@@ -1001,10 +1007,9 @@
   :ensure t
   :defer t
   :custom
-  (rustic-lsp-client (if (boundp 'language-support)
-                         (pcase language-support
-                           ((and lsp-based (or 'lsp-mode 'eglot)) lsp-based)
-                           (_ nil)))))
+  (rustic-lsp-client (pcase language-support
+                       ((and lsp-based (or 'lsp-mode 'eglot)) lsp-based)
+                       (_ nil))))
 
 (use-package groovy-mode
   :ensure t
@@ -1074,7 +1079,7 @@
 ;; LSP ;;
 ;;;;;;;;;
 
-(pcase (and (boundp 'language-support) language-support)
+(pcase language-support
   ('citre
    (use-package citre
      :ensure t
@@ -1295,12 +1300,13 @@
     rust-mode
     rustic-mode
     js-mode
-    tex-mode)
+    tex-mode
+    dart-mode)
    .
    (lambda ()
      (require 'intellij-features)
      (local-set-key (kbd "DEL") #'intellij-backspace)
-     (when (-contains-p '(java-mode rust-mode rustic-mode js-mode) major-mode)
+     (when (-contains-p '(java-mode rust-mode rustic-mode js-mode dart-mode) major-mode)
        (local-set-key (kbd "RET") #'intellij-return))))
   (python-mode . (lambda ()
                    (require 'intellij-features)
@@ -1374,23 +1380,8 @@
   (org-latex-compiler "xelatex")
   (org-latex-custom-lang-environments '((Chinese "")))
   (org-latex-pdf-process '("%latex -shell-escape -interaction nonstopmode -output-directory %o %f" "%latex -shell-escape -interaction nonstopmode -output-directory %o %f" "%latex -shell-escape -interaction nonstopmode -output-directory %o %f"))
-  (org-latex-default-packages-alist
-   '(("AUTO" "inputenc" t
-      ("pdflatex"))
-     ("T1" "fontenc" t
-      ("pdflatex"))
-     ("" "graphicx" nil nil)
-     ("" "grffile" nil nil)
-     ("" "longtable" nil nil)
-     ("" "wrapfig" nil nil)
-     ("" "rotating" nil nil)
-     ("normalem" "ulem" t nil)
-     ("" "amsmath" t nil)
-     ("" "textcomp" t nil)
-     ("" "amssymb" t nil)
-     ("" "capt-of" nil nil)
-     ("" "hyperref" nil nil)
-     ("a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm" "geometry" nil nil)
+  (org-latex-packages-alist
+   '(("a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm" "geometry" nil nil)
      ("" "ctex" nil nil)
      ("" "svg" nil nil)))
   (org-latex-image-default-width nil)
@@ -1442,7 +1433,7 @@
   :after org
   :demand t
   :bind (:map org-mode-map
-         ("C-c C-S-L" . org-link-make-from-region)))
+              ("C-c C-S-L" . org-link-make-from-region)))
 
 (use-package org-agenda
   :ensure nil
@@ -1459,7 +1450,7 @@
   (require 'org-gtd)
   (nconc recentf-exclude (org-agenda-files))
   (use-package appt
-    :when (and (boundp 'use-appt-org-agenda) use-appt-org-agenda)
+    :when (member 'appt-org-agenda extra-features)
     :demand t
     :config
     (add-hook 'org-agenda-finalize-hook #'org-agenda-to-appt)
@@ -1526,7 +1517,7 @@
   :hook (org-mode . org-appear-mode))
 
 (use-package org-remark
-  :when (and (boundp 'use-org-remark) use-org-remark)
+  :when (member 'org-remark extra-features)
   :init (require 'org-remark-global-tracking)
   :ensure t
   :defer t
@@ -1567,7 +1558,7 @@
   (org-noter-always-create-frame nil))
 
 (use-package pdf-tools
-  :when (and (boundp 'use-pdf-tools) use-pdf-tools)
+  :when (member 'pdf-tools extra-features)
   :ensure t
   :defer t
   :mode ("\\.pdf\\'" . (lambda ()
@@ -1576,13 +1567,13 @@
                          (pdf-view-mode))))
 
 (use-package org-pdftools
-  :when (and (boundp 'use-pdf-tools) use-pdf-tools)
+  :when (member 'org-pdf-tools extra-features)
   :ensure t
   :defer t
   :hook (org-mode . org-pdftools-setup-link))
 
 (use-package org-noter-pdftools
-  :when (and (boundp 'use-pdf-tools) use-pdf-tools)
+  :when (member 'org-pdf-tools extra-features)
   :after pdf-tools
   :init
   (use-package org-noter-pdftools
@@ -1593,10 +1584,13 @@
   :bind (:map pdf-view-mode-map ("i" . org-noter)))
 
 (use-package org-roam
+  :when (member 'org-roam extra-features)
   :ensure t
   :defer t
   :init
   (setq org-roam-v2-ack t)
+  :hook
+  (org-mode . org-roam-db-autosync-mode)
   :custom
   (org-roam-directory (expand-file-name "org-roam" org-directory))
   (org-roam-graph-link-den-types '("file" "attachment"))
@@ -1609,10 +1603,10 @@
          ("C-c r j" . org-roam-dailies-capture-today)
          ("C-c r t" . org-roam-buffer-toggle))
   :config
-  (org-roam-db-autosync-enable)
   (require 'org-roam-protocol))
 
 (use-package org-journal
+  :when (member 'org-journal extra-features)
   :ensure t
   :defer t
   :init
@@ -1747,7 +1741,12 @@
       (if cdlatex-mode
           (cdlatex-tab)
         (apply fun args)))
-    (advice-add #'yas-expand-from-trigger-key :around #'cdlatex-yas-expand-from-trigger-key)))
+    (advice-add #'yas-expand-from-trigger-key :around #'cdlatex-yas-expand-from-trigger-key))
+  (use-package cape
+    :config
+    (defun cape-dabbrev-disable-in-cdlatex-mode (ret)
+      (unless cdlatex-mode ret))
+    (advice-add #'cape-dabbrev :filter-return #'cape-dabbrev-disable-in-cdlatex-mode)))
 
 (use-package tex
   :ensure auctex
@@ -1869,6 +1868,7 @@
   :hook (eshell-mode . esh-autosuggest-mode))
 
 (use-package vterm
+  :when (member 'vterm extra-features)
   :ensure t
   :defer t
   :bind (:map vterm-mode-map
@@ -1877,6 +1877,7 @@
          ("C-x C-q" . vterm-copy-mode)))
 
 (use-package eshell-vterm
+  :when (member 'vterm extra-features)
   :ensure t
   :demand t
   :after eshell
@@ -1906,6 +1907,7 @@
   :defer t)
 
 (use-package rime
+  :when (member 'rime extra-features)
   :ensure t
   :defer t
   :custom
@@ -1925,6 +1927,7 @@
   :custom (mpv-default-options '("--volume-max=300")))
 
 (use-package emms
+  :when (member 'emms extra-features)
   :ensure t
   :defer t
   :hook (emms-player-started . emms-show)
@@ -1944,6 +1947,7 @@
   (emms-playing-time-mode -1))
 
 (use-package emms-mark
+  :when (member 'emms extra-features)
   :ensure nil
   :defer t
   :bind (:map emms-mark-mode-map
@@ -1951,18 +1955,14 @@
          ("p" . previous-line)))
 
 (use-package emms-ext
+  :when (member 'emms extra-features)
   :load-path "custom-lisp"
   :demand t
   :after emms
   :commands hydra-emms/body)
 
-(use-package rsync-mode
-  :quelpa (rsync-mode :fetcher github :repo "BohongHuang/rsync-mode")
-  :ensure t
-  :defer t)
-
 (use-package mu4e
-  :when (and (boundp 'use-mu4e) use-mu4e)
+  :when (member 'mu4e extra-features)
   :defer t
   :commands (mu4e)
   :custom
@@ -2031,11 +2031,13 @@ Saves to a temp file and puts the filename in the kill ring."
   (global-set-key (kbd "C-x ;") #'comment-line))
 
 (use-package sis
-  :when (and (boundp 'use-sis) use-sis)
+  :when (member 'sis extra-features)
   :ensure t
   :defer nil
   :config
   (sis-ism-lazyman-config "1" "2" 'fcitx5)
+  (push "M-g" sis-prefix-override-keys)
+  (push "<f1>" sis-prefix-override-keys)
   (sis-global-cursor-color-mode t)
   (sis-global-respect-mode t)
   (sis-global-context-mode t)
