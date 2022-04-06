@@ -1085,7 +1085,9 @@
      :ensure t
      :defer t
      :init (require 'citre-config)
-     :bind (("C-M-?" . citre-peek))
+     :bind (("C-M-?" . citre-peek)
+            :map citre-mode-map
+                 ("M-?" . citre-jump-to-reference))
      :custom
      (citre-auto-enable-citre-mode-modes '(prog-mode))
      (citre-project-root-function (lambda  () (project-root (project-current t))))
