@@ -349,6 +349,15 @@
   :defer t
   :bind (:map picture-mode-map ("C-c v" . picture-movement-down)))
 
+(use-package calc
+  :ensure nil
+  :defer t)
+
+(use-package calc-bin-ext
+  :load-path "custom-lisp"
+  :demand t
+  :after calc)
+
 ;;;;;;;;;;;;;;;;;
 ;; Interaction ;;
 ;;;;;;;;;;;;;;;;;
@@ -1735,7 +1744,8 @@
   :hook (latex-mode . turn-on-cdlatex)
   :custom
   (cdlatex-paired-parens "$[{(")
-  (cdlatex-env-alist '(("cases" "\\begin{cases}\n?\n\\end{cases}" nil)))
+  (cdlatex-env-alist '(("cases" "\\begin{cases}\n?\n\\end{cases}" nil)
+                       ("aligned" "\\begin{aligned}\n?\n\\end{aligned}" nil)))
   :config
   (use-package yasnippet
     :config

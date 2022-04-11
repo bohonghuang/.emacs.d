@@ -11,9 +11,9 @@
             "No playing track")
    :hint nil)
   ("File"
-   (("o l"     (call-interactively #'emms-play-playlist)       "Play Playlist")
-    ("o o"     (call-interactively #'emms-play-file)           "Play File")
-    ("o d"     (call-interactively #'emms-play-directory-tree) "Play Directory"))
+   (("o l"    (call-interactively #'emms-play-playlist)        "Play Playlist")
+    ("o o"    (call-interactively #'emms-play-file)            "Play File")
+    ("o d"    (call-interactively #'emms-play-directory-tree)  "Play Directory"))
    "Playlist"
    (("S"     (emms-shuffle)                                    "Shuffle"))
    "Playback"
@@ -27,7 +27,8 @@
    (("s"     (call-interactively #'emms-score-set-playing)     "Set Score"))
    "Lyrics"
    (("l v"   (emms-lyrics-visit-lyric)                         "View Lyrics")
-    ("l t"   (emms-lyrics-switch-display-position)             "Toggle Display"))
+    ("l t"   (emms-lyrics-switch-display-position)             "Toggle Display")
+    ("l c"   (emms-lyrics-restore-mode-line)                   "Clean Up Modeline"))
    "Other"
    (("m"     (emms)                                            "Emms Buffer"))))
 
@@ -75,5 +76,6 @@
     (delete-file emms-info-lyrics-temp-file)))
 
 (add-hook 'kill-emacs-hook #'emms-lyrics-delete-temp-file)
+(advice-add #'emms-lyrics-visit-lyric :after #'auto-revert-mode)
 
 (provide 'emms-ext)

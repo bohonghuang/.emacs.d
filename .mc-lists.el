@@ -38,6 +38,7 @@
         lsp-signature-activate
         lsp-ui-doc--handle-mouse-movement
         org-beginning-of-line
+        org-cdlatex-underscore-caret
         org-ctrl-c-ctrl-c
         org-cycle
         org-delete-char
