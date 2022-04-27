@@ -13,7 +13,9 @@
         c-electric-slash
         c-electric-star
         c-indent-line-or-region
+        cdlatex-pbb
         cdlatex-tab
+        comment-dwim
         comment-line
         crux-eval-and-replace
         dap-breakpoint-toggle
@@ -70,6 +72,7 @@
         sgml-slash
         sis--prefix-override-handler
         sp-backward-sexp
+        sp-beginning-of-sexp
         sp-forward-sexp
         sp-forward-slurp-sexp
         sp-join-sexp

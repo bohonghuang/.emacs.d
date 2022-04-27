@@ -296,6 +296,13 @@ the documentation of `org-diary'."
     map)
   "Keymap to repeat `org-mode' navigation key sequences.  Used in `repeat-mode'.")
 
+(defvar org-mode-archive-subtree-repeat-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-a") #'org-archive-subtree-default)
+    (put #'org-archive-subtree-default 'repeat-map 'org-mode-archive-subtree-repeat-map)
+    map)
+  "Keymap to repeat `org-mode' archive subtree key sequences.  Used in `repeat-mode'.")
+
 (defun org-link-make-from-region (beg end &optional _desc)
   (interactive "*r\n")
   (let ((link (buffer-substring beg end)))

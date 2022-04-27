@@ -71,7 +71,9 @@
 (use-package comp
   :ensure nil
   :defer nil
-  :custom (package-native-compile t))
+  :custom
+  (package-native-compile t)
+  (native-comp-async-report-warnings-errors nil))
 
 (use-package startup
   :ensure nil
@@ -238,6 +240,8 @@
   (browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
   :config
   (put 'dired-find-alternate-file 'disabled nil)
+  :hook
+  (dired-mode . toggle-truncate-lines)
   :bind
   (:map dired-mode-map ("/" . dired-narrow)))
 
@@ -837,6 +841,7 @@
   (sp-pair "【" "】")
   (sp-pair "《" "》")
   (sp-pair "“" "”")
+  (sp-pair "’" "’")
   (use-package smartparens
     :after org
     :demand t
@@ -886,7 +891,7 @@
          ("M-<left>" . drag-stuff-left))
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode common-lisp-mode) major-mode) (drag-stuff-mode +1)))))
 
-(if (and (version<= "29" emacs-version))
+(if (version<= "29" emacs-version)
     (use-package pixel-scroll
       :ensure nil
       :defer nil
@@ -1368,6 +1373,7 @@
   (org-adapt-indentation nil)
   (org-hide-emphasis-markers t)
   (org-default-notes-file (expand-file-name "org-capture/captures.org" org-directory))
+  (org-highlight-latex-and-related '(native))
   :bind (:map org-mode-map
               ("M-," . org-mark-ring-goto)
               ("M-." . org-open-at-point)))
@@ -1417,7 +1423,11 @@
     (when (string-match "[^[:ascii:]]" (car args))
       (setf (nth 4 args) 'imagemagick-xelatex))
     (apply fun args))
-  (advice-add #'org-create-formula-image :around #'org-create-formula-image-with-auto-processing-type))
+  (advice-add #'org-create-formula-image :around #'org-create-formula-image-with-auto-processing-type)
+  (let ((article-class (copy-sequence (assoc-string "article" org-latex-classes))))
+    (setf (car article-class) "article-ctex"
+          (cadr article-class) "\\documentclass[11pt]{ctexart}")
+    (push article-class org-latex-classes)))
 
 (use-package org-attach
   :after org
@@ -1575,7 +1585,10 @@
   :mode ("\\.pdf\\'" . (lambda ()
                          (require 'pdf-tools)
                          (pdf-tools-install)
-                         (pdf-view-mode))))
+                         (pdf-view-mode)))
+  :bind (:map pdf-view-mode-map
+         ("M-g M-g" . pdf-view-goto-page)
+         ("M-g g" . pdf-view-goto-page)))
 
 (use-package org-pdftools
   :when (member 'org-pdf-tools extra-features)
@@ -1601,7 +1614,7 @@
   :init
   (setq org-roam-v2-ack t)
   :hook
-  (org-mode . org-roam-db-autosync-mode)
+  (org-mode . (lambda () (unless org-roam-db-autosync-mode (org-roam-db-autosync-mode +1))))
   :custom
   (org-roam-directory (expand-file-name "org-roam" org-directory))
   (org-roam-graph-link-den-types '("file" "attachment"))
