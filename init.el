@@ -115,12 +115,25 @@
   :custom (make-backup-files nil)
   :hook (find-file . (lambda ()
                        (unless (file-exists-p (file-truename buffer-file-name))
-                         (set-buffer-file-coding-system 'utf-8)))))
+                         (set-buffer-file-coding-system 'utf-8))))
+  :bind (("C-x C-w" . write-file-or-region-command))
+  :config
+  (defun write-file-or-region-command ()
+    (interactive)
+    (if (region-active-p)
+        (call-interactively #'write-region)
+      (call-interactively #'write-file))))
 
 (use-package url-handlers
   :ensure nil
   :defer nil
   :config (url-handler-mode +1))
+
+(use-package ediff
+  :ensure nil
+  :defer t
+  :custom
+  (ediff-window-setup-function 'ediff-setup-windows-plain))
 
 (defcustom extra-features nil
   "Extra features enabled on Emacs startup.")
@@ -527,10 +540,15 @@
   :hook
   ((minibuffer-setup corfu-mode) . (lambda () (setq-local completion-styles '(orderless))))
   :config
-  (defun orderless-literal-if-unicode (pattern _index _total)
-    (when (-some (lambda (char) (> char 255)) (string-to-list pattern))
-      #'orderless-literal))
-  (push #'orderless-literal-if-unicode orderless-style-dispatchers))
+  (defun orderless-literal-when-nonascii (pattern _index _total)
+    (when (string-match "[^[:ascii:]]" pattern) #'orderless-literal))
+  (defun orderless-literal-when-begin-with-upper-case (pattern _index _total)
+    (when (let ((case-fold-search nil)) (string-match "^[[:upper:]]" pattern)) #'orderless-literal))
+  (defun orderless-regexp-when-regexp-symbol (pattern _index _total)
+    (when (string-match "[\\^$?\\.+*^]\\|\\[\\|\\]" pattern) #'orderless-regexp))
+  (push #'orderless-literal-when-nonascii orderless-style-dispatchers)
+  (push #'orderless-literal-when-begin-with-upper-case orderless-style-dispatchers)
+  (push #'orderless-regexp-when-regexp-symbol orderless-style-dispatchers))
 
 
 (use-package marginalia
@@ -855,6 +873,26 @@
     :config
     (sp-local-pair 'eshell-mode "#<" ">")))
 
+(use-package string-inflection
+  :ensure t
+  :defer t
+  :bind (:map prog-mode-map
+         ("C-c i i" . string-inflection-cycle)
+         ("C-c i t" . string-inflection-toggle)
+         ("C-c i C" . string-inflection-camelcase)
+         ("C-c i c" . string-inflection-lower-camelcase)
+         ("C-c i -" . string-inflection-kebab-case)
+         ("C-c i _" . string-inflection-underscore))
+  :config
+  (defvar string-inflection-repeat-map
+    (let ((map (make-sparse-keymap)))
+      (define-key map (kbd "i") #'string-inflection-cycle)
+      (define-key map (kbd "t") #'string-inflection-toggle)
+      (dolist (it '(string-inflection-cycle string-inflection-toggle))
+        (put it 'repeat-map 'string-inflection-repeat-map))
+      map)
+    "Keymap to repeat string inflection key sequences.  Used in `repeat-mode'."))
+
 (use-package indent-yank
   :quelpa (indent-yank :fetcher github :repo "BohongHuang/indent-yank")
   :defer t
@@ -987,6 +1025,7 @@
   ((prog-mode org-mode tex-mode) . yas-minor-mode)
   :custom
   (yas-triggers-in-field t)
+  (yas-indent-line 'fixed)
   :config
   (yas-reload-all))
 
@@ -1087,7 +1126,8 @@
 
 (use-package toml-mode
   :ensure t
-  :defer t)
+  :defer t
+  :hook (toml-mode . smartparens-mode))
 
 ;;;;;;;;;
 ;; LSP ;;
@@ -1987,6 +2027,14 @@
   :demand t
   :after emms
   :commands hydra-emms/body)
+
+(use-package emms-vgm
+  :when (member 'emms extra-features)
+  :load-path "custom-lisp"
+  :demand t
+  :after emms
+  :config
+  (nconc emms-player-list '(emms-player-audacious emms-player-playgsf emms-player-gme emms-player-vgmstream)))
 
 (use-package mu4e
   :when (member 'mu4e extra-features)
