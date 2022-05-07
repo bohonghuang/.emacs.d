@@ -432,12 +432,6 @@
 (use-package company
   :ensure t
   :defer t
-  :init
-  (use-package company
-    :when (not (display-graphic-p))
-    :defer t
-    :hook
-    ((prog-mode ielm-mode) . company-mode))
   :custom
   (company-minimum-prefix-length 1)
   (company-frontends '(company-pseudo-tooltip-frontend
@@ -453,7 +447,6 @@
     :config (add-hook 'TeX-mode-hook (lambda () (delete 'company-dabbrev company-backends)))))
 
 (use-package corfu
-  :when (display-graphic-p)
   :ensure t
   :defer t
   :hook
@@ -473,6 +466,17 @@
     (let ((completion-extra-properties corfu--extra)
           completion-cycle-threshold completion-cycling)
       (apply #'consult-completion-in-region completion-in-region--data))))
+
+(use-package popon
+  :when (not (display-graphic-p))
+  :quelpa (popon :fetcher git :url "https://codeberg.org/akib/emacs-popon.git")
+  :defer t)
+
+(use-package corfu-popup
+  :when (not (display-graphic-p))
+  :quelpa (corfu-popup :fetcher git :url "https://codeberg.org/akib/emacs-corfu-popup.git")
+  :defer t
+  :hook (corfu-mode . corfu-popup-mode))
 
 (use-package cape
   :ensure t
@@ -502,7 +506,7 @@
   (push #'cape-keyword completion-at-point-functions))
 
 (use-package kind-icon
-  :when (version<= "28" emacs-version)
+  :when (and (version<= "28" emacs-version) (not (display-graphic-p)))
   :ensure t
   :demand t
   :after corfu
@@ -1881,7 +1885,10 @@
   (gts-translate-list '(("en" "zh")))
   :bind (("C-c t t" . gts-do-translate))
   :config
-  (defalias 'subseq 'cl-subseq))
+  (defalias 'subseq 'cl-subseq)
+  (defun gts-text-replace-redundant-empty (ret)
+    (replace-regexp-in-string "[ \n\t]+" " " ret))
+  (advice-add #'gts-text :filter-return #'gts-text-replace-redundant-empty))
 
 (use-package eshell
   :ensure nil
