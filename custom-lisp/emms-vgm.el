@@ -2,12 +2,11 @@
 
 (require 'emms-player-simple)
 
-(defconst emms-player-vgmstream-extensions '("2dx9" "aaap" "aax" "acm"
-                                             "adp" "adpcm" "ads" "adx" "afc" "agsc" "ahx" "aifc" "aix" "amts" "as4"
-                                             "asd" "asf" "asr" "ass" "ast" "at3" "aud" "aus" "baf" "baka" "bao"
+(defconst emms-player-vgmstream-extensions '("2dx9" "aaap" "aax" "acm" "adp" "adpcm" "ads" "adx" "afc" "agsc" "ahx" "aifc" "aix"
+                                             "amts" "as4" "asd" "asf" "asr" "ass" "ast" "at3" "aud" "aus" "baf" "baka" "bao"
                                              "bar" "bcstm" "bg00" "bgw" "bh2pcm" "bmdx" "bns" "bnsf" "bo2" "brstm"
                                              "caf" "capdsp" "ccc" "cfn" "cnk" "ddsp" "de2" "dec" "dmsg" "dsp" "dvi"
-                                             "dxh" "eam" "emff" "enth" "fag" "filp" "fsb" "gca" "gcm" "gcsw" "gcw"
+                                             "dxh" "eam" "emff" "enth" "fag" "filp" "fsb" "genh" "gca" "gcm" "gcsw" "gcw"
                                              "gms" "gsp" "hca" "hgc1" "his" "hps" "hwas" "idsp" "idvi" "ikm" "ild"
                                              "int" "isd" "ish" "ivaud" "ivb" "joe" "kces" "kcey" "khv" "kraw"
                                              "laac" "leg" "lflac" "logg" "lps" "lsf" "lstm" "lwav" "matx" "mc3"
@@ -55,7 +54,7 @@
   (emms-player-started player))
 
 (define-emms-simple-player audacious '(file)
-  (apply #'emms-player-simple-regexp  (append emms-player-vgmstream-extensions emms-player-gme-extensions))
+  (apply #'emms-player-simple-regexp (append emms-player-vgmstream-extensions emms-player-gme-extensions '("mini2sf" "minipsf" "minipsf2")))
   "audacious" "-H")
 
 (defvar emms-vgm-endless-loop-p nil)

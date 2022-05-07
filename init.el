@@ -201,11 +201,6 @@
   :defer nil
   :hook (prog-mode . hl-line-mode))
 
-(use-package hideshow
-  :ensure nil
-  :defer t
-  :hook (prog-mode . hs-minor-mode))
-
 (use-package paragraphs
   :ensure nil
   :defer nil
@@ -1032,7 +1027,34 @@
 (use-package yasnippet-snippets
   :ensure t
   :defer t
-  :hook (yas-minor-mode . (lambda () (require 'yasnippet-snippets)))) 
+  :hook (yas-minor-mode . (lambda () (require 'yasnippet-snippets))))
+
+(use-package hideshow
+  :ensure nil
+  :defer t
+  :hook (prog-mode . hs-minor-mode)
+  :bind (:map hs-minor-mode-map
+         ("TAB" . hs-toggle-hiding-or-tab)
+         ("<backtab>" . hs-toggle-hiding-all))
+  :commands (hs-toggle-hiding-or-tab hs-toggle-hiding-all)
+  :config
+  (defun hs-toggle-hiding-or-tab (&optional arg)
+    (interactive "P")
+    (if hs-minor-mode
+        (let ((block-start-p (hs-looking-at-block-start-p))
+              (beg (point))
+              (end (progn (indent-for-tab-command arg) (point))))
+          (when (and block-start-p (not (region-active-p)) (eq beg end))
+            (hs-toggle-hiding)
+            (goto-char beg)))
+      (indent-for-tab-command arg)))
+  (defvar hs-all-hidden-p nil)
+  (defun hs-toggle-hiding-all ()
+    (interactive)
+    (if hs-all-hidden-p
+        (hs-show-all)
+      (hs-hide-all))
+    (setq-local hs-all-hidden-p (not hs-all-hidden-p))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Language Supports ;;
@@ -1055,6 +1077,11 @@
    'self-insert-command
    minibuffer-local-completion-map)
    (setq sbt:program-options '("-Dsbt.supershell=false")))
+
+(use-package cc-mode
+  :ensure nil
+  :defer t
+  :init (defalias 'cpp-mode 'c++-mode))
 
 (use-package rustic
   :ensure t
@@ -1852,7 +1879,7 @@
   :defer t
   :custom
   (gts-translate-list '(("en" "zh")))
-  :bind ("C-c t t" . gts-do-translate)
+  :bind (("C-c t t" . gts-do-translate))
   :config
   (defalias 'subseq 'cl-subseq))
 
@@ -1934,14 +1961,20 @@
   :defer t
   :hook (eshell-mode . esh-autosuggest-mode))
 
+(use-package fish-completion
+  :when (executable-find "fish")
+  :ensure t
+  :defer t
+  :hook (eshell-mode . fish-completion-mode))
+
 (use-package vterm
   :when (member 'vterm extra-features)
   :ensure t
   :defer t
   :bind (:map vterm-mode-map
-              ("C-x C-q" . vterm-copy-mode)
+         ("C-x C-q" . vterm-copy-mode)
          :map vterm-copy-mode-map
-              ("C-x C-q" . vterm-copy-mode)))
+         ("C-x C-q" . vterm-copy-mode)))
 
 (use-package eshell-vterm
   :when (member 'vterm extra-features)
@@ -2005,7 +2038,7 @@
   (emms-info-asynchronously t)
   (emms-info-functions '(emms-info-libtag))
   (emms-lyrics-scroll-p nil)
-  :bind ("C-c m" . hydra-emms/body)
+  :bind (("C-c m" . hydra-emms/body))
   :config
   (require 'emms-setup)
   (require 'emms-info-libtag)
@@ -2104,6 +2137,24 @@ Saves to a temp file and puts the filename in the kill ring."
 (when (not window-system)
   (global-set-key (kbd "M-=") #'er/expand-region)
   (global-set-key (kbd "C-x ;") #'comment-line))
+
+(use-package app-launcher
+  :defer t
+  :quelpa (app-launcher :fetcher github :repo "BohongHuang/app-launcher")
+  :bind (("s-SPC" . app-launcher-run-app))
+  :commands (app-launcher-make-frame-and-run-app)
+  :config
+  (defun app-launcher-make-frame-and-run-app ()
+    (interactive)
+    (with-selected-frame (make-frame '((name . "Run Application")
+                                       (minibuffer . only)
+                                       (width . 120)
+                                       (height . 11)
+                                       (window-system . pgtk)
+                                       (undecorated . t)))
+      (unwind-protect
+          (let ((enable-recursive-minibuffers nil)) (app-launcher-run-app))
+        (delete-frame)))))
 
 (use-package sis
   :when (member 'sis extra-features)
