@@ -506,14 +506,24 @@
   (push #'cape-keyword completion-at-point-functions))
 
 (use-package kind-icon
-  :when (and (version<= "28" emacs-version) (not (display-graphic-p)))
+  :when (and (version<= "28" emacs-version) (display-graphic-p))
   :ensure t
   :demand t
   :after corfu
   :custom
   (kind-icon-default-face 'corfu-default)
   :config
-  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+  (when (null corfu-margin-formatters)
+    (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter)))
+
+(use-package kind-all-the-icons
+  :when (member 'all-the-icons extra-features)
+  :load-path "custom-lisp"
+  :after kind-icon
+  :demand t
+  :config
+  (when (null corfu-margin-formatters)
+    (add-to-list 'corfu-margin-formatters #'kind-all-the-icons-margin-formatter)))
 
 (use-package corfu-doc
   :ensure t
