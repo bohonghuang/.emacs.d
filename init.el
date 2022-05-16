@@ -326,7 +326,7 @@
 
 (use-package winner
   :ensure nil
-  :defer t
+  :defer nil
   :config
   (winner-mode +1))
 
@@ -335,7 +335,7 @@
   :hook (find-file . (lambda () (require 'recentf)))
   :commands recentf-open-files
   :custom
-  (recentf-exclude '("~$" "/tmp/" "/ssh:" "/sshx:" "/sudo:"))
+  (recentf-exclude '("~$" "/tmp/" "/ssh:" "/sshx:" "/sudo:" "ftp://" "http://" "https://"))
   (recentf-max-saved-items 100)
   :config
   (recentf-mode +1)
@@ -506,12 +506,13 @@
   (push #'cape-keyword completion-at-point-functions))
 
 (use-package kind-icon
-  :when (and (version<= "28" emacs-version) (display-graphic-p))
+  :when (version<= "28" emacs-version)
   :ensure t
   :demand t
   :after corfu
   :custom
   (kind-icon-default-face 'corfu-default)
+  (kind-icon-use-icons (display-graphic-p))
   :config
   (when (null corfu-margin-formatters)
     (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter)))
@@ -522,6 +523,8 @@
   :after kind-icon
   :demand t
   :config
+  (unless (display-graphic-p)
+    (dolist (icon kind-all-the-icons--icons) (setf (cdr icon) (concat (cdr icon) " "))))
   (when (null corfu-margin-formatters)
     (add-to-list 'corfu-margin-formatters #'kind-all-the-icons-margin-formatter)))
 
@@ -1410,6 +1413,12 @@
                    (local-set-key (kbd "RET") #'pycharm-return)
                    (local-set-key (kbd "DEL") #'pycharm-backspace))))
 
+(use-package time
+  :ensure nil
+  :defer t
+  :custom
+  (display-time-string-forms '(24-hours ":" minutes)))
+
 (use-package calendar
   :ensure nil
   :defer t
@@ -2080,11 +2089,11 @@
 
 (use-package emms-vgm
   :when (member 'emms extra-features)
-  :load-path "custom-lisp"
+  :quelpa (emms-vgm :fetcher github :repo "BohongHuang/emms-vgm")
   :demand t
   :after emms
   :config
-  (nconc emms-player-list '(emms-player-audacious emms-player-playgsf emms-player-gme emms-player-vgmstream)))
+  (nconc emms-player-list emms-vgm-players-default))
 
 (use-package mu4e
   :when (member 'mu4e extra-features)

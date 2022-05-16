@@ -78,4 +78,14 @@
 (add-hook 'kill-emacs-hook #'emms-lyrics-delete-temp-file)
 (advice-add #'emms-lyrics-visit-lyric :after #'auto-revert-mode)
 
+(defun emms-playlist-insert-tracks-from-playlist-or-funcall (fun track)
+  (let ((file (emms-track-name track)))
+    (pcase (file-name-extension file)
+      ("pls" (emms-source-pls-playlist file))
+      ((or "m3u" "m3u8") (emms-source-m3u-playlist file))
+      ((or "l" "lisp" "el") (emms-source-native-playlist file))
+      (_ (funcall fun track)))))
+
+(advice-add #'emms-playlist-insert-track :around #'emms-playlist-insert-tracks-from-playlist-or-funcall)
+
 (provide 'emms-ext)
