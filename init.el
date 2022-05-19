@@ -2190,13 +2190,12 @@ Saves to a temp file and puts the filename in the kill ring."
   (sis-ism-lazyman-config "1" "2" 'fcitx5)
   (push "M-g" sis-prefix-override-keys)
   (push "<f1>" sis-prefix-override-keys)
-  (sis-global-cursor-color-mode t)
-  (sis-global-respect-mode t)
-  (sis-global-context-mode t)
+  (sis-global-cursor-color-mode +1)
+  (sis-global-respect-mode +1)
+  (sis-global-context-mode +1)
   (when (package-installed-p 'doom-modeline)
     (defvar sis-global-respect-mode-before-kbd-macro nil)
     (defvar sis-global-respect-mode-previous-defining-kbd-macro nil)
-    
     (defun sis-defining-kbd-macro-watcher (&rest _)
       (when (not (eq sis-global-respect-mode-previous-defining-kbd-macro defining-kbd-macro))
         (if defining-kbd-macro
@@ -2207,7 +2206,19 @@ Saves to a temp file and puts the filename in the kill ring."
             (setq sis-global-respect-mode-before-kbd-macro nil)
             (sis-global-respect-mode +1)))
         (setq sis-global-respect-mode-previous-defining-kbd-macro defining-kbd-macro)))
-    (advice-add #'doom-modeline-segment--matches :before #'sis-defining-kbd-macro-watcher)))
+    (advice-add #'doom-modeline-segment--matches :before #'sis-defining-kbd-macro-watcher)
+    (defun sis-update-cursor-color-after-theme-load (&rest _)
+      (sis-global-cursor-color-mode -1)
+      (let ((cursor-color (face-background 'cursor)))
+        (add-hook 'post-command-hook
+                (defun sis-update-default-cursor-color ()
+                  (setq sis-default-cursor-color cursor-color)
+                  (print sis-default-cursor-color)
+                  (sis-global-cursor-color-mode +1)
+                  (remove-hook 'post-command-hook #'sis-update-default-cursor-color)
+                  (fmakunbound 'sis-update-default-cursor-color)))))
+    (advice-add #'consult-theme :after #'sis-update-cursor-color-after-theme-load)
+    (sis--update-cursor-color)))
 
 (provide 'init)
 ;;; init.el ends here
