@@ -472,11 +472,11 @@
   :quelpa (popon :fetcher git :url "https://codeberg.org/akib/emacs-popon.git")
   :defer t)
 
-(use-package corfu-popup
+(use-package corfu-terminal
   :when (not (display-graphic-p))
-  :quelpa (corfu-popup :fetcher git :url "https://codeberg.org/akib/emacs-corfu-popup.git")
+  :quelpa (corfu-terminal :fetcher git :url "https://codeberg.org/akib/emacs-corfu-terminal.git")
   :defer t
-  :hook (corfu-mode . corfu-popup-mode))
+  :hook (corfu-mode . corfu-terminal-mode))
 
 (use-package cape
   :ensure t
@@ -2093,7 +2093,8 @@
   :demand t
   :after emms
   :config
-  (nconc emms-player-list emms-vgm-players-default))
+  (require 'emms-vgm-default-players)
+  (nconc emms-player-list emms-vgm-default-players))
 
 (use-package mu4e
   :when (member 'mu4e extra-features)
@@ -2213,7 +2214,6 @@ Saves to a temp file and puts the filename in the kill ring."
         (add-hook 'post-command-hook
                 (defun sis-update-default-cursor-color ()
                   (setq sis-default-cursor-color cursor-color)
-                  (print sis-default-cursor-color)
                   (sis-global-cursor-color-mode +1)
                   (remove-hook 'post-command-hook #'sis-update-default-cursor-color)
                   (fmakunbound 'sis-update-default-cursor-color)))))

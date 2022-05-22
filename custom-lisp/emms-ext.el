@@ -1,7 +1,10 @@
 ;;; -*- lexical-binding: t -*-
 
+(require 'cl-lib)
+
 (require 'emms)
 (require 'emms-info-native)
+(require 'emms-volume)
 (require 'pretty-hydra)
 
 (pretty-hydra-define hydra-emms
@@ -16,22 +19,29 @@
     ("o d"    (call-interactively #'emms-play-directory-tree)  "Play Directory")
     ("o u"    (call-interactively #'emms-play-url)             "Play URL"))
    "Playlist"
-   (("S"     (emms-shuffle)                                    "Shuffle"))
+   (("a l"    (call-interactively #'emms-add-playlist)         "Add Playlist")
+    ("a o"    (call-interactively #'emms-add-file)             "Add File")
+    ("a d"    (call-interactively #'emms-add-directory-tree)   "Add Directory")
+    ("a u"    (call-interactively #'emms-add-url)              "Add URL")
+    ("S"      (emms-shuffle)                                   "Shuffle"))
    "Playback"
-   (("<SPC>" (emms-pause)                                      "Pause/Resume")
-    ("n"     (emms-next)                                       "Next")
-    ("p"     (emms-previous)                                   "Previous")
-    ("f"     (emms-seek-forward)                               "Seek Forward")
-    ("b"     (emms-seek-backward)                              "Seek Backward")
-    ("k"     (emms-stop)                                       "Stop"))
+   (("<SPC>"  (emms-pause)                                     "Pause/Resume")
+    ("n"      (emms-next)                                      "Next")
+    ("p"      (emms-previous)                                  "Previous")
+    ("f"      (emms-seek-forward)                              "Seek Forward")
+    ("b"      (emms-seek-backward)                             "Seek Backward")
+    ("k"      (emms-stop)                                      "Stop"))
    "Score"
-   (("s"     (call-interactively #'emms-score-set-playing)     "Set Score"))
+   (("s"      (call-interactively #'emms-score-set-playing)    "Set Score"))
    "Lyrics"
-   (("l v"   (emms-lyrics-visit-lyric)                         "View Lyrics")
-    ("l t"   (emms-lyrics-switch-display-position)             "Toggle Display")
-    ("l c"   (emms-lyrics-restore-mode-line)                   "Clean Up Modeline"))
+   (("l v"    (emms-lyrics-visit-lyric)                        "View Lyrics")
+    ("l t"    (emms-lyrics-switch-display-position)            "Toggle Display")
+    ("l c"    (emms-lyrics-restore-mode-line)                  "Clean Up Modeline"))
+   "Volume"
+   (("+"      (emms-volume-raise)                              "Raise Volume")
+    ("-"      (emms-volume-lower)                              "Lower Volume"))
    "Other"
-   (("m"     (emms)                                            "Emms Buffer"))))
+   (("m"      (emms)                                           "Emms Buffer"))))
 
 (defconst emms-lyrics-display-positions (ring-convert-sequence-to-ring '((t . nil) (nil . t) (nil . nil))))
 
@@ -91,5 +101,28 @@
       (funcall fun track))))
 
 (advice-add #'emms-playlist-insert-track :around #'emms-playlist-insert-tracks-from-playlist-or-funcall)
+
+(defcustom emms-volume-amixer-device nil
+  "The device to change volume."
+  :type 'symbol
+  :group 'emms-volume)
+
+(defun emms-volume-amixer-change-with-device-and-card (amount)
+  "Change amixer master volume by AMOUNT."
+  (message "Playback channels: %s"
+           (with-temp-buffer
+             (when (zerop
+                    (apply #'call-process (append (list "amixer" nil (current-buffer) nil)
+                                                  (when-let ((device emms-volume-amixer-device))
+                                                    (list "-D" (symbol-name emms-volume-amixer-device)))
+                                                  (when-let ((card emms-volume-amixer-card))
+                                                    (list "-c" (number-to-string card)))
+                                                  (list "sset" emms-volume-amixer-control
+                                                        (format "%d%%%s" (abs amount)
+                                                                (if (< amount 0) "-" "+"))))))
+               (if (re-search-backward "\\[\\([0-9]+%\\)\\]" nil t)
+                   (match-string 1))))))
+
+(advice-add #'emms-volume-amixer-change :override #'emms-volume-amixer-change-with-device-and-card)
 
 (provide 'emms-ext)
