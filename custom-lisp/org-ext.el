@@ -292,7 +292,7 @@ the documentation of `org-diary'."
     (define-key map (kbd "C-b") #'org-backward-heading-same-level)
     (define-key map (kbd "C-u") #'org-up-heading)
     (define-key map (kbd "C-i") #'org-down-heading)
-    (--each '(org-next-visible-heading org-previous-visible-heading org-forward-heading-same-level org-backward-heading-same-level org-up-heading org-down-heading) (put it 'repeat-map 'org-mode-navigation-repeat-map))
+    (dolist (it '(org-next-visible-heading org-previous-visible-heading org-forward-heading-same-level org-backward-heading-same-level org-up-heading org-down-heading)) (put it 'repeat-map 'org-mode-navigation-repeat-map))
     map)
   "Keymap to repeat `org-mode' navigation key sequences.  Used in `repeat-mode'.")
 

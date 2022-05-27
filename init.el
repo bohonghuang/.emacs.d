@@ -116,9 +116,9 @@
   :hook (find-file . (lambda ()
                        (unless (file-exists-p (file-truename buffer-file-name))
                          (set-buffer-file-coding-system 'utf-8))))
-  :bind (("C-x C-w" . write-file-or-region-command))
+  :bind (("C-x C-w" . write-to-file-dwim))
   :config
-  (defun write-file-or-region-command ()
+  (defun write-to-file-dwim ()
     (interactive)
     (if (region-active-p)
         (call-interactively #'write-region)
@@ -176,7 +176,7 @@
 ;;;;;;;;;;;
 
 (use-package term/xterm
-  :if (string-equal (getenv "TERM") "fbterm")
+  :when (string-equal (getenv "TERM") "fbterm")
   :ensure nil
   :demand t
   :config
@@ -188,7 +188,7 @@
 
 (use-package monokai-theme
   :quelpa (monokai-theme :fetcher github :repo "BohongHuang/monokai-emacs")
-  :if (null custom-enabled-themes)
+  :when (null custom-enabled-themes)
   :config
   (load-theme 'monokai t))
 
@@ -311,7 +311,7 @@
   (compilation-scroll-output t))
 
 (use-package project
-  :if (version<= "27.1" emacs-version)
+  :when (version<= "27.1" emacs-version)
   :ensure nil
   :defer t
   :config
@@ -344,7 +344,7 @@
       (recentf-add-file buffer-file-name))))
 
 (use-package repeat
-  :if (version<= "28.0.60" emacs-version)
+  :when (version<= "28.0.60" emacs-version)
   :ensure nil
   :defer t
   :init
@@ -467,14 +467,9 @@
           completion-cycle-threshold completion-cycling)
       (apply #'consult-completion-in-region completion-in-region--data))))
 
-(use-package popon
-  :when (not (display-graphic-p))
-  :quelpa (popon :fetcher git :url "https://codeberg.org/akib/emacs-popon.git")
-  :defer t)
-
 (use-package corfu-terminal
+  :ensure t
   :when (not (display-graphic-p))
-  :quelpa (corfu-terminal :fetcher git :url "https://codeberg.org/akib/emacs-corfu-terminal.git")
   :defer t
   :hook (corfu-mode . corfu-terminal-mode))
 
@@ -561,7 +556,6 @@
   (push #'orderless-literal-when-nonascii orderless-style-dispatchers)
   (push #'orderless-literal-when-begin-with-upper-case orderless-style-dispatchers)
   (push #'orderless-regexp-when-regexp-symbol orderless-style-dispatchers))
-
 
 (use-package marginalia
   :ensure t
@@ -720,7 +714,7 @@
 
 (use-package ligature
   :defer t
-  :if (and (version<= "28" emacs-version) window-system)
+  :when (and (version<= "28" emacs-version) window-system)
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode) major-mode) (require 'ligature) (ligature-mode +1))))
   :quelpa (ligature :fetcher github :repo "mickeynp/ligature.el")
   :config
@@ -1012,7 +1006,7 @@
 (use-package subword
   :ensure nil
   :defer t
-  :hook ((c++-mode java-mode scala-mode rustic-mode) . subword-mode))
+  :hook ((c-mode c++-mode objc-mode java-mode scala-mode rustic-mode python-mode) . subword-mode))
 
 (use-package tree-sitter
   :when (member 'tree-sitter extra-features)
@@ -1028,7 +1022,7 @@
 (use-package tree-sitter-langs
   :ensure t
   :defer t
-  :if (not (eq system-type 'windows-nt)))
+  :when (not (eq system-type 'windows-nt)))
 
 (use-package yasnippet
   :ensure t
@@ -1051,27 +1045,27 @@
   :defer t
   :hook (prog-mode . hs-minor-mode)
   :bind (:map hs-minor-mode-map
-         ("TAB" . hs-toggle-hiding-or-tab)
          ("<backtab>" . hs-toggle-hiding-all))
-  :commands (hs-toggle-hiding-or-tab hs-toggle-hiding-all)
   :config
-  (defun hs-toggle-hiding-or-tab (&optional arg)
+  (defun hs-togglable-p (&optional cmd)
+    (let ((block-start-p (hs-looking-at-block-start-p))
+          (at-indent (looking-back "^[[:blank:]]*" (line-beginning-position)))
+          (beg (point)))
+      (when (and block-start-p (not (region-active-p)) (or (not at-indent)
+                                                           (eq (point) (save-excursion (back-to-indentation) (point)))))
+        (or cmd beg))))
+  (defun hs-toggle-hiding-at-point (&optional arg)
     (interactive "P")
-    (if hs-minor-mode
-        (let ((block-start-p (hs-looking-at-block-start-p))
-              (beg (point))
-              (end (progn (indent-for-tab-command arg) (point))))
-          (when (and block-start-p (not (region-active-p)) (eq beg end))
-            (hs-toggle-hiding)
-            (goto-char beg)))
-      (indent-for-tab-command arg)))
+    (save-excursion (hs-toggle-hiding)))
   (defvar hs-all-hidden-p nil)
   (defun hs-toggle-hiding-all ()
     (interactive)
     (if hs-all-hidden-p
         (hs-show-all)
       (hs-hide-all))
-    (setq-local hs-all-hidden-p (not hs-all-hidden-p))))
+    (setq-local hs-all-hidden-p (not hs-all-hidden-p)))
+  (defconst hs-maybe-toggle-hideing-at-point '(menu-item "" hs-toggle-hiding-at-point :filter hs-togglable-p))
+  (define-key hs-minor-mode-map (kbd "TAB") hs-maybe-toggle-hideing-at-point))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Language Supports ;;
@@ -1727,7 +1721,7 @@
   (setq org-journal-prefix-key "C-c j")
   :bind (("C-c j j" . org-journal-new-entry))
   :custom
-  (org-journal-date-format "%Y年%m月%d日 %A")
+  (org-journal-date-format "%Y 年 %m 月 %d 日 %A")
   (org-journal-dir (expand-file-name "org-journal" org-directory))
   :config
   (global-unset-key (kbd "C-c C-j"))
@@ -1745,7 +1739,7 @@
   (add-hook 'org-journal-after-header-create-hook #'org-journal-insert-template-after-header))
 
 (use-package org-bars
-  :if window-system
+  :when window-system
   :quelpa (org-bars :fetcher github :repo "tonyaldon/org-bars")
   :defer t
   :hook (org-mode . org-bars-mode)
@@ -1953,7 +1947,7 @@
 
 (use-package em-term
   :ensure nil
-  :defer tpppp 
+  :defer t
   :config
   (dolist (it '("nvtop" "bashtop" "btop" "top" "vim" "nvim" "cmatrix"))
     (add-to-list 'eshell-visual-commands it)))
