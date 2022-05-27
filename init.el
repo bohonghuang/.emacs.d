@@ -4,7 +4,7 @@
 ;; This is an Emacs configuration file, in which modules are loaded lazily by `use-package'.
 
 ;;; Code:
-
+(require 'cl-lib)
 ;; Produce backtraces when errors occur: can be helpful to diagnose startup issues
 ;;(setq debug-on-error t)
 (progn
@@ -140,6 +140,9 @@
 
 (defcustom language-support nil
   "The language support used in `prog-mode'.")
+
+(defcustom used-languages nil
+  "All programming languages that this configured Emacs need to support.")
 
 (setq local-file (expand-file-name "local.el" user-emacs-directory))
 (if (file-exists-p local-file) (load-file local-file))
@@ -1072,6 +1075,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package scala-mode
+  :when (member 'scala used-languages)
   :ensure t
   :defer t
   :mode ("\\.sc\\'" . scala-mode)
@@ -1079,6 +1083,7 @@
   ("scala" . scala-mode))
 
 (use-package sbt-mode
+  :when (member 'scala used-languages)
   :ensure t
   :defer t
   :commands sbt-start sbt-command
@@ -1090,11 +1095,13 @@
    (setq sbt:program-options '("-Dsbt.supershell=false")))
 
 (use-package cc-mode
+  :when (cl-intersection '(c++ c objective-c) used-languages)
   :ensure nil
   :defer t
   :init (defalias 'cpp-mode 'c++-mode))
 
 (use-package rustic
+  :when (member 'rust used-languages)
   :ensure t
   :defer t
   :custom
@@ -1103,10 +1110,12 @@
                        (_ nil))))
 
 (use-package groovy-mode
+  :when (member 'groovy used-languages)
   :ensure t
   :defer t)
 
 (use-package python
+  :when (member 'python used-languages)
   :ensure nil
   :defer t
   :config
@@ -1119,28 +1128,34 @@
     "Keymap to repeat Python indentation key sequences.  Used in `repeat-mode'."))
 
 (use-package ein
+  :when (member 'python used-languages)
   :ensure t
   :defer t)
 
 (use-package cmake-mode
+  :when (member 'cmake used-languages)
   :ensure t
   :defer t)
 
 (use-package json-mode
+  :when (member 'json used-languages)
   :ensure t
   :defer t)
 
 (use-package scad-mode
+  :when (member 'scad used-languages)
   :ensure t
   :defer t)
 
 (use-package scad-preview
+  :when (member 'scad used-languages)
   :ensure t
   :defer t
-  :bind(:map scad-mode-map
-             ("C-c C-c" . scad-preview-mode)))
+  :bind (:map scad-mode-map
+         ("C-c C-c" . scad-preview-mode)))
 
 (use-package vhdl-capf
+  :when (member 'vhdl used-languages)
   :ensure t
   :defer t
   :hook (vhdl-mode . vhdl-capf-enable)
@@ -1148,21 +1163,25 @@
   (defun vhdl-capf-flatten (l) (-flatten l)))
 
 (use-package markdown-mode
+  :when (member 'markdown used-languages)
   :ensure nil
   :defer t
   :init
   (defalias 'md-mode 'markdown-mode))
 
 (use-package csv-mode
+  :when (member 'csv used-languages)
   :ensure t
   :defer t
   :hook (csv-mode . csv-align-mode))
 
 (use-package yaml-mode
+  :when (member 'yaml used-languages)
   :ensure t
   :defer t)
 
 (use-package toml-mode
+  :when (member 'toml used-languages)
   :ensure t
   :defer t
   :hook (toml-mode . smartparens-mode))
@@ -1226,20 +1245,20 @@
      :ensure nil
      :defer t
      :bind (:map lsp-mode-map
-                 ("C-c l l" . lsp-avy-lens)))
+            ("C-c l l" . lsp-avy-lens)))
    
    (use-package dap-mode
      :after lsp-mode
      :ensure t
      :defer t
-     :bind(:map prog-mode-map
-                ("C-c l d" . dap-debug)
-                ("C-<f8>". dap-breakpoint-toggle)
-                ("<f8>" . dap-continue)
-                ("S-<f8>" . dap-step-out)
-                ("<f7>" . dap-step-in)
-                ("C-<f2>" . dap-disconnect)
-                ("C-S-<f2>" . dap-stop-thread))
+     :bind(:map dap-mode-map
+           ("C-c l d" . dap-debug)
+           ("C-<f8>". dap-breakpoint-toggle)
+           ("<f8>" . dap-continue)
+           ("S-<f8>" . dap-step-out)
+           ("<f7>" . dap-step-in)
+           ("C-<f2>" . dap-disconnect)
+           ("C-S-<f2>" . dap-stop-thread))
      :hook
      (lsp-mode . dap-mode)
      (lsp-mode . dap-ui-mode))
@@ -1269,6 +1288,7 @@
                  ("M-g F" . consult-lsp-diagnostics)))
 
    (use-package lsp-metals
+     :when (member 'scala used-languages)
      :ensure t
      :defer t
      :custom
@@ -1282,6 +1302,7 @@
                        :server-id 'metals-remote)))
 
    (use-package lsp-rust
+     :when (member 'rust used-languages)
      :defer t
      :hook (rustic-mode . lsp)
      :custom
@@ -1294,6 +1315,7 @@
                        :server-id 'rust-analyzer-remote)))
 
    (use-package lsp-clangd
+     :when (cl-intersection '(c++ c objective-c) used-languages)
      :defer t
      :hook
      ((c-mode c++-mode objc-mode) . lsp)
@@ -1307,6 +1329,7 @@
                        :server-id 'clangd-remote)))
 
    (use-package lsp-pyright
+     :when (member 'python used-languages)
      :ensure t
      :defer t
      :hook (python-mode . (lambda ()
@@ -1329,6 +1352,7 @@
                                         :name "Python Program")))  ; or lsp-deferred
 
    (use-package lsp-java
+     :when (member 'java used-languages)
      :ensure t
      :defer t
      :hook (java-mode . lsp)
@@ -1340,6 +1364,7 @@
                        :server-id 'lsp-java-remote)))
 
    (use-package lsp-vhdl
+     :when (member 'vhdl used-languages)
      :defer t
      :hook
      (vhdl-mode . lsp)
@@ -1352,6 +1377,7 @@
                        :remote? t
                        :server-id 'ghdl-ls-remote)))
    (use-package lsp-tex
+     :when (member 'tex used-languages)
      :defer t
      :hook
      (tex-mode . lsp))))
@@ -1538,15 +1564,15 @@
   :after org
   :demand t
   :bind (:map org-mode-map
-              ("C-c C-S-L" . org-link-make-from-region)))
+         ("C-c C-S-L" . org-link-make-from-region)))
 
 (use-package org-agenda
   :ensure nil
   :defer t
   :bind (:map org-mode-map
-              ("C-c C-x C-S-o" . org-resolve-clocks)
+         ("C-c C-x C-S-o" . org-resolve-clocks)
          :map org-agenda-mode-map
-              ("C-c C-x C-S-o" . org-resolve-clocks))
+         ("C-c C-x C-S-o" . org-resolve-clocks))
   :custom
   (org-agenda-files (list (expand-file-name "org-agenda" org-directory)))
   (org-agenda-window-setup 'current-window)
@@ -1580,12 +1606,14 @@
       (appt-disp-window min-to-appt new-time appt-msg))))
 
 (use-package org-edna
+  :when (member 'org-gtd extra-features)
   :ensure t
   :defer t
   :custom (org-edna-use-inheritance t)
   :config (org-edna-mode +1))
 
 (use-package org-gtd
+  :when (member 'org-gtd extra-features)
   :ensure t
   :defer t
   :custom
@@ -1655,6 +1683,7 @@
         "Keymap to repeat note navigation key sequences.  Used in `repeat-mode'."))
 
 (use-package org-noter
+  :when (member 'org-noter extra-features)
   :ensure t
   :defer t
   :custom
@@ -1663,7 +1692,7 @@
   (org-noter-always-create-frame nil))
 
 (use-package pdf-tools
-  :when (member 'pdf-tools extra-features)
+  :when (and (member 'org-noter extra-features) (member 'pdf-tools extra-features))
   :ensure t
   :defer t
   :mode ("\\.pdf\\'" . (lambda ()
@@ -1675,13 +1704,13 @@
          ("M-g g" . pdf-view-goto-page)))
 
 (use-package org-pdftools
-  :when (member 'org-pdf-tools extra-features)
+  :when (and (member 'org-noter extra-features) (member 'pdf-tools extra-features))
   :ensure t
   :defer t
   :hook (org-mode . org-pdftools-setup-link))
 
 (use-package org-noter-pdftools
-  :when (member 'org-pdf-tools extra-features)
+  :when (and (member 'org-noter extra-features) (member 'pdf-tools extra-features))
   :after pdf-tools
   :init
   (use-package org-noter-pdftools
@@ -1739,7 +1768,7 @@
   (add-hook 'org-journal-after-header-create-hook #'org-journal-insert-template-after-header))
 
 (use-package org-bars
-  :when window-system
+  :when (display-graphic-p)
   :quelpa (org-bars :fetcher github :repo "tonyaldon/org-bars")
   :defer t
   :hook (org-mode . org-bars-mode)
@@ -1770,7 +1799,14 @@
   :demand t
   :after ox)
 
+(use-package mpv
+  :when (member 'org-media-note extra-features)
+  :ensure t
+  :defer t
+  :custom (mpv-default-options '("--volume-max=300")))
+
 (use-package org-media-note
+  :when (member 'org-media-note extra-features)
   :quelpa (org-media-note :fetcher github :repo "yuchen-lea/org-media-note")
   :defer t
   :hook (org-mode . org-media-note-mode)
@@ -1781,20 +1817,22 @@
   (org-media-note-screenshot-image-dir (expand-file-name "org-media-note" org-directory)))
 
 (use-package org-tree-slide
+  :when (member 'org-tree-slide extra-features)
   :ensure t
   :after org
   :defer t
   :bind (:map org-mode-map
-          ("<f5> <f5>" . org-tree-slide-mode)
+         ("<f5> <f5>" . org-tree-slide-mode)
          :map org-tree-slide-mode-map
-          ("<prior>" . org-tree-slide-move-previous-tree)
-          ("<next>" . org-tree-slide-move-next-tree)
-          ("<f5> t" . org-tree-slide-skip-done-toggle)
-          ("<f5> ;" . org-tree-slide-skip-comments-toggle)
-          ("<f5> T" . org-tree-slide-display-header-toggle)
-          ("<f5> a" . org-tree-slide-slide-in-effect-toggle)))
+         ("<prior>" . org-tree-slide-move-previous-tree)
+         ("<next>" . org-tree-slide-move-next-tree)
+         ("<f5> t" . org-tree-slide-skip-done-toggle)
+         ("<f5> ;" . org-tree-slide-skip-comments-toggle)
+         ("<f5> T" . org-tree-slide-display-header-toggle)
+         ("<f5> a" . org-tree-slide-slide-in-effect-toggle)))
 
 (use-package org-tree-slide-ext
+  :when (member 'org-tree-slide extra-features)
   :load-path "custom-lisp"
   :after org-tree-slide
   :demand t
@@ -1804,6 +1842,7 @@
   (org-tree-slide-text-scale 4))
 
 (use-package org-englearn
+  :when (member 'org-englearn extra-features)
   :quelpa (org-englearn :fetcher github :repo "BohongHuang/org-englearn")
   :defer t
   :commands org-englearn-capture org-englearn-process-inbox org-englearn-capture-process-region
@@ -1819,6 +1858,7 @@
    :kill-buffer t)))
 
 (use-package org-englearn-pdf-view
+  :when (member 'org-englearn extra-features)
   :ensure nil
   :defer t
   :after pdf-view
@@ -1832,6 +1872,7 @@
 ;;;;;;;;;;;;
 
 (use-package cdlatex
+  :when (member 'tex used-languages)
   :ensure t
   :defer t
   :init
@@ -1858,7 +1899,7 @@
     (advice-add #'cape-dabbrev :filter-return #'cape-dabbrev-disable-in-cdlatex-mode)))
 
 (use-package tex
-  :when (member 'auctex extra-features)
+  :when (and (member 'tex used-languages) (member 'auctex extra-features))
   :ensure auctex
   :defer t
   :custom
@@ -1884,7 +1925,7 @@
     (dolist (hook tex-mode-hook) (add-to-list 'TeX-mode-hook hook))))
 
 (use-package latex
-  :when (member 'auctex extra-features)
+  :when (and (member 'tex used-languages) (member 'auctex extra-features))
   :ensure auctex
   :defer t
   :config
@@ -1904,6 +1945,7 @@
   (advice-add #'gts-text :filter-return #'gts-text-replace-redundant-empty))
 
 (use-package eshell
+  :when (member 'eshell extra-features)
   :ensure nil
   :defer t
   :custom
@@ -1918,6 +1960,7 @@
   (advice-add #'eshell--complete-commands-list :around #'eshell--complete-commands-list@around))
 
 (use-package em-hist
+  :when (member 'eshell extra-features)
   :ensure nil
   :defer t
   :custom
@@ -1946,6 +1989,7 @@
   (advice-add #'eshell-hist-initialize :after #'eshell-hist-initialize@after))
 
 (use-package em-term
+  :when (member 'eshell extra-features)
   :ensure nil
   :defer t
   :config
@@ -1953,11 +1997,13 @@
     (add-to-list 'eshell-visual-commands it)))
 
 (use-package eshell-syntax-highlighting
+  :when (member 'eshell extra-features)
   :ensure t
   :defer t
   :hook (eshell-mode . eshell-syntax-highlighting-mode))
 
 (use-package eshell-outline
+  :when (member 'eshell extra-features)
   :ensure t
   :defer t
   :hook (eshell-mode . eshell-outline-mode)
@@ -1966,6 +2012,7 @@
 
 
 (use-package eshell-prompt-extras
+  :when (member 'eshell extra-features)
   :ensure t
   :after eshell
   :demand t
@@ -1977,12 +2024,13 @@
     (advice-add prompt :filter-return #'eshell-prompt-make-read-only)))
 
 (use-package esh-autosuggest
+  :when (member 'eshell extra-features)
   :ensure t
   :defer t
   :hook (eshell-mode . esh-autosuggest-mode))
 
 (use-package fish-completion
-  :when (executable-find "fish")
+  :when (and (member 'eshell extra-features) (executable-find "fish"))
   :ensure t
   :defer t
   :hook (eshell-mode . fish-completion-mode))
@@ -2040,11 +2088,6 @@
   :ensure t
   :defer t
   :bind (("<pause>" . redacted-mode)))
-
-(use-package mpv
-  :ensure t
-  :defer t
-  :custom (mpv-default-options '("--volume-max=300")))
 
 (use-package emms
   :when (member 'emms extra-features)
