@@ -1,3 +1,4 @@
+
 auto-save-list
 elpa
 session.*
@@ -36,3 +37,10 @@ quelpa
 *.eln
 eclipse.jdt.ls
 workspace
+ac-comphist.dat
+auctex
+multisession
+octave-workspace
+shadow_todo
+shadows
+srecode-map.el
