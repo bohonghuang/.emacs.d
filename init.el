@@ -96,7 +96,8 @@
   (indent-tabs-mode nil)
   (auto-hscroll-mode t)
   (word-wrap-by-category t)
-  (read-extended-command-predicate #'command-completion-default-include-p))
+  (read-extended-command-predicate #'command-completion-default-include-p)
+  (put 'narrow-to-region 'disabled nil))
 
 (use-package simple-ext
   :load-path "custom-lisp"
@@ -672,6 +673,37 @@
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
+(use-package tempel
+  :ensure t
+  :defer t
+  :custom
+  (tempel-trigger-prefix "<")
+  :hook
+  ((tex-mode prog-mode org-mode) . tempel-setup-capf)
+  :bind (("M-+" . tempel-complete) ;; Alternative tempel-expand
+         ("M-*" . tempel-insert))
+  :config
+  (defun tempel-setup-capf ()
+    (setq-local completion-at-point-functions
+                (cons #'tempel-expand completion-at-point-functions)))
+  (defconst tempel-maybe-expand `(menu-item "" ,(lambda () (interactive) (tempel-expand t)) :filter ,(lambda (cmd) (when (tempel-expand nil) cmd))))
+  (defvar tempel-tab-mode-map
+    (let ((map (make-sparse-keymap)))
+      (define-key map [tab] tempel-maybe-expand)
+      map)
+    "Keymap for `tempel-tab-mode'.")
+  (define-minor-mode tempel-tab-mode
+    "Minor mode to make tempel use <tab> for template expansion as well as `tempel-next', and use <backtab> for `tempel-previous'."
+    :group 'tempel
+    :keymap tempel-tab-mode-map
+    :global t
+    (if tempel-tab-mode
+        (progn (define-key tempel-map (kbd "TAB") #'tempel-next)
+               (define-key tempel-map (kbd "<backtab>") #'tempel-previous))
+      (define-key tempel-map (kbd "TAB") nil)
+      (define-key tempel-map (kbd "<backtab>") nil)))
+  (tempel-tab-mode +1))
+
 (use-package all-the-icons-completion
   :when (member 'all-the-icons extra-features)
   :ensure t
@@ -924,7 +956,7 @@
   :ensure t
   :defer t
   :hook
-  ((lisp-mode emacs-lisp-mode) . rainbow-delimiters-mode))
+  ((lisp-mode lisp-data-mode emacs-lisp-mode) . rainbow-delimiters-mode))
 
 (use-package drag-stuff
   :ensure t
@@ -1027,22 +1059,6 @@
   :defer t
   :when (not (eq system-type 'windows-nt)))
 
-(use-package yasnippet
-  :ensure t
-  :defer t
-  :hook
-  ((prog-mode org-mode tex-mode) . yas-minor-mode)
-  :custom
-  (yas-triggers-in-field t)
-  (yas-indent-line 'fixed)
-  :config
-  (yas-reload-all))
-
-(use-package yasnippet-snippets
-  :ensure t
-  :defer t
-  :hook (yas-minor-mode . (lambda () (require 'yasnippet-snippets))))
-
 (use-package hideshow
   :ensure nil
   :defer t
@@ -1051,12 +1067,13 @@
          ("<backtab>" . hs-toggle-hiding-all))
   :config
   (defun hs-togglable-p (&optional cmd)
-    (let ((block-start-p (hs-looking-at-block-start-p))
-          (at-indent (looking-back "^[[:blank:]]*" (line-beginning-position)))
-          (beg (point)))
-      (when (and block-start-p (not (region-active-p)) (or (not at-indent)
-                                                           (eq (point) (save-excursion (back-to-indentation) (point)))))
-        (or cmd beg))))
+    (when hs-minor-mode                 ; Prevent errors in describe-map
+      (let ((at-indent (looking-back "^[[:blank:]]*" (line-beginning-position)))
+            (beg (point)))
+        (when (and (hs-looking-at-block-start-p)
+                   (not (region-active-p))
+                   (or (not at-indent) (eq (point) (save-excursion (back-to-indentation) (point)))))
+          (or cmd beg)))))
   (defun hs-toggle-hiding-at-point (&optional arg)
     (interactive "P")
     (save-excursion (hs-toggle-hiding)))
@@ -1287,6 +1304,19 @@
                  ("M-g i" . consult-lsp-file-symbols)
                  ("M-g F" . consult-lsp-diagnostics)))
 
+   (use-package yasnippet
+     :ensure t
+     :defer t
+     :hook
+     (lsp-mode . yas-minor-mode)
+     :custom
+     (yas-triggers-in-field t)
+     (yas-indent-line 'fixed)
+     :config
+     (define-key yas-minor-mode-map [(tab)]        nil)
+     (define-key yas-minor-mode-map (kbd "TAB")    nil)
+     (define-key yas-minor-mode-map (kbd "<tab>")  nil))
+
    (use-package lsp-metals
      :when (member 'scala used-languages)
      :ensure t
@@ -1396,7 +1426,7 @@
 (use-package expand-region
   :ensure t
   :defer t
-  :bind (( "C-=" . er/expand-region)))
+  :bind (("C-=" . er/expand-region)))
 
 (use-package multiple-cursors
   :ensure t
@@ -1692,7 +1722,7 @@
   (org-noter-always-create-frame nil))
 
 (use-package pdf-tools
-  :when (and (member 'org-noter extra-features) (member 'pdf-tools extra-features))
+  :when (member 'pdf-tools extra-features)
   :ensure t
   :defer t
   :mode ("\\.pdf\\'" . (lambda ()
@@ -1965,6 +1995,7 @@
   :defer t
   :custom
   (eshell-history-size 1000)
+  (eshell-hist-ignoredups 'erase)
   :config
   (defun eshell-hist-write-after-command (&rest _)
     (eshell-read-history)
@@ -1972,29 +2003,33 @@
                   eshell-last-input-start (1- eshell-last-input-end)))
           index
           earliest)
-      (while (setq index (ring-member eshell-history-ring input)) (ring-remove eshell-history-ring index))
+      (while (when (and (setq index (ring-member eshell-history-ring input)) (eq eshell-hist-ignoredups 'erase))
+               (ring-remove eshell-history-ring index)))
       (when (>= (ring-length eshell-history-ring) (ring-size eshell-history-ring))
         (setq earliest (ring-ref eshell-history-ring (1- (ring-length eshell-history-ring))))
         (with-temp-buffer
           (insert earliest)
           (newline)
           (write-region (point-min) (point-max) (concat eshell-history-file-name ".old") 'append)))
-      (eshell-add-input-to-history (string-trim input)))
+      (unless (and index eshell-hist-ignoredups (not (eq eshell-hist-ignoredups 'erase)))
+        (let ((eshell-hist-ignoredups nil))
+          (eshell-add-input-to-history (string-trim input)))))
     (eshell-write-history))
   (add-hook 'eshell-input-filter-functions #'eshell-hist-write-after-command)
   (defun eshell-hist-initialize@after (&rest _)
     (remove-hook 'eshell-input-filter-functions #'eshell-add-to-history t)
     (remove-hook 'eshell-exit-hook #'eshell-write-history t)
-    (remove-hook 'kill-emacs-query-functions #'eshell-save-some-history t))
+    (remove-hook 'kill-emacs-query-functions #'eshell-save-some-history))
   (advice-add #'eshell-hist-initialize :after #'eshell-hist-initialize@after))
 
 (use-package em-term
   :when (member 'eshell extra-features)
   :ensure nil
   :defer t
+  :custom
+  (eshell-destroy-buffer-when-process-dies t)
   :config
-  (dolist (it '("nvtop" "bashtop" "btop" "top" "vim" "nvim" "cmatrix"))
-    (add-to-list 'eshell-visual-commands it)))
+  (nconc eshell-visual-commands '("nvtop" "bashtop" "btop" "vim" "nvim" "cmatrix")))
 
 (use-package eshell-syntax-highlighting
   :when (member 'eshell extra-features)
@@ -2020,6 +2055,8 @@
   :config
   (defun eshell-prompt-make-read-only (ret)
     (concat (propertize (substring ret 0 -1) 'read-only t) (propertize " " 'read-only t 'rear-nonsticky '(font-lock-face read-only))))
+  (advice-add #'epe-remote-host :filter-return #'concat)
+  (advice-add #'epe-remote-user :filter-return #'concat)
   (dolist (prompt #'(epe-theme-lambda epe-theme-dakrone epe-theme-pipeline epe-theme-pipeline epe-theme-multiline-with-status))
     (advice-add prompt :filter-return #'eshell-prompt-make-read-only)))
 
@@ -2259,4 +2296,3 @@ Saves to a temp file and puts the filename in the kill ring."
 
 (provide 'init)
 ;;; init.el ends here
-(put 'narrow-to-region 'disabled nil)
