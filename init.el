@@ -130,12 +130,6 @@
   :defer nil
   :config (url-handler-mode +1))
 
-(use-package ediff
-  :ensure nil
-  :defer t
-  :custom
-  (ediff-window-setup-function 'ediff-setup-windows-plain))
-
 (defcustom extra-features nil
   "Extra features enabled on Emacs startup.")
 
@@ -255,7 +249,7 @@
   :hook
   (dired-mode . toggle-truncate-lines)
   :bind
-  (:map dired-mode-map ("/" . dired-narrow)))
+  (:map dired-mode-map ("/ n" . dired-narrow)))
 
 (use-package dired-async
   :ensure nil
@@ -313,6 +307,18 @@
   :defer t
   :custom
   (compilation-scroll-output t))
+
+(use-package comint
+  :ensure nil
+  :defer t
+  :config
+  (add-to-list 'comint-output-filter-functions #'comint-truncate-buffer))
+
+(use-package ediff
+  :ensure nil
+  :defer t
+  :custom
+  (ediff-window-setup-function 'ediff-setup-windows-plain))
 
 (use-package project
   :when (version<= "27.1" emacs-version)
@@ -747,23 +753,23 @@
   :config
   (cnfonts-enable))
 
-(use-package ligature
-  :defer t
-  :when (and (version<= "28" emacs-version) window-system)
-  :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode) major-mode) (require 'ligature) (ligature-mode +1))))
-  :quelpa (ligature :fetcher github :repo "mickeynp/ligature.el")
-  :config
-  (ligature-set-ligatures 'prog-mode '("-|" "-~" "---" "-<<" "-<" "--" "->" "->>" "-->" "///" "/=" "/=="
-                                      "/>" "//" "/*" "*>" "***" "*/" "<-" "<<-" "<=>" "<=" "<|" "<||"
-                                      "<|||" "<|>" "<:" "<>" "<-<" "<<<" "<==" "<<=" "<=<" "<==>" "<-|"
-                                      "<<" "<~>" "<=|" "<~~" "<~" "<$>" "<$" "<+>" "<+" "</>" "</" "<*"
-                                      "<*>" "<->" "<!--" ":>" ":<" ":::" "::" ":?" ":?>" ":=" "::=" "=>>"
-                                      "==>" "=/=" "=!=" "=>" "===" "=:=" "==" "!==" "!!" "!=" ">]" ">:"
-                                      ">>-" ">>=" ">=>" ">>>" ">-" ">=" "&&&" "&&" "|||>" "||>" "|>" "|]"
-                                      "|}" "|=>" "|->" "|=" "||-" "|-" "||=" "||" ".." ".?" ".=" ".-" "..<"
-                                      "..." "+++" "+>" "++" "[||]" "[<" "[|" "{|" "??" "?." "?=" "?:" "##"
-                                      "###" "####" "#[" "#{" "#=" "#!" "#:" "#_(" "#_" "#?" "#(" ";;" "_|_"
-                                      "__" "~~" "~~>" "~>" "~-" "~@" "$>" "^=" "]#")))
+;; (use-package ligature
+;;   :defer t
+;;   :when (and (version<= "28" emacs-version) window-system)
+;;   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode) major-mode) (require 'ligature) (ligature-mode +1))))
+;;   :quelpa (ligature :fetcher github :repo "mickeynp/ligature.el")
+;;   :config
+;;   (ligature-set-ligatures 'prog-mode '("-|" "-~" "---" "-<<" "-<" "--" "->" "->>" "-->" "///" "/=" "/=="
+;;                                       "/>" "//" "/*" "*>" "***" "*/" "<-" "<<-" "<=>" "<=" "<|" "<||"
+;;                                       "<|||" "<|>" "<:" "<>" "<-<" "<<<" "<==" "<<=" "<=<" "<==>" "<-|"
+;;                                       "<<" "<~>" "<=|" "<~~" "<~" "<$>" "<$" "<+>" "<+" "</>" "</" "<*"
+;;                                       "<*>" "<->" "<!--" ":>" ":<" ":::" "::" ":?" ":?>" ":=" "::=" "=>>"
+;;                                       "==>" "=/=" "=!=" "=>" "===" "=:=" "==" "!==" "!!" "!=" ">]" ">:"
+;;                                       ">>-" ">>=" ">=>" ">>>" ">-" ">=" "&&&" "&&" "|||>" "||>" "|>" "|]"
+;;                                       "|}" "|=>" "|->" "|=" "||-" "|-" "||=" "||" ".." ".?" ".=" ".-" "..<"
+;;                                       "..." "+++" "+>" "++" "[||]" "[<" "[|" "{|" "??" "?." "?=" "?:" "##"
+;;                                       "###" "####" "#[" "#{" "#=" "#!" "#:" "#_(" "#_" "#?" "#(" ";;" "_|_"
+;;                                       "__" "~~" "~~>" "~>" "~-" "~@" "$>" "^=" "]#")))
 
 
 ;;;;;;;;
@@ -1135,6 +1141,7 @@
   :when (member 'python used-languages)
   :ensure nil
   :defer t
+  :hook (inferior-python-mode . (lambda () (add-hook 'comint-output-filter-functions #'comint-truncate-buffer nil 'local)))
   :config
   (defvar python-indent-repeat-map
     (let ((map (make-sparse-keymap)))
@@ -1414,7 +1421,8 @@
 
 (use-package magit
   :defer t
-  :ensure t)
+  :ensure t
+  :bind (("C-x g" . magit)))
 
 (use-package binary-jump
   :load-path "custom-lisp"
@@ -1988,6 +1996,13 @@
         (pcomplete-executables)
       (funcall fun)))
   (advice-add #'eshell--complete-commands-list :around #'eshell--complete-commands-list@around))
+
+(use-package esh-mode
+  :when (member 'eshell extra-features)
+  :ensure nil
+  :defer t
+  :config
+  (add-to-list 'eshell-output-filter-functions #'eshell-truncate-buffer))
 
 (use-package em-hist
   :when (member 'eshell extra-features)
