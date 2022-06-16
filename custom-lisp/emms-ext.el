@@ -34,28 +34,42 @@
    "Score"
    (("s"      (call-interactively #'emms-score-set-playing)    "Set Score"))
    "Lyrics"
-   (("l v"    (emms-lyrics-visit-lyric)                        "View Lyrics")
-    ("l t"    (emms-lyrics-switch-display-position)            "Toggle Display")
-    ("l c"    (emms-lyrics-restore-mode-line)                  "Clean Up Modeline"))
+   (("l"    (emms-lyrics-switch-display-position)            "Switch Display"))
    "Volume"
    (("+"      (emms-volume-raise)                              "Raise Volume")
     ("-"      (emms-volume-lower)                              "Lower Volume"))
    "Other"
    (("m"      (emms)                                           "Emms Buffer"))))
 
-(defconst emms-lyrics-display-positions (ring-convert-sequence-to-ring '((t . nil) (nil . t) (nil . nil))))
+(defun emms-lyrics-toggle-display-buffer-auto-create-or-kill-wrapper (fun &rest args)
+  (let ((w (and emms-lyrics-buffer (get-buffer-window emms-lyrics-buffer))))
+    (if emms-lyrics-display-buffer
+        (progn (apply fun args)
+               (when w
+                 (kill-buffer emms-lyrics-buffer)
+                 (setq emms-lyrics-display-buffer nil)))
+      (unless w
+          (emms-lyrics-create-buffer)
+          (setq emms-lyrics-display-buffer t))
+      (apply fun args))))
+
+(advice-add #'emms-lyrics-toggle-display-buffer :around #'emms-lyrics-toggle-display-buffer-auto-create-or-kill-wrapper)
+
+(defconst emms-lyrics-display-positions (ring-convert-sequence-to-ring '((nil nil nil) (t nil nil) (nil t nil) (nil nil t))))
 
 (defun emms-lyrics-switch-display-position ()
   (interactive)
-  (pcase-let ((`(,on-minibuffer . ,on-modeline)
-               (ring-next emms-lyrics-display-positions
-                          (cons emms-lyrics-display-on-minibuffer emms-lyrics-display-on-modeline))))
+  (pcase-let ((`(,on-minibuffer ,on-modeline ,buffer) (ring-next emms-lyrics-display-positions (list emms-lyrics-display-on-minibuffer
+                                                                                                     emms-lyrics-display-on-modeline
+                                                                                                     emms-lyrics-display-buffer))))
     (unless (eq emms-lyrics-display-on-minibuffer on-minibuffer)
       (emms-lyrics-toggle-display-on-minibuffer))
     (unless (eq emms-lyrics-display-on-modeline on-modeline)
-      (emms-lyrics-toggle-display-on-modeline))))
+      (emms-lyrics-toggle-display-on-modeline))
+    (unless (eq emms-lyrics-display-buffer buffer)
+      (emms-lyrics-toggle-display-buffer))))
 
-(push "lyrics" emms-info-native--accepted-vorbis-fields)
+(add-to-list 'emms-info-native--accepted-vorbis-fields "lyrics")
 
 (defconst emms-info-lyrics-temp-file (make-temp-file "emms-info-lyrics-" nil ".lrc"))
 
@@ -88,6 +102,25 @@
 
 (add-hook 'kill-emacs-hook #'emms-lyrics-delete-temp-file)
 (advice-add #'emms-lyrics-visit-lyric :after #'auto-revert-mode)
+
+(defun emms-lyrics-buffer-recenter-after-display (lyrics line)
+  (when emms-lyrics-display-buffer
+    (dolist (w (get-buffer-window-list emms-lyrics-buffer))
+      (with-selected-window w
+        (when line
+          (goto-char (point-min))
+          (forward-line (1- line))
+          (set-window-point w (point))
+          (recenter-top-bottom))))))
+
+(define-minor-mode emms-lyrics-buffer-auto-scroll-mode
+  "Minor mode to make `emms-lyrics-display-buffer' scroll automatically with current line in lyrics."
+  :global t
+  (if emms-lyrics-buffer-auto-scroll-mode
+      (advice-add #'emms-lyrics-display :after #'emms-lyrics-buffer-recenter-after-display)
+    (advice-remove #'emms-lyrics-display #'emms-lyrics-buffer-recenter-after-display)))
+
+(emms-lyrics-buffer-auto-scroll-mode +1)
 
 (defun emms-playlist-insert-tracks-from-playlist-or-funcall (fun track)
   (let ((file (emms-track-name track))
@@ -124,5 +157,10 @@
                    (match-string 1))))))
 
 (advice-add #'emms-volume-amixer-change :override #'emms-volume-amixer-change-with-device-and-card)
+
+(defun emms-player-mpv-ignore-error-wrapper (fun &rest args)
+  (ignore-errors (apply fun args)))
+
+(advice-add #'emms-player-mpv-ipc-filter :around #'emms-player-mpv-ignore-error-wrapper)
 
 (provide 'emms-ext)

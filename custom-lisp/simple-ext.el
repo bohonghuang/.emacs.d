@@ -23,4 +23,11 @@
   (filter-initials-region beg end)
   (upcase-region (region-beginning) (region-end)))
 
+(defun reverse-chars-region (beg end)
+ "Reverse characters between BEG and END."
+ (interactive "r")
+ (let ((region (buffer-substring beg end)))
+   (delete-region beg end)
+   (insert (nreverse region))))
+
 (provide 'simple-ext)

@@ -73,6 +73,7 @@
         sis--prefix-override-handler
         sp-backward-sexp
         sp-beginning-of-sexp
+        sp-end-of-sexp
         sp-forward-sexp
         sp-forward-slurp-sexp
         sp-join-sexp

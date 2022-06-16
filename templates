@@ -102,7 +102,7 @@ c++-mode
 
 org-mode
 
-(h "#+TITLE: " p n "#+AUTHOR: " (p (user-full-name)) n>)
+(head "#+TITLE: " p n "#+AUTHOR: " (p (user-full-name)) n>)
 (quote "#+BEGIN_QUOTE" n> r> n> "#+END_QUOTE")
 (exam "#+BEGIN_EXAMPLE" n> r> n> "#+END_EXAMPLE")
 (center "#+BEGIN_CENTER" n> r> n> "#+END_CENTER")

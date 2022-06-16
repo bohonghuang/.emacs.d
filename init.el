@@ -140,7 +140,7 @@
   "All programming languages that this configured Emacs need to support.")
 
 (setq local-file (expand-file-name "local.el" user-emacs-directory))
-(if (file-exists-p local-file) (load-file local-file))
+(when (file-exists-p local-file) (load-file local-file))
 
 (use-package window
   :ensure nil
@@ -251,8 +251,15 @@
   :bind
   (:map dired-mode-map ("/ n" . dired-narrow)))
 
-(use-package dired-async
+(use-package dired-aux
   :ensure nil
+  :defer t
+  :config
+  (nconc dired-compress-files-alist '(("\\.7z\\'" . "7z a %o %i")
+                                      ("\\.tar\\'" . "tar -cf %o %i"))))
+
+(use-package dired-async
+  :ensure async
   :demand t
   :after dired
   :config (dired-async-mode +1))
@@ -534,6 +541,7 @@
     (add-to-list 'corfu-margin-formatters #'kind-all-the-icons-margin-formatter)))
 
 (use-package corfu-doc
+  :when (display-graphic-p)
   :ensure t
   :defer t
   :after corfu
@@ -624,14 +632,14 @@
          ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
          ("M-s L" . consult-line-multi))           ;; needed by consult-line to detect isearch
   :hook (completion-list-mode . consult-preview-at-point-mode)
+  :commands (consult-completion-in-region)
   :init
   (use-package minibuffer
       :ensure nil
       :custom (completion-in-region-function #'consult-completion-in-region))
-  (setq register-preview-delay 0
+  (setq register-preview-delay 0.5
         register-preview-function #'consult-register-format)
   (advice-add #'register-preview :override #'consult-register-window)
-  (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
   (setq xref-show-xrefs-function #'consult-xref
         xref-show-definitions-function #'consult-xref)
   :config
@@ -686,8 +694,10 @@
   (tempel-trigger-prefix "<")
   :hook
   ((tex-mode prog-mode org-mode) . tempel-setup-capf)
+  ((tex-mode prog-mode org-mode) . tempel-tab-mode)
   :bind (("M-+" . tempel-complete) ;; Alternative tempel-expand
          ("M-*" . tempel-insert))
+  :commands (tempel-tab-mode)
   :config
   (defun tempel-setup-capf ()
     (setq-local completion-at-point-functions
@@ -707,8 +717,7 @@
         (progn (define-key tempel-map (kbd "TAB") #'tempel-next)
                (define-key tempel-map (kbd "<backtab>") #'tempel-previous))
       (define-key tempel-map (kbd "TAB") nil)
-      (define-key tempel-map (kbd "<backtab>") nil)))
-  (tempel-tab-mode +1))
+      (define-key tempel-map (kbd "<backtab>") nil))))
 
 (use-package all-the-icons-completion
   :when (member 'all-the-icons extra-features)
@@ -805,6 +814,7 @@
                               flymake-project-diagnostics-mode))
   (popper-mode +1)
   (popper-echo-mode +1)
+  (popper-mode-line '(:eval (propertize " POP " 'face 'mode-line-emphasis)))
   :config
   (defun delete-other-windows@before (&optional window &rest _)
     (let ((buffer (window-buffer window)))
@@ -919,6 +929,23 @@
     :demand t
     :config
     (sp-local-pair 'eshell-mode "#<" ">")))
+
+(use-package highlight-indent-guides
+  :ensure t
+  :defer t
+  :custom
+  (highlight-indent-guides-responsive 'top)
+  (highlight-indent-guides-method 'character)
+  (highlight-indent-guides-auto-odd-face-perc 15)
+  (highlight-indent-guides-auto-even-face-perc 25)
+  (highlight-indent-guides-auto-top-odd-face-perc 40)
+  (highlight-indent-guides-auto-top-even-face-perc 45)
+  (highlight-indent-guides-auto-character-face-perc 40)
+  (highlight-indent-guides-auto-stack-odd-face-perc 35)
+  (highlight-indent-guides-auto-stack-even-face-perc 40)
+  (highlight-indent-guides-auto-top-character-face-perc 75)
+  (highlight-indent-guides-auto-stack-character-face-perc 70)
+  :hook ((python-mode toml-mode yaml-mode haskell-mode lua-mode ruby-mode octave-mode matlab-mode) . highlight-indent-guides-mode))
 
 (use-package string-inflection
   :ensure t
@@ -1169,10 +1196,13 @@
 (use-package scad-mode
   :when (member 'scad used-languages)
   :ensure t
-  :defer t)
+  :defer t
+  :config
+  (define-key scad-mode-map (kbd "<return>") nil))
 
 (use-package scad-preview
   :when (member 'scad used-languages)
+  :after scad-mode
   :ensure t
   :defer t
   :bind (:map scad-mode-map
@@ -1446,30 +1476,12 @@
          ("C-M->" . mc/skip-to-next-like-this)
          ("C-M-<" . mc/skip-to-previous-like-this)))
 
-(use-package intellij-features
+(use-package intellij-edit
   :load-path "custom-lisp"
   :defer t
   :hook
-  ((c-mode
-    c++-mode
-    objc-mode
-    java-mode
-    scala-mode
-    rust-mode
-    rustic-mode
-    js-mode
-    tex-mode
-    dart-mode)
-   .
-   (lambda ()
-     (require 'intellij-features)
-     (local-set-key (kbd "DEL") #'intellij-backspace)
-     (when (-contains-p '(java-mode rust-mode rustic-mode js-mode dart-mode) major-mode)
-       (local-set-key (kbd "RET") #'intellij-return))))
-  (python-mode . (lambda ()
-                   (require 'intellij-features)
-                   (local-set-key (kbd "RET") #'pycharm-return)
-                   (local-set-key (kbd "DEL") #'pycharm-backspace))))
+  ((c-mode c++-mode objc-mode java-mode scala-mode rust-mode rustic-mode js-mode tex-mode dart-mode scad-mode python-mode) . intellij-edit-mode)
+  :commands (intellij-edit-mode))
 
 (use-package time
   :ensure nil
@@ -1530,52 +1542,13 @@
   :ensure nil
   :defer t
   :custom
-  (org-src-window-setup 'current-window))
-
-(use-package ox
-  :ensure nil
-  :defer t
-  :custom
-  (org-export-with-tags nil))
-
-(use-package ox-latex
-  :ensure nil
-  :defer t
-  :custom
-  (org-latex-compiler "xelatex")
-  (org-latex-custom-lang-environments '((Chinese "")))
-  (org-latex-pdf-process '("%latex -shell-escape -interaction nonstopmode -output-directory %o %f" "%latex -shell-escape -interaction nonstopmode -output-directory %o %f" "%latex -shell-escape -interaction nonstopmode -output-directory %o %f"))
-  (org-latex-packages-alist
-   '(("a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm" "geometry" nil nil)
-     ("" "ctex" nil nil)
-     ("" "svg" nil nil)))
-  (org-latex-image-default-width nil)
-  (org-latex-image-default-height ".2\\linewidth")
+  (org-src-window-setup 'current-window)
   :config
-  (push `(imagemagick-xelatex :programs ("xelatex" "convert")
-                  :description "pdf > png"
-                  :message "you need to install the programs: xelatex and imagemagick."
-                  :image-input-type "pdf"
-                  :image-output-type "png"
-                  :image-size-adjust (1.0 . 1.0)
-                  :latex-compiler ("xelatex -interaction nonstopmode -output-directory %o %f")
-                  :latex-header ,(string-join '("\\documentclass[crop,varwidth=\\maxdimen]{standalone}"
-                                                "\\usepackage[usenames]{color}"
-                                                "\\usepackage{amsmath}"
-                                                "\\usepackage{amssymb}"
-                                                "\\usepackage{ctex}")
-                                              "\n")
-                  :image-converter ("convert -density %D -trim -antialias %f -quality 100 %O"))
-        org-preview-latex-process-alist)
-  (defun org-create-formula-image-with-auto-processing-type (fun &rest args)
-    (when (string-match "[^[:ascii:]]" (car args))
-      (setf (nth 4 args) 'imagemagick-xelatex))
-    (apply fun args))
-  (advice-add #'org-create-formula-image :around #'org-create-formula-image-with-auto-processing-type)
-  (let ((article-class (copy-sequence (assoc-string "article" org-latex-classes))))
-    (setf (car article-class) "article-ctex"
-          (cadr article-class) "\\documentclass[11pt]{ctexart}")
-    (push article-class org-latex-classes)))
+  (defun org-latex-disable-global-capf (&rest _)
+    (when (local-variable-p 'completion-at-point-functions)
+      (setq completion-at-point-functions (cl-remove-if #'booleanp completion-at-point-functions))))
+  (advice-add #'org-edit-latex-environment :after #'org-latex-disable-global-capf)
+  (advice-add #'org-edit-latex-fragment :after #'org-latex-disable-global-capf))
 
 (use-package org-attach
   :after org
@@ -1588,14 +1561,6 @@
   :quelpa (org-attach-refactor :fetcher github :repo "BohongHuang/org-attach-refactor")
   :defer t
   :commands org-attach-refactor-remove-id org-attach-refactor-add-id)
-
-(use-package ob
-  :ensure nil
-  :defer t
-  :config
-  (defun org-babel-check-evaluate@before (info)
-    (ignore-errors (org-babel-do-load-languages 'org-babel-load-languages (list (cons (intern (car info)) t)))))
-  (advice-add #'org-babel-check-evaluate :before #'org-babel-check-evaluate@before))
 
 (use-package org-ext
   :load-path "custom-lisp"
@@ -1677,7 +1642,7 @@
 (use-package org-download
   :defer t
   :ensure t
-  :hook (org-mode . (lambda () (require 'org-download)))
+  :hook (org-mode . org-download-enable)
   :custom
   (org-download-display-inline-images nil)
   (org-download-method 'attach))
@@ -1762,10 +1727,6 @@
   :when (member 'org-roam extra-features)
   :ensure t
   :defer t
-  :init
-  (setq org-roam-v2-ack t)
-  :hook
-  (org-mode . (lambda () (unless org-roam-db-autosync-mode (org-roam-db-autosync-mode +1))))
   :custom
   (org-roam-directory (expand-file-name "org-roam" org-directory))
   (org-roam-graph-link-den-types '("file" "attachment"))
@@ -1778,6 +1739,7 @@
          ("C-c r j" . org-roam-dailies-capture-today)
          ("C-c r t" . org-roam-buffer-toggle))
   :config
+  (org-roam-db-autosync-mode +1)
   (require 'org-roam-protocol))
 
 (use-package org-journal
@@ -1822,7 +1784,74 @@
   :defer t
   :hook (org-mode . org-indent-mode))
 
+(use-package ob
+  :ensure nil
+  :defer t
+  :config
+  (defun org-babel-check-evaluate@before (info)
+    (ignore-errors (org-babel-do-load-languages 'org-babel-load-languages (list (cons (intern (car info)) t)))))
+  (advice-add #'org-babel-check-evaluate :before #'org-babel-check-evaluate@before))
+
+(use-package ob-ditaa
+  :ensure nil
+  :defer t
+  :config
+  (defun ob-ditaa-fix-nonascii-before-execute (args)
+    (pcase-let ((`(,body ,params) args))
+      (list (replace-regexp-in-string "\\([^[:ascii:]]\\)" "\\1 " body) params)))
+  (advice-add #'org-babel-execute:ditaa :filter-args #'ob-ditaa-fix-nonascii-before-execute))
+
+(use-package ox
+  :ensure nil
+  :defer t
+  :custom
+  (org-export-with-tags nil))
+
+(use-package ox-latex
+  :ensure nil
+  :defer t
+  :custom
+  (org-latex-compiler "xelatex")
+  (org-latex-custom-lang-environments '((Chinese "")))
+  (org-latex-pdf-process '("%latex -shell-escape -interaction nonstopmode -output-directory %o %f" "%latex -shell-escape -interaction nonstopmode -output-directory %o %f" "%latex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+  (org-latex-packages-alist
+   '(("a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm" "geometry" nil nil)
+     ("" "ctex" nil nil)
+     ("" "svg" nil nil)))
+  (org-latex-image-default-width nil)
+  (org-latex-image-default-height ".2\\linewidth")
+  :config
+  (push `(imagemagick-xelatex :programs ("xelatex" "convert")
+                  :description "pdf > png"
+                  :message "you need to install the programs: xelatex and imagemagick."
+                  :image-input-type "pdf"
+                  :image-output-type "png"
+                  :image-size-adjust (1.0 . 1.0)
+                  :latex-compiler ("xelatex -interaction nonstopmode -output-directory %o %f")
+                  :latex-header ,(string-join '("\\documentclass[crop,varwidth=\\maxdimen]{standalone}"
+                                                "\\usepackage[usenames]{color}"
+                                                "\\usepackage{amsmath}"
+                                                "\\usepackage{amssymb}"
+                                                "\\usepackage{ctex}")
+                                              "\n")
+                  :image-converter ("convert -density %D -trim -antialias %f -quality 100 %O"))
+        org-preview-latex-process-alist)
+  (defun org-create-formula-image-with-auto-processing-type (fun &rest args)
+    (when (string-match "[^[:ascii:]]" (car args))
+      (setf (nth 4 args) 'imagemagick-xelatex))
+    (apply fun args))
+  (advice-add #'org-create-formula-image :around #'org-create-formula-image-with-auto-processing-type)
+  (let ((article-class (copy-sequence (assoc-string "article" org-latex-classes))))
+    (setf (car article-class) "article-ctex"
+          (cadr article-class) "\\documentclass[11pt]{ctexart}")
+    (push article-class org-latex-classes)))
+
 (use-package ox-md
+  :ensure nil
+  :demand t
+  :after ox)
+
+(use-package ox-beamer
   :ensure nil
   :demand t
   :after ox)
@@ -1896,7 +1925,7 @@
    :kill-buffer t)))
 
 (use-package org-englearn-pdf-view
-  :when (member 'org-englearn extra-features)
+  :when (and (member 'org-englearn extra-features) (member 'pdf-tools extra-features))
   :ensure nil
   :defer t
   :after pdf-view
@@ -1982,6 +2011,10 @@
     (replace-regexp-in-string "[ \n\t]+" " " ret))
   (advice-add #'gts-text :filter-return #'gts-text-replace-redundant-empty))
 
+;;;;;;;;;;;;
+;; Eshell ;;
+;;;;;;;;;;;;
+
 (use-package eshell
   :when (member 'eshell extra-features)
   :ensure nil
@@ -2044,7 +2077,13 @@
   :custom
   (eshell-destroy-buffer-when-process-dies t)
   :config
-  (nconc eshell-visual-commands '("nvtop" "bashtop" "btop" "vim" "nvim" "cmatrix")))
+  (nconc eshell-visual-commands '("nvtop" "bashtop" "btop" "vim" "nvim" "cmatrix" "ssh"))
+  (defun eshell-term-hide-mode-line-after-buffer-change (&rest _)
+    (when (and (boundp 'hide-mode-line-mode) hide-mode-line-mode)
+      (add-hook 'window-buffer-change-functions (defun eshell-exec-visual-hide-mode-line-after-switch-to-buffer (&rest _)
+                                                  (hide-mode-line-mode +1)
+                                                  (remove-hook 'window-buffer-change-functions #'eshell-exec-visual-hide-mode-line-after-switch-to-buffer)
+                                                  (fmakunbound #'eshell-exec-visual-hide-mode-line-after-switch-to-buffer))))))
 
 (use-package eshell-syntax-highlighting
   :when (member 'eshell extra-features)
@@ -2102,7 +2141,10 @@
   :demand t
   :after eshell
   :config
-  (eshell-vterm-mode +1))
+  (eshell-vterm-mode +1)
+  (defun eshell/vterm (&optional args)
+    (eshell-term-hide-mode-line-after-buffer-change)
+    (vterm args)))
 
 (use-package quickrun
   :ensure t
@@ -2119,10 +2161,12 @@
   :defer t)
 
 (use-package mermaid-mode
+  :when (member 'mermaid used-languages)
   :ensure t
   :defer t)
 
 (use-package ob-mermaid
+  :when (member 'mermaid used-languages)
   :ensure t
   :defer t)
 
@@ -2148,16 +2192,13 @@
   :hook (emms-player-started . emms-show)
   :commands emms
   :custom
-  (emms-player-list '(emms-player-vlc emms-player-mpv))
   (emms-playlist-buffer-name "*Music*")
   (emms-info-asynchronously t)
-  (emms-info-functions '(emms-info-libtag))
   (emms-lyrics-scroll-p nil)
   :bind (("C-c m" . hydra-emms/body))
   :config
-  (require 'emms-setup)
-  (require 'emms-info-libtag)
   (emms-all)
+  (emms-default-players)
   (emms-mode-line-disable)
   (emms-playing-time-mode -1))
 
@@ -2182,8 +2223,11 @@
   :demand t
   :after emms
   :config
-  (require 'emms-vgm-default-players)
-  (nconc emms-player-list emms-vgm-default-players))
+  (use-package emms-vgm-default-players
+    :ensure nil
+    :demand t
+    :config
+    (nconc emms-player-list emms-vgm-default-players)))
 
 (use-package mu4e
   :when (member 'mu4e extra-features)
@@ -2195,7 +2239,6 @@
   (message-send-mail-function  'message-send-mail-with-sendmail)
   (sendmail-program            (executable-find "msmtp"))
   :config
-  ;; (setq mu4e-contexts nil)
   (dolist (file (directory-files
                  (expand-file-name "mu4e/accounts" (or (getenv "XDG_CONFIG_HOME") "~/.config")) t "\\.el$" nil))
     (load file)))
@@ -2283,31 +2326,31 @@ Saves to a temp file and puts the filename in the kill ring."
   (sis-global-cursor-color-mode +1)
   (sis-global-respect-mode +1)
   (sis-global-context-mode +1)
-  (when (package-installed-p 'doom-modeline)
-    (defvar sis-global-respect-mode-before-kbd-macro nil)
-    (defvar sis-global-respect-mode-previous-defining-kbd-macro nil)
-    (defun sis-defining-kbd-macro-watcher (&rest _)
-      (when (not (eq sis-global-respect-mode-previous-defining-kbd-macro defining-kbd-macro))
-        (if defining-kbd-macro
-            (when sis-global-respect-mode
-              (setq sis-global-respect-mode-before-kbd-macro sis-global-respect-mode)
-              (sis-global-respect-mode -1))
-          (when sis-global-respect-mode-before-kbd-macro
-            (setq sis-global-respect-mode-before-kbd-macro nil)
-            (sis-global-respect-mode +1)))
-        (setq sis-global-respect-mode-previous-defining-kbd-macro defining-kbd-macro)))
-    (advice-add #'doom-modeline-segment--matches :before #'sis-defining-kbd-macro-watcher)
-    (defun sis-update-cursor-color-after-theme-load (&rest _)
-      (sis-global-cursor-color-mode -1)
-      (let ((cursor-color (face-background 'cursor)))
-        (add-hook 'post-command-hook
+  (defvar sis-global-respect-mode-before-kbd-macro nil)
+  (defvar sis-global-respect-mode-previous-defining-kbd-macro nil)
+  (defun sis-defining-kbd-macro-watcher (&rest _)
+    (unless (eq sis-global-respect-mode-previous-defining-kbd-macro defining-kbd-macro)
+      (if defining-kbd-macro
+          (when sis-global-respect-mode
+            (setq sis-global-respect-mode-before-kbd-macro sis-global-respect-mode)
+            (sis-global-respect-mode -1))
+        (when sis-global-respect-mode-before-kbd-macro
+          (setq sis-global-respect-mode-before-kbd-macro nil)
+          (sis-global-respect-mode +1)))
+      (setq sis-global-respect-mode-previous-defining-kbd-macro defining-kbd-macro)))
+  (add-hook 'post-command-hook #'sis-defining-kbd-macro-watcher)
+  (when (fboundp 'native-compile) (native-compile #'sis-defining-kbd-macro-watcher))
+  (defun sis-update-cursor-color-after-theme-load (&rest _)
+    (sis-global-cursor-color-mode -1)
+    (let ((cursor-color (face-background 'cursor)))
+      (add-hook 'post-command-hook
                 (defun sis-update-default-cursor-color ()
                   (setq sis-default-cursor-color cursor-color)
                   (sis-global-cursor-color-mode +1)
                   (remove-hook 'post-command-hook #'sis-update-default-cursor-color)
-                  (fmakunbound 'sis-update-default-cursor-color)))))
-    (advice-add #'consult-theme :after #'sis-update-cursor-color-after-theme-load)
-    (sis--update-cursor-color)))
+                  (fmakunbound #'sis-update-default-cursor-color)))))
+  (advice-add #'consult-theme :after #'sis-update-cursor-color-after-theme-load)
+  (sis--update-cursor-color))
 
 (provide 'init)
 ;;; init.el ends here
