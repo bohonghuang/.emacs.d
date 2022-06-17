@@ -1793,13 +1793,19 @@
   (advice-add #'org-babel-check-evaluate :before #'org-babel-check-evaluate@before))
 
 (use-package ob-ditaa
-  :ensure nil
   :defer t
   :config
   (defun ob-ditaa-fix-nonascii-before-execute (args)
     (pcase-let ((`(,body ,params) args))
       (list (replace-regexp-in-string "\\([^[:ascii:]]\\)" "\\1 " body) params)))
   (advice-add #'org-babel-execute:ditaa :filter-args #'ob-ditaa-fix-nonascii-before-execute))
+
+(use-package ob-svgbob
+  :when (member 'svgbob used-languages)
+  :ensure t
+  :defer t
+  :init
+  (defalias 'svgbob-mode 'artist-mode))
 
 (use-package ox
   :ensure nil
