@@ -18,7 +18,8 @@
 (when (version<= "24" emacs-version)
   (require 'package)
   (dolist (archive '(("melpa" . "https://melpa.org/packages/")
-                     ("gnu-devel" . "https://elpa.gnu.org/devel/")))
+                     ("gnu-devel" . "https://elpa.gnu.org/devel/")
+                     ("nongnu" . "https://elpa.nongnu.org/nongnu/")))
     (push archive package-archives)))
 
 (unless (package-installed-p 'use-package)
@@ -425,6 +426,14 @@
   :custom (doom-modeline-icon (member 'all-the-icons extra-features))
   :config
   (doom-modeline-mode +1))
+
+(use-package mode-line-bell
+  :ensure t
+  :defer nil
+  :custom
+  (mode-line-bell-flash-time 0.1)
+  :config
+  (mode-line-bell-mode +1))
 
 (use-package hide-mode-line
   :ensure t
@@ -2299,9 +2308,15 @@ Saves to a temp file and puts the filename in the kill ring."
   (advice-add #'xwidget-webkit-begin-edit-textarea :after #'xwidget-webkit-begin-edit-textarea-bind-key)
   (advice-add #'xwidget-webkit-end-edit-textarea :after #'kill-current-buffer))
 
-(when (not window-system)
-  (global-set-key (kbd "M-=") #'er/expand-region)
-  (global-set-key (kbd "C-x ;") #'comment-line))
+(when (not (display-graphic-p))
+  (use-package expand-region
+    :bind ("M-=" . er/expand-region))
+  (use-package embark
+    :bind (("M-." . embark-act)
+           :map embark-general-map
+           ("M-." . embark-cycle)))
+  (use-package newcomment
+    :bind (("C-x ;" . comment-line))))
 
 (use-package app-launcher
   :defer t
