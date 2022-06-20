@@ -18,6 +18,7 @@
         comment-dwim
         comment-line
         crux-eval-and-replace
+        cycle-spacing
         dap-breakpoint-toggle
         delete-horizontal-space
         dired-do-delete
@@ -44,6 +45,7 @@
         org-ctrl-c-ctrl-c
         org-cycle
         org-delete-char
+        org-delete-indentation
         org-end-of-line
         org-force-self-insert
         org-freeplane-metaright

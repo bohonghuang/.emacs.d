@@ -1461,7 +1461,11 @@
 (use-package magit
   :defer t
   :ensure t
-  :bind (("C-x g" . magit)))
+  :custom
+  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+  (magit-bury-buffer-function #'quit-window)
+  :bind (("C-x g" . magit)
+         ("C-x G" . magit-dispatch)))
 
 (use-package binary-jump
   :load-path "custom-lisp"
@@ -1777,8 +1781,7 @@
   (add-hook 'org-journal-after-header-create-hook #'org-journal-insert-template-after-header))
 
 (use-package org-bars
-  :when (display-graphic-p)
-  :quelpa (org-bars :fetcher github :repo "tonyaldon/org-bars")
+  :quelpa (org-bars :fetcher github :repo "BohongHuang/org-bars")
   :defer t
   :hook (org-mode . org-bars-mode)
   :config
