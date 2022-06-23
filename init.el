@@ -7,10 +7,9 @@
 (require 'cl-lib)
 ;; Produce backtraces when errors occur: can be helpful to diagnose startup issues
 ;;(setq debug-on-error t)
-(progn
-  (let ((original-gc-cons-threshold gc-cons-threshold))
-    (setq gc-cons-threshold most-positive-fixnum)
-    (add-hook 'emacs-startup-hook (lambda () (setq gc-cons-threshold original-gc-cons-threshold)))))
+(let ((original-gc-cons-threshold gc-cons-threshold))
+  (setq gc-cons-threshold most-positive-fixnum)
+  (add-hook 'emacs-startup-hook (lambda () (setq gc-cons-threshold original-gc-cons-threshold))))
 
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (if (file-exists-p custom-file) (load-file custom-file))
@@ -60,7 +59,7 @@
   :custom
   (history-length 1000)
   (completion-category-defaults nil)
-  (completion-category-overrides '((file (styles partial-completion))))
+  (completion-category-overrides '((file (styles basic partial-completion))))
   (enable-recursive-minibuffers t)
   :config
   (minibuffer-depth-indicate-mode +1))
@@ -103,7 +102,8 @@
 (use-package simple-ext
   :load-path "custom-lisp"
   :after simple
-  :bind ("M-C" . filter-and-upcase-initials-region)
+  :bind (("M-C" . filter-and-upcase-initials-region)
+         ("M-SPC" . cycle-spacing-dwim))
   :demand t)
 
 (use-package subr
@@ -421,8 +421,6 @@
 (use-package doom-modeline
   :ensure t
   :defer nil
-  :hook
-  (window-setup . doom-modeline-refresh-font-width-cache)
   :custom (doom-modeline-icon (member 'all-the-icons extra-features))
   :config
   (doom-modeline-mode +1))
@@ -572,7 +570,7 @@
   :defer t
   :custom (orderless-matching-styles '(orderless-prefixes))
   :hook
-  ((minibuffer-setup corfu-mode) . (lambda () (setq-local completion-styles '(orderless))))
+  ((minibuffer-setup corfu-mode) . (lambda () (setq-local completion-styles '(orderless basic))))
   :config
   (defun orderless-literal-when-nonascii (pattern _index _total)
     (when (string-match "[^[:ascii:]]" pattern) #'orderless-literal))
@@ -1489,6 +1487,17 @@
          ("C-M->" . mc/skip-to-next-like-this)
          ("C-M-<" . mc/skip-to-previous-like-this)))
 
+(use-package phi-search
+  :ensure t
+  :defer t)
+
+(use-package isearch-mb
+  :ensure t
+  :after isearch
+  :demand t
+  :config
+  (isearch-mb-mode +1))
+
 (use-package intellij-edit
   :load-path "custom-lisp"
   :defer t
@@ -1673,6 +1682,7 @@
   :custom
   (org-remark-global-tracking-mode +1)
   (org-remark-notes-file-path (expand-file-name "org-remark/notes.org" org-directory))
+  (org-remark-create-default-pen-set nil)
   (org-remark-notes-display-buffer-action '((display-buffer-in-side-window)
                                             (side . right)
                                             (slot . 1)))
@@ -1684,6 +1694,7 @@
          ("C-c n r" . org-remark-remove)
          ("C-c n c" . org-remark-change)
          ("C-c n ." . org-remark-view))
+  :commands (org-remark-notes-file-auto-path)
   :config
   (org-remark-create "red"
                      '(:underline "red" :background "dark red")
@@ -1871,11 +1882,6 @@
 
 (use-package ox-beamer
   :ensure nil
-  :demand t
-  :after ox)
-
-(use-package ox-reveal
-  :ensure t
   :demand t
   :after ox)
 

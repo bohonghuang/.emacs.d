@@ -32,6 +32,7 @@
         indent-for-tab-command
         insert-register
         intellij-backspace
+        intellij-edit-backspace
         intellij-return
         kill-region
         kill-sexp
@@ -96,6 +97,7 @@
         kmacro-end-or-call-macro
         mouse-drag-mode-line
         mouse-select-window
+        phi-search
         rime--backspace
         suspend-frame
         toggle-input-method
