@@ -19,6 +19,7 @@
         comment-line
         crux-eval-and-replace
         cycle-spacing
+        cycle-spacing-dwim
         dap-breakpoint-toggle
         delete-horizontal-space
         dired-do-delete

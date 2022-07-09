@@ -32,7 +32,7 @@
 
 (defun cycle-spacing-dwim ()
   (interactive)
-  (if (region-active-p)
+  (if (and (region-active-p) (< (region-beginning) (region-end)))
       (let ((beg (region-beginning))
             (end (set-marker (make-marker) (region-end)))
             (rep (eq last-command #'cycle-spacing-dwim))

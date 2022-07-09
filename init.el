@@ -134,12 +134,6 @@
 (defcustom extra-features nil
   "Extra features enabled on Emacs startup.")
 
-(defcustom language-support nil
-  "The language support used in `prog-mode'.")
-
-(defcustom used-languages nil
-  "All programming languages that this configured Emacs need to support.")
-
 (setq local-file (expand-file-name "local.el" user-emacs-directory))
 (when (file-exists-p local-file) (load-file local-file))
 
@@ -175,15 +169,30 @@
 ;;;;;;;;;;;
 
 (use-package term/xterm
-  :when (string-equal (getenv "TERM") "fbterm")
+  :when (not (display-graphic-p))
   :ensure nil
-  :demand t
+  :defer nil
+  :custom (xterm-set-window-title t)
   :config
-  (unless (terminal-coding-system)
-    (set-terminal-coding-system 'utf-8-unix))
-  (tty-no-underline)
-  (ignore-errors (when gpm-mouse-mode (require 't-mouse) (gpm-mouse-enable)))
-  (xterm-register-default-colors xterm-standard-colors))
+  (xterm-mouse-mode +1)
+  (use-package term/xterm
+    :when (string-equal (getenv "TERM") "fbterm")
+    :ensure nil
+    :config
+    (tty-no-underline)
+    (xterm-register-default-colors xterm-standard-colors)
+    (use-package t-mouse
+      :ensure nil
+      :demand t
+      :config
+      (ignore-errors (gpm-mouse-enable)))))
+
+(use-package xclip
+  :when (and (not (display-graphic-p)) (executable-find "xclip"))
+  :defer nil
+  :ensure t
+  :config
+  (xclip-mode +1))
 
 (use-package monokai-theme
   :quelpa (monokai-theme :fetcher github :repo "BohongHuang/monokai-emacs")
@@ -258,12 +267,6 @@
   :config
   (nconc dired-compress-files-alist '(("\\.7z\\'" . "7z a %o %i")
                                       ("\\.tar\\'" . "tar -cf %o %i"))))
-
-(use-package dired-async
-  :ensure async
-  :demand t
-  :after dired
-  :config (dired-async-mode +1))
 
 (use-package dired-ext
   :load-path "custom-lisp"
@@ -466,7 +469,6 @@
   :config
   (use-package company
     :after tex
-    :ensure nil
     :demand t
     :config (add-hook 'TeX-mode-hook (lambda () (delete 'company-dabbrev company-backends)))))
 
@@ -474,7 +476,7 @@
   :ensure t
   :defer t
   :hook
-  ((prog-mode ielm-mode tex-mode) . corfu-mode)
+  ((prog-mode ielm-mode tex-mode sly-mode) . corfu-mode)
   :bind (:map corfu-map ("C-M-i" . corfu-move-to-minibuffer))
   :custom
   (corfu-auto t)
@@ -639,11 +641,10 @@
          ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
          ("M-s L" . consult-line-multi))           ;; needed by consult-line to detect isearch
   :hook (completion-list-mode . consult-preview-at-point-mode)
-  :commands (consult-completion-in-region)
   :init
   (use-package minibuffer
-      :ensure nil
-      :custom (completion-in-region-function #'consult-completion-in-region))
+    :ensure nil
+    :custom (completion-in-region-function #'consult-completion-in-region))
   (setq register-preview-delay 0.5
         register-preview-function #'consult-register-format)
   (advice-add #'register-preview :override #'consult-register-window)
@@ -742,55 +743,25 @@
          ("C-<return>" . crux-smart-open-line)
          ("S-<f1>" . crux-find-user-init-file)))
 
-;;;;;;;;;;
-;; File ;;
-;;;;;;;;;;
-
 (use-package vlf
   :ensure t
   :defer t
   :init (require 'vlf-setup))
 
-;;;;;;;;;;;
-;; Fonts ;;
-;;;;;;;;;;;
-
 (use-package cnfonts
-  :when (member 'cnfonts extra-features)
+  :when (and (display-graphic-p) (member 'cnfonts extra-features))
   :ensure t
   :defer nil
   :bind (("C-M-_" . cnfonts-decrease-fontsize)
          ("C-M-+" . cnfonts-increase-fontsize)
          ("C-M-)" . cnfonts-reset-fontsize))
   :custom
-  (cnfonts-personal-fontnames '(("JetBrains Mono" "JetBrainsMono Nerd Font") nil nil))
+  (cnfonts-personal-fontnames '(("JetBrains Mono") ("Noto Serif CJK SC" "Noto Serif CJK TC") nil nil nil))
+  (cnfonts-profiles '("program" "document"))
   (cnfonts-use-face-font-rescale t)
   (cnfonts-use-cache t)
   :config
   (cnfonts-enable))
-
-;; (use-package ligature
-;;   :defer t
-;;   :when (and (version<= "28" emacs-version) window-system)
-;;   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode) major-mode) (require 'ligature) (ligature-mode +1))))
-;;   :quelpa (ligature :fetcher github :repo "mickeynp/ligature.el")
-;;   :config
-;;   (ligature-set-ligatures 'prog-mode '("-|" "-~" "---" "-<<" "-<" "--" "->" "->>" "-->" "///" "/=" "/=="
-;;                                       "/>" "//" "/*" "*>" "***" "*/" "<-" "<<-" "<=>" "<=" "<|" "<||"
-;;                                       "<|||" "<|>" "<:" "<>" "<-<" "<<<" "<==" "<<=" "<=<" "<==>" "<-|"
-;;                                       "<<" "<~>" "<=|" "<~~" "<~" "<$>" "<$" "<+>" "<+" "</>" "</" "<*"
-;;                                       "<*>" "<->" "<!--" ":>" ":<" ":::" "::" ":?" ":?>" ":=" "::=" "=>>"
-;;                                       "==>" "=/=" "=!=" "=>" "===" "=:=" "==" "!==" "!!" "!=" ">]" ">:"
-;;                                       ">>-" ">>=" ">=>" ">>>" ">-" ">=" "&&&" "&&" "|||>" "||>" "|>" "|]"
-;;                                       "|}" "|=>" "|->" "|=" "||-" "|-" "||=" "||" ".." ".?" ".=" ".-" "..<"
-;;                                       "..." "+++" "+>" "++" "[||]" "[<" "[|" "{|" "??" "?." "?=" "?:" "##"
-;;                                       "###" "####" "#[" "#{" "#=" "#!" "#:" "#_(" "#_" "#?" "#(" ";;" "_|_"
-;;                                       "__" "~~" "~~>" "~>" "~-" "~@" "$>" "^=" "]#")))
-
-
-;;;;;;;;
-;; UI ;;
-;;;;;;;;
 
 (use-package posframe
   :ensure t
@@ -834,6 +805,20 @@
          win
          (floor (frame-height) 3)
          (floor (frame-height) 4)))
+
+  (defun popper-popup-buffer (buffer)
+    (unless (window-dedicated-p (selected-window))
+      (switch-to-buffer buffer))
+    (popper-lower-to-popup buffer))
+  
+  (use-package project
+    :when (version<= "27.1" emacs-version)
+    :ensure nil
+    :defer t
+    :config
+    (defun project-eshell@around (fun &rest _)
+      (popper-popup-buffer (funcall fun)))    
+    (advice-add #'project-eshell :around #'project-eshell@around))
   
   (use-package eshell
     :ensure nil
@@ -841,18 +826,9 @@
     :bind ("C-<tab>" . eshell-popper-request)
     :config
     (add-to-list 'eshell-modules-list 'eshell-tramp)
-    (defun popper-popup-buffer (buffer)
-      (unless (window-dedicated-p (selected-window))
-        (switch-to-buffer buffer))
-      (popper-lower-to-popup buffer))
-    
-    (defun project-eshell@around (fun &rest _)
-      (popper-popup-buffer (funcall fun)))
-    
-    (advice-add #'project-eshell :around #'project-eshell@around)
     
     (defun eshell-popper-buffer-p (buffer)
-      (and (eq (with-current-buffer buffer major-mode) 'eshell-mode) (popper-display-control-p buffer) (string-match-p "\\*eshell-popper\\*\\(<[0-9]+>\\)\\{0,1\\}" (buffer-name buffer))))
+        (and (eq (with-current-buffer buffer major-mode) 'eshell-mode) (popper-display-control-p buffer) (string-match-p "\\*eshell-popper\\*\\(<[0-9]+>\\)\\{0,1\\}" (buffer-name buffer))))
     
     (defun eshell-popper-request ()
       (interactive)
@@ -873,9 +849,11 @@
 (use-package smartparens
   :ensure t
   :defer t
-  :init (defalias 'sp-mode #'smartparens-mode)
+  :init
+  (defalias 'sp-mode #'smartparens-mode)
+  (require 'smartparens-config)
   :hook
-  ((prog-mode text-mode minibuffer-setup eshell-mode lisp-mode ielm-mode mermaid-mode) . smartparens-mode)
+  ((prog-mode text-mode minibuffer-setup eshell-mode lisp-mode ielm-mode sly-mode) . smartparens-mode)
   (smartparens-mode . show-smartparens-mode)
   :bind (:map smartparens-mode-map
          ("C-*"               . sp-join-sexp)
@@ -912,12 +890,11 @@
          ("C-M-S-<backspace>" . sp-splice-sexp-killing-around)
          ("M-F"               . sp-forward-symbol)
          ("M-B"               . sp-backward-symbol))
-  :init
-  (require 'smartparens-config)
   :custom
   (sp-highlight-pair-overlay nil)
   (sp-highlight-wrap-overlay nil)
   (sp-highlight-wrap-tag-overlay nil)
+  (sp-c-modes '(c-mode c++-mode objc-mode java-mode scala-mode rust-mode rustic-mode js-mode dart-mode scad-mode js-mode typescript-mode))
   :config
   (sp-pair "（" "）")
   (sp-pair "【" "】")
@@ -935,7 +912,8 @@
     :after eshell
     :demand t
     :config
-    (sp-local-pair 'eshell-mode "#<" ">")))
+    (sp-local-pair 'eshell-mode "#<" ">")
+    (sp-local-pair 'eshell-mode "'")))
 
 (use-package highlight-indent-guides
   :ensure t
@@ -1010,22 +988,20 @@
          ("M-<left>" . drag-stuff-left))
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode common-lisp-mode) major-mode) (drag-stuff-mode +1)))))
 
-(if (version<= "29" emacs-version)
-    (use-package pixel-scroll
-      :ensure nil
-      :defer nil
-      :config
-      (pixel-scroll-precision-mode +1))
-  (use-package good-scroll
-    :ensure t
-    :defer t
-    :init (defun require-good-scroll () (require 'good-scroll))
-    :hook (pre-command . require-good-scroll)
-    :custom (good-scroll-step 100)
-    :config
-    (good-scroll-mode +1)
-    (remove-hook 'pre-command-hook #'require-good-scroll)
-    (fmakunbound #'require-good-scroll)))
+(use-package pixel-scroll
+  :when (and (display-graphic-p) (version<= "29" emacs-version))
+  :ensure nil
+  :defer nil
+  :config
+  (pixel-scroll-precision-mode +1))
+
+(use-package good-scroll
+  :when (and (display-graphic-p) (version< emacs-version "29"))
+  :ensure t
+  :defer nil
+  :custom (good-scroll-step 100)
+  :config
+  (good-scroll-mode +1))
 
 (use-package elisp-mode
   :ensure nil
@@ -1081,7 +1057,7 @@
 (use-package subword
   :ensure nil
   :defer t
-  :hook ((c-mode c++-mode objc-mode java-mode scala-mode rustic-mode python-mode) . subword-mode))
+  :hook ((c-mode c++-mode objc-mode java-mode scala-mode rustic-mode python-mode js-mode typescript-mode) . subword-mode))
 
 (use-package tree-sitter
   :when (member 'tree-sitter extra-features)
@@ -1127,334 +1103,10 @@
   (defconst hs-maybe-toggle-hideing-at-point '(menu-item "" hs-toggle-hiding-at-point :filter hs-togglable-p))
   (define-key hs-minor-mode-map (kbd "TAB") hs-maybe-toggle-hideing-at-point))
 
-;;;;;;;;;;;;;;;;;;;;;;;
-;; Language Supports ;;
-;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package scala-mode
-  :when (member 'scala used-languages)
-  :ensure t
-  :defer t
-  :mode ("\\.sc\\'" . scala-mode)
-  :interpreter
-  ("scala" . scala-mode))
-
-(use-package sbt-mode
-  :when (member 'scala used-languages)
-  :ensure t
-  :defer t
-  :commands sbt-start sbt-command
-  :config
-  (substitute-key-definition
-   'minibuffer-complete-word
-   'self-insert-command
-   minibuffer-local-completion-map)
-   (setq sbt:program-options '("-Dsbt.supershell=false")))
-
-(use-package cc-mode
-  :when (cl-intersection '(c++ c objective-c) used-languages)
-  :ensure nil
-  :defer t
-  :init (defalias 'cpp-mode 'c++-mode))
-
-(use-package rustic
-  :when (member 'rust used-languages)
-  :ensure t
-  :defer t
-  :custom
-  (rustic-lsp-client (pcase language-support
-                       ((and lsp-based (or 'lsp-mode 'eglot)) lsp-based)
-                       (_ nil))))
-
-(use-package groovy-mode
-  :when (member 'groovy used-languages)
-  :ensure t
-  :defer t)
-
-(use-package python
-  :when (member 'python used-languages)
-  :ensure nil
-  :defer t
-  :hook (inferior-python-mode . (lambda () (add-hook 'comint-output-filter-functions #'comint-truncate-buffer nil 'local)))
-  :config
-  (defvar python-indent-repeat-map
-    (let ((map (make-sparse-keymap)))
-      (define-key map (kbd "<") #'python-indent-shift-left)
-      (define-key map (kbd ">") #'python-indent-shift-right)
-      (dolist (it '(python-indent-shift-left python-indent-shift-right)) (put it 'repeat-map 'python-indent-repeat-map))
-      map)
-    "Keymap to repeat Python indentation key sequences.  Used in `repeat-mode'."))
-
-(use-package ein
-  :when (member 'python used-languages)
-  :ensure t
-  :defer t)
-
-(use-package cmake-mode
-  :when (member 'cmake used-languages)
-  :ensure t
-  :defer t)
-
-(use-package json-mode
-  :when (member 'json used-languages)
-  :ensure t
-  :defer t)
-
-(use-package scad-mode
-  :when (member 'scad used-languages)
-  :ensure t
-  :defer t
-  :config
-  (define-key scad-mode-map (kbd "<return>") nil))
-
-(use-package scad-preview
-  :when (member 'scad used-languages)
-  :after scad-mode
-  :ensure t
-  :defer t
-  :bind (:map scad-mode-map
-         ("C-c C-c" . scad-preview-mode)))
-
-(use-package vhdl-capf
-  :when (member 'vhdl used-languages)
-  :ensure t
-  :defer t
-  :hook (vhdl-mode . vhdl-capf-enable)
-  :config
-  (defun vhdl-capf-flatten (l) (-flatten l)))
-
-(use-package markdown-mode
-  :when (member 'markdown used-languages)
-  :ensure nil
-  :defer t
-  :init
-  (defalias 'md-mode 'markdown-mode))
-
-(use-package csv-mode
-  :when (member 'csv used-languages)
-  :ensure t
-  :defer t
-  :hook (csv-mode . csv-align-mode))
-
-(use-package yaml-mode
-  :when (member 'yaml used-languages)
-  :ensure t
-  :defer t)
-
-(use-package toml-mode
-  :when (member 'toml used-languages)
-  :ensure t
-  :defer t
-  :hook (toml-mode . smartparens-mode))
-
-;;;;;;;;;
-;; LSP ;;
-;;;;;;;;;
-
-(pcase language-support
-  ('citre
-   (use-package citre
-     :ensure t
-     :defer t
-     :init (require 'citre-config)
-     :bind (("C-M-?" . citre-peek)
-            :map citre-mode-map
-                 ("M-?" . citre-jump-to-reference))
-     :custom
-     (citre-auto-enable-citre-mode-modes '(prog-mode))
-     (citre-project-root-function (lambda  () (project-root (project-current t))))
-     (citre-gtags-args '("--compact")))
-   (use-package citre-ext
-     :load-path "custom-lisp"
-     :demand t
-     :hook ((after-save . citre-auto-update-tags-after-save)
-            (citre-mode . citre-global-auto-objdir))
-     :after citre))
-  ('eglot
-   (use-package eglot
-     :hook ((scala-mode rustic-mode c++-mode c-mode objc-mode java-mode python-mode tex-mode) . eglot-ensure)
-     :defer t
-     :ensure t
-     :bind (:map prog-mode-map
-                 ("C-c l r r" . eglot-rename)
-                 ("C-c l a a" . eglot-code-actions))
-     :config
-     (setf (cdr (assoc 'python-mode eglot-server-programs)) '("pyright-langserver" "--stdio")
-           (cdr (assoc 'scala-mode eglot-server-programs)) '("metals")
-           (cdr (assoc 'rust-mode eglot-server-programs)) '("rust-analyzer")
-           (cdr (assoc 'java-mode eglot-server-programs)) '("jdtls")
-           (cdr (assoc '(tex-mode context-mode texinfo-mode bibtex-mode) eglot-server-programs)) '("texlab"))
-     (setq completion-category-defaults nil)))
-  ('lsp-mode
-   (use-package lsp-mode
-     ;; Optional - enable lsp-mode automatically in scala files
-     :ensure t
-     :defer t
-     :init
-     (setq lsp-keymap-prefix "C-c l")
-     :hook (lsp-mode . lsp-lens-mode)
-     :custom
-     (lsp-eldoc-hook nil)
-     (lsp-eldoc-enable-hover nil)
-     (lsp-completion-provider :none)
-     (read-process-output-max (* 1024 1024 16))
-     (lsp-idle-delay 0.5)
-     (lsp-log-io nil))
-
-   (use-package lsp-lens
-     :after lsp-mode
-     :ensure nil
-     :defer t
-     :bind (:map lsp-mode-map
-            ("C-c l l" . lsp-avy-lens)))
-   
-   (use-package dap-mode
-     :after lsp-mode
-     :ensure t
-     :defer t
-     :bind(:map dap-mode-map
-           ("C-c l d" . dap-debug)
-           ("C-<f8>". dap-breakpoint-toggle)
-           ("<f8>" . dap-continue)
-           ("S-<f8>" . dap-step-out)
-           ("<f7>" . dap-step-in)
-           ("C-<f2>" . dap-disconnect)
-           ("C-S-<f2>" . dap-stop-thread))
-     :hook
-     (lsp-mode . dap-mode)
-     (lsp-mode . dap-ui-mode))
-
-   (use-package lsp-ui
-     :ensure t
-     :defer t
-     :after lsp-mode
-     :custom
-     (lsp-ui-doc-show-with-cursor t)
-     (lsp-ui-doc-position 'at-point)
-     (lsp-ui-doc-delay 0.5))
-
-   (use-package lsp-completion
-     :ensure nil
-     :defer t
-     :init
-     (defun lsp-completion-mode@after (&rest _) (kill-local-variable 'completion-category-defaults))
-     (advice-add #'lsp-completion-mode :after #'lsp-completion-mode@after))
-
-   (use-package consult-lsp
-     :ensure t
-     :defer t
-     :after lsp-mode
-     :bind (:map lsp-mode-map
-                 ("M-g i" . consult-lsp-file-symbols)
-                 ("M-g F" . consult-lsp-diagnostics)))
-
-   (use-package yasnippet
-     :ensure t
-     :defer t
-     :hook
-     (lsp-mode . yas-minor-mode)
-     :custom
-     (yas-triggers-in-field t)
-     (yas-indent-line 'fixed)
-     :config
-     (define-key yas-minor-mode-map [(tab)]        nil)
-     (define-key yas-minor-mode-map (kbd "TAB")    nil)
-     (define-key yas-minor-mode-map (kbd "<tab>")  nil))
-
-   (use-package lsp-metals
-     :when (member 'scala used-languages)
-     :ensure t
-     :defer t
-     :custom
-     (lsp-metals-server-args '("-J-Dmetals.allow-multiline-string-formatting=off -Xmx8192m"))
-     :hook (scala-mode . lsp)
-     :config
-     (lsp-register-client
-      (make-lsp-client :new-connection (lsp-tramp-connection "metals")
-                       :major-modes '(scala-mode)
-                       :remote? t
-                       :server-id 'metals-remote)))
-
-   (use-package lsp-rust
-     :when (member 'rust used-languages)
-     :defer t
-     :hook (rustic-mode . lsp)
-     :custom
-     (lsp-rust-analyzer-proc-macro-enable t)
-     :config
-     (lsp-register-client
-      (make-lsp-client :new-connection (lsp-tramp-connection "rust-analyzer")
-                       :major-modes '(rustic-mode)
-                       :remote? t
-                       :server-id 'rust-analyzer-remote)))
-
-   (use-package lsp-clangd
-     :when (cl-intersection '(c++ c objective-c) used-languages)
-     :defer t
-     :hook
-     ((c-mode c++-mode objc-mode) . lsp)
-     :custom
-     (lsp-clients-clangd-args '("--header-insertion=never"))
-     :config
-     (lsp-register-client
-      (make-lsp-client :new-connection (lsp-tramp-connection "clangd")
-                       :major-modes '(c-mode c++-mode objc-mode)
-                       :remote? t
-                       :server-id 'clangd-remote)))
-
-   (use-package lsp-pyright
-     :when (member 'python used-languages)
-     :ensure t
-     :defer t
-     :hook (python-mode . (lambda ()
-                            (require 'lsp-pyright)
-                            (lsp)))
-     :config
-     (lsp-register-client
-      (make-lsp-client :new-connection (lsp-tramp-connection "pyright")
-                       :major-modes '(python-mode)
-                       :remote? t
-                       :server-id 'pyright-remote))
-     (require 'dap-python)
-     (dap-register-debug-template "Python Program"
-                                  (list :type "python"
-                                        :args "-i"
-                                        :cwd nil
-                                        :env '(("DEBUG" . "1"))
-                                        :target-module (expand-file-name "~/工程/Python")
-                                        :request "launch"
-                                        :name "Python Program")))  ; or lsp-deferred
-
-   (use-package lsp-java
-     :when (member 'java used-languages)
-     :ensure t
-     :defer t
-     :hook (java-mode . lsp)
-     :config
-     (lsp-register-client
-      (make-lsp-client :new-connection (lsp-tramp-connection "java-language-server")
-                       :major-modes '(java-mode)
-                       :remote? t
-                       :server-id 'lsp-java-remote)))
-
-   (use-package lsp-vhdl
-     :when (member 'vhdl used-languages)
-     :defer t
-     :hook
-     (vhdl-mode . lsp)
-     (vhdl-mode . (lambda () (ligature-mode -1)))
-     :custom
-     (lsp-vhdl-server 'ghdl-ls)
-     (lsp-register-client
-      (make-lsp-client :new-connection (lsp-tramp-connection "ghdl-ls")
-                       :major-modes '(vhdl-mode)
-                       :remote? t
-                       :server-id 'ghdl-ls-remote)))
-   (use-package lsp-tex
-     :when (member 'tex used-languages)
-     :defer t
-     :hook
-     (tex-mode . lsp))))
+(use-package language-support
+  :load-path "modules"
+  :demand t
+  :bind ("C-c l" . language-support-enable))
 
 (use-package magit
   :defer t
@@ -1502,8 +1154,9 @@
   :load-path "custom-lisp"
   :defer t
   :hook
-  ((c-mode c++-mode objc-mode java-mode scala-mode rust-mode rustic-mode js-mode tex-mode dart-mode scad-mode python-mode) . intellij-edit-mode)
-  :commands (intellij-edit-mode))
+  ((c-mode c++-mode objc-mode java-mode scala-mode rust-mode rustic-mode js-mode dart-mode scad-mode js-mode typescript-mode) . intellij-edit-cc-mode)
+  ((python-mode) . intellij-edit-python-mode)
+  :commands (intellij-edit-cc-mode intellij-edit-indent-mode))
 
 (use-package time
   :ensure nil
@@ -1582,7 +1235,7 @@
 (use-package org-attach-refactor
   :quelpa (org-attach-refactor :fetcher github :repo "BohongHuang/org-attach-refactor")
   :defer t
-  :commands org-attach-refactor-remove-id org-attach-refactor-add-id)
+  :commands (org-attach-refactor-remove-id org-attach-refactor-add-id))
 
 (use-package org-ext
   :load-path "custom-lisp"
@@ -1797,7 +1450,8 @@
   :hook (org-mode . org-bars-mode)
   :config
   (use-package org-tree-slide-ext
-    :ensure nil
+    :when (member 'org-tree-slide extra-features)
+    :load-path "custom-lisp"
     :demand t
     :config
     (push '(org-bars-mode . nil) org-tree-slide-minor-mode-alist)))
@@ -1824,7 +1478,7 @@
   (advice-add #'org-babel-execute:ditaa :filter-args #'ob-ditaa-fix-nonascii-before-execute))
 
 (use-package ob-svgbob
-  :when (member 'svgbob used-languages)
+  :when (member 'svgbob language-support-languages)
   :ensure t
   :defer t
   :init
@@ -1912,6 +1566,7 @@
   :ensure t
   :after org
   :defer t
+  :custom (org-tree-slide-slide-in-effect nil)
   :bind (:map org-mode-map
          ("<f5> <f5>" . org-tree-slide-mode)
          :map org-tree-slide-mode-map
@@ -1950,7 +1605,7 @@
 
 (use-package org-englearn-pdf-view
   :when (and (member 'org-englearn extra-features) (member 'pdf-tools extra-features))
-  :ensure nil
+  :ensure org-englearn
   :defer t
   :after pdf-view
   :custom (org-englearn-pdf-view-disable-org-pdftools-link t)
@@ -1963,7 +1618,7 @@
 ;;;;;;;;;;;;
 
 (use-package cdlatex
-  :when (member 'tex used-languages)
+  :when (member 'tex language-support-languages)
   :ensure t
   :defer t
   :init
@@ -1990,7 +1645,7 @@
     (advice-add #'cape-dabbrev :filter-return #'cape-dabbrev-disable-in-cdlatex-mode)))
 
 (use-package tex
-  :when (and (member 'tex used-languages) (member 'auctex extra-features))
+  :when (and (member 'tex language-support-languages) (member 'auctex extra-features))
   :ensure auctex
   :defer t
   :custom
@@ -2016,7 +1671,7 @@
     (dolist (hook tex-mode-hook) (add-to-list 'TeX-mode-hook hook))))
 
 (use-package latex
-  :when (and (member 'tex used-languages) (member 'auctex extra-features))
+  :when (and (member 'tex language-support-languages) (member 'auctex extra-features))
   :ensure auctex
   :defer t
   :config
@@ -2185,12 +1840,12 @@
   :defer t)
 
 (use-package mermaid-mode
-  :when (member 'mermaid used-languages)
+  :when (member 'mermaid language-support-languages)
   :ensure t
   :defer t)
 
 (use-package ob-mermaid
-  :when (member 'mermaid used-languages)
+  :when (member 'mermaid language-support-languages)
   :ensure t
   :defer t)
 
@@ -2222,13 +1877,14 @@
   :bind (("C-c m" . hydra-emms/body))
   :config
   (emms-all)
-  (emms-default-players)
+  (unless emms-player-list
+    (emms-default-players))
   (emms-mode-line-disable)
   (emms-playing-time-mode -1))
 
 (use-package emms-mark
   :when (member 'emms extra-features)
-  :ensure nil
+  :ensure emms
   :defer t
   :bind (:map emms-mark-mode-map
          ("n" . next-line)
@@ -2248,7 +1904,7 @@
   :after emms
   :config
   (use-package emms-vgm-default-players
-    :ensure nil
+    :ensure emms-vgm
     :demand t
     :config
     (nconc emms-player-list emms-vgm-default-players)))

@@ -309,5 +309,32 @@ the documentation of `org-diary'."
     (delete-region beg end)
     (insert "[[" link "][" link "]]")))
 
+(defun org-mode-optional-variable-pitch-mode-wrapper (fun &rest args)
+  (if (eq major-mode 'org-mode)
+      (when-let ((default-font (face-attribute 'default :family)))
+        (apply fun args)
+        (when buffer-face-mode
+          (dolist (face '(org-block
+                          org-block-begin-line
+                          org-block-end-line
+                          org-document-info-keyword
+                          org-code
+                          org-indent
+                          org-latex-and-related
+                          org-checkbox
+                          org-formula
+                          org-table
+                          org-verbatim
+                          org-property-value
+                          org-special-keyword
+                          org-drawer
+                          org-todo
+                          org-done
+                          org-tag))
+            (face-remap-add-relative face :family default-font))))
+    (apply fun args)))
+
+(advice-add #'variable-pitch-mode :around #'org-mode-optional-variable-pitch-mode-wrapper)
+
 (provide 'org-ext)
 ;;; org-ext.el ends here
