@@ -34,6 +34,7 @@
         insert-register
         intellij-backspace
         intellij-edit-backspace
+        intellij-edit-cc-backspace
         intellij-return
         kill-region
         kill-sexp

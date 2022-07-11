@@ -13,12 +13,15 @@
   (or (when-let ((proj (project-current))) (project-root proj))
       (when-let ((file (buffer-file-name))) (file-name-directory file))))
 
+(defun language-support--enable ()
+  (pcase language-support
+    ('lsp-mode (lsp))
+    ('eglot (eglot-ensure))))
+
 (defun language-support-enable ()
   "Enable language support for current project or directory."
   (interactive)
-  (pcase language-support
-    ('lsp-mode (lsp))
-    ('eglot (eglot-ensure)))
+  (language-support--enable)
   (add-to-list 'language-support-enabled-directories (language-support-directory) nil #'string-equal))
 
 (defun language-support-auto-enable ()
@@ -40,8 +43,6 @@
   :ensure t
   :defer t
   :mode ("\\.sc\\'" . scala-mode)
-  :interpreter
-  ("scala" . scala-mode)
   :hook (scala-mode . language-support-auto-enable))
 
 (use-package sbt-mode
@@ -68,8 +69,15 @@
   :ensure t
   :defer t
   :custom
-  (rustic-lsp-client nil)
-  :hook (rustic-mode . language-support-auto-enable))
+  (rustic-lsp-setup-p nil)
+  (rustic-lsp-client (when (member language-support '(lsp-mode eglot)) language-support))
+  :hook (rustic-mode . language-support-auto-enable)
+  :config
+  (defun language-support--enable-rustic (fun &rest args)
+    (if (eq major-mode 'rustic-mode)
+        (rustic-setup-lsp)
+      (apply fun args)))
+  (advice-add #'language-support--enable :around #'language-support--enable-rustic))
 
 (use-package groovy-mode
   :when (member 'groovy language-support-languages)
@@ -134,6 +142,7 @@
   :ensure t
   :defer t
   :mode ("\\.ts\\'" . typescript-mode)
+  :preface (defalias 'ts-mode 'typescript-mode)
   :hook (typescript-mode . language-support-auto-enable))
 
 (use-package vhdl-capf
@@ -231,7 +240,7 @@
      :after lsp-mode
      :ensure t
      :defer t
-     :bind(:map dap-mode-map
+     :bind(:map lsp-mode-map
            ("C-c l d" . dap-debug)
            ("C-<f8>". dap-breakpoint-toggle)
            ("<f8>" . dap-continue)
@@ -342,9 +351,6 @@
      :when (member 'python language-support-languages)
      :ensure t
      :defer t
-     :hook (python-mode . (lambda ()
-                            (require 'lsp-pyright)
-                            (lsp)))
      :config
      (lsp-register-client
       (make-lsp-client :new-connection (lsp-tramp-connection "pyright")

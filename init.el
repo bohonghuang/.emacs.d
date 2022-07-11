@@ -913,7 +913,7 @@
     :demand t
     :config
     (sp-local-pair 'eshell-mode "#<" ">")
-    (sp-local-pair 'eshell-mode "'")))
+    (sp-local-pair 'eshell-mode "'" "'" :unless nil)))
 
 (use-package highlight-indent-guides
   :ensure t
@@ -1687,7 +1687,7 @@
   :config
   (defalias 'subseq 'cl-subseq)
   (defun gts-text-replace-redundant-empty (ret)
-    (replace-regexp-in-string "[ \n\t]+" " " ret))
+    (when ret (replace-regexp-in-string "[ \n\t]+" " " ret)))
   (advice-add #'gts-text :filter-return #'gts-text-replace-redundant-empty))
 
 ;;;;;;;;;;;;
@@ -1912,7 +1912,6 @@
 (use-package mu4e
   :when (member 'mu4e extra-features)
   :defer t
-  :commands (mu4e)
   :custom
   (mu4e-get-mail-command       "mbsync -a")
   (mail-user-agent             'mu4e-user-agent)
