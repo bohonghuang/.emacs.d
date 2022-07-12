@@ -912,8 +912,12 @@
     :after eshell
     :demand t
     :config
+    (defun sp-point-in-eshell-sexp (&rest _)
+      (let ((after-prompt-position (save-excursion (eshell-bol) (and (looking-back eshell-prompt-regexp (line-beginning-position)) (point))))
+            (sexp-beg (save-excursion (elisp--beginning-of-sexp) (point))))
+        (>= sexp-beg (or after-prompt-position (line-beginning-position)))))
     (sp-local-pair 'eshell-mode "#<" ">")
-    (sp-local-pair 'eshell-mode "'" "'" :unless nil)))
+    (sp-local-pair 'eshell-mode "'" "'" :unless '(sp-point-in-eshell-sexp))))
 
 (use-package highlight-indent-guides
   :ensure t
@@ -1053,6 +1057,13 @@
         (put it 'repeat-map 'flymake-navigation-repeat-map))
       map)
     "Keymap to repeat flymake navigation key sequences.  Used in `repeat-mode'."))
+
+(use-package flymake-popon
+  :ensure t
+  :defer t
+  :hook (emacs-lisp-mode . flymake-popon-mode)
+  :custom
+  (flymake-popon-delay 0.5))
 
 (use-package subword
   :ensure nil
