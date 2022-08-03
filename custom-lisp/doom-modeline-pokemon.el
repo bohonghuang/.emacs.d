@@ -62,7 +62,13 @@
     (markdown-mode . 39)
     (text-mode . 169)
     (picture-mode . 235)
-    (magit-status-mode . 65))
+    (magit-status-mode . 65)
+    (mu4e-main-mode . 225)
+    (mu4e-view-mode . 225)
+    (mu4e-headers-mode . 225)
+    (mu4e~update-mail-mode . 225)
+    (org-agenda-mode . 437)
+    (process-menu-mode . 82))
   "Pokemon definition alist for `major-mode'."
   :group 'doom-modeline-pokemon
   :type '(alist :key-type symbol :value-type sexp)
@@ -127,7 +133,7 @@
   (doom-modeline-pokemon-icon (doom-modeline-pokemon-by-major-mode)))
 
 (defun doom-modeline-pokemon-buffer-name-icon ()
-  (doom-modeline-pokemon-icon (doom-modeline-pokemon-by-object (buffer-name))))
+  (doom-modeline-pokemon-icon (doom-modeline-pokemon-by-object (current-buffer))))
 
 (doom-modeline-def-segment buffer-info-pokemon
   "Combined information about the current buffer.

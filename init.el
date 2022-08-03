@@ -342,8 +342,7 @@
 (use-package project-ext
   :load-path "custom-lisp"
   :defer t
-  :bind
-  ("C-x p u" . project-run-or-quickrun))
+  :bind (("C-x p u" . project-run-or-quickrun)))
 
 (use-package winner
   :ensure nil
@@ -476,11 +475,10 @@
   :ensure t
   :defer t
   :hook
-  ((prog-mode ielm-mode tex-mode sly-mode) . corfu-mode)
+  ((prog-mode ielm-mode tex-mode sly-mode racket-repl-mode) . corfu-mode)
   :bind (:map corfu-map ("C-M-i" . corfu-move-to-minibuffer))
   :custom
   (corfu-auto t)
-  (corfu-auto-prefix 1)
   (corfu-separator ?\s)
   (corfu-quit-no-match 'separator)
   (corfu-on-exact-match nil)
@@ -777,12 +775,14 @@
   :custom
   (popper-reference-buffers '("\\*Messages\\*"
                               "Output\\*$"
+                              "out\\*$"
                               "\\*Async Shell Command\\*"
                               "\\*rustic-compilation\\*"
                               "\\*cargo-run\\*"
                               "\\*Go-Translate\\*"
                               "\\*Compile-Log\\*"
                               "^\\*lsp-install"
+                              dap-ui-repl-mode
                               help-mode
                               compilation-mode
                               dap-server-log-mode
@@ -853,7 +853,7 @@
   (defalias 'sp-mode #'smartparens-mode)
   (require 'smartparens-config)
   :hook
-  ((prog-mode text-mode minibuffer-setup eshell-mode lisp-mode ielm-mode sly-mode) . smartparens-mode)
+  ((prog-mode text-mode minibuffer-setup eshell-mode lisp-mode ielm-mode sly-mode racket-repl-mode) . smartparens-mode)
   (smartparens-mode . show-smartparens-mode)
   :bind (:map smartparens-mode-map
          ("C-*"               . sp-join-sexp)
@@ -978,7 +978,7 @@
   :ensure t
   :defer t
   :hook
-  ((lisp-mode lisp-data-mode emacs-lisp-mode) . rainbow-delimiters-mode))
+  ((lisp-mode lisp-data-mode emacs-lisp-mode scheme-mode racket-mode clojure-mode racket-repl-mode sly-mode) . rainbow-delimiters-mode))
 
 (use-package drag-stuff
   :ensure t
@@ -1061,9 +1061,10 @@
 (use-package flymake-popon
   :ensure t
   :defer t
-  :hook (emacs-lisp-mode . flymake-popon-mode)
+  :hook (flymake-mode . flymake-popon-mode)
   :custom
-  (flymake-popon-delay 0.5))
+  (flymake-popon-delay 0.5)
+  (flymake-popon-posframe-extra-arguments '(:poshandler posframe-poshandler-point-bottom-left-corner)))
 
 (use-package subword
   :ensure nil
@@ -1732,7 +1733,7 @@
   :ensure nil
   :defer t
   :custom
-  (eshell-history-size 1000)
+  (eshell-history-size 500)
   (eshell-hist-ignoredups 'erase)
   :config
   (defun eshell-hist-write-after-command (&rest _)
@@ -1748,7 +1749,7 @@
         (with-temp-buffer
           (insert earliest)
           (newline)
-          (write-region (point-min) (point-max) (concat eshell-history-file-name ".old") 'append)))
+          (write-region (point-min) (point-max) (print (concat eshell-history-file-name ".old")) 'append)))
       (unless (and index eshell-hist-ignoredups (not (eq eshell-hist-ignoredups 'erase)))
         (let ((eshell-hist-ignoredups nil))
           (eshell-add-input-to-history (string-trim input)))))

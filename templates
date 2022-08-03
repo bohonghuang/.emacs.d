@@ -1,6 +1,8 @@
 fundamental-mode ;; Available everywhere
 
 (today (format-time-string "%Y-%m-%d"))
+(file (file-name-nondirectory (or (buffer-file-name) (buffer-name))))
+(pfile (file-relative-name (or (buffer-file-name) (buffer-name)) (project-root (project-current))))
 
 prog-mode
 

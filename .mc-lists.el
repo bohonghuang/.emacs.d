@@ -35,6 +35,7 @@
         intellij-backspace
         intellij-edit-backspace
         intellij-edit-cc-backspace
+        intellij-edit-pycharm-backspace
         intellij-return
         kill-region
         kill-sexp
@@ -43,6 +44,7 @@
         list-buffers
         lsp-signature-activate
         lsp-ui-doc--handle-mouse-movement
+        markdown-enter-key
         org-beginning-of-line
         org-cdlatex-underscore-caret
         org-ctrl-c-ctrl-c
@@ -97,6 +99,7 @@
         embark-act
         find-file
         kmacro-end-or-call-macro
+        markdown-outdent-or-delete
         mouse-drag-mode-line
         mouse-select-window
         phi-search

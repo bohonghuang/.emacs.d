@@ -36,7 +36,16 @@
   :when (member 'lisp language-support-languages)
   :ensure t
   :defer t
-  :custom (org-babel-lisp-eval-fn 'sly-eval))
+  :hook
+  (sly-mode . (lambda () (setq-local corfu-auto-delay 0.3)))
+  :custom
+  (org-babel-lisp-eval-fn 'sly-eval))
+
+(use-package racket-mode
+  :when (member 'racket language-support-languages)
+  :ensure t
+  :defer t
+  :hook (racket-mode . racket-xp-mode))
 
 (use-package scala-mode
   :when (member 'scala language-support-languages)
