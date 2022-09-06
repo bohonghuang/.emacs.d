@@ -907,6 +907,7 @@
     :config
     (sp-local-pair 'org-mode "\\[" "\\]")
     (sp-local-pair 'org-mode "<<" ">>")
+    (sp-local-pair 'org-mode "@@" "@@")
     (sp-local-pair 'org-mode "+" "+" :unless '(sp-point-after-word-p)))
   (use-package smartparens
     :after eshell
@@ -1920,6 +1921,10 @@
     :demand t
     :config
     (nconc emms-player-list emms-vgm-default-players)))
+
+(use-package consult-emms
+  :quelpa (consult-emms :fetcher github :repo "Hugo-Heagren/consult-emms")
+  :defer t)
 
 (use-package mu4e
   :when (member 'mu4e extra-features)
