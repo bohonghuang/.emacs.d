@@ -20,6 +20,7 @@
         crux-eval-and-replace
         cycle-spacing
         cycle-spacing-dwim
+        dabbrev-completion
         dap-breakpoint-toggle
         delete-horizontal-space
         dired-do-delete
@@ -27,6 +28,7 @@
         electric-newline-and-maybe-indent
         eval-last-sexp
         forward-sexp
+        hs-toggle-hiding-at-point
         ibuffer-do-delete
         ibuffer-mark-forward
         ignore
@@ -87,6 +89,7 @@
         sp-kill-sexp
         sp-split-sexp
         sp-unwrap-sexp
+        transpose-sexps
         vhdl-electric-semicolon
         vhdl-electric-space
         vhdl-electric-tab
