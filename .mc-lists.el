@@ -87,6 +87,7 @@
         sp-kill-sexp
         sp-split-sexp
         sp-unwrap-sexp
+        transpose-words
         vhdl-electric-semicolon
         vhdl-electric-space
         vhdl-electric-tab

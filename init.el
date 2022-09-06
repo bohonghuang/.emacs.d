@@ -853,7 +853,7 @@
   (defalias 'sp-mode #'smartparens-mode)
   (require 'smartparens-config)
   :hook
-  ((prog-mode text-mode minibuffer-setup eshell-mode lisp-mode ielm-mode sly-mode racket-repl-mode) . smartparens-mode)
+  ((prog-mode text-mode minibuffer-setup eshell-mode lisp-mode ielm-mode sly-mrepl-mode racket-repl-mode) . smartparens-mode)
   (smartparens-mode . show-smartparens-mode)
   :bind (:map smartparens-mode-map
          ("C-*"               . sp-join-sexp)
@@ -978,7 +978,7 @@
   :ensure t
   :defer t
   :hook
-  ((lisp-mode lisp-data-mode emacs-lisp-mode scheme-mode racket-mode clojure-mode racket-repl-mode sly-mode) . rainbow-delimiters-mode))
+  ((lisp-mode lisp-data-mode emacs-lisp-mode scheme-mode racket-mode clojure-mode racket-repl-mode sly-mrepl-mode) . rainbow-delimiters-mode))
 
 (use-package drag-stuff
   :ensure t
