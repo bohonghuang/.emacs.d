@@ -47,6 +47,11 @@
   :defer t
   :hook (racket-mode . racket-xp-mode))
 
+(use-package ob-racket
+  :when (member 'racket language-support-languages)
+  :quelpa (ob-racket :fetcher github :repo "hasu/emacs-ob-racket")
+  :defer t)
+
 (use-package scala-mode
   :when (member 'scala language-support-languages)
   :ensure t

@@ -22,6 +22,27 @@ lisp-mode emacs-lisp-mode ;; Specify multiple modes
 
 (lambda "(lambda (" p ")" n> r> ")")
 
+lisp-mode sly-mrepl-mode
+
+(ign "(declare (ignore " p "))")
+(ignble "(declare (ignorable " p "))")
+(optim "(declare (optimize (speed " (p "3") ")" n> "(debug " (p "0") ")" n> "(space " (p "0") ")" n> "(compilation-speed " (p "0") ")" n> "(safety " (p "0") ")))")
+(o3 "(declare (speed 3))")
+(O3 "(declare (speed 3)" n> "(debug 0)" n> "(safety 0)" ")")
+(type "(declare (type " p " " p "))")
+(ftype "(declaim (fype (function (" p ") " p ") " p "))")
+(inline "(declaim (inline " p "))")
+(callf "(setf " (s var) " (" p " " (s var) "))")
+(ql "(ql:quickload :" p ")")
+(defpack "(defpackage " (s package) n "  (:use " (p "#:cl #:alexandria") ")" n> "(:nicknames #:" p "))" n> n> "(in-package #:" (s package) ")")
+(inpack "(in-package #:" p ")")
+(unwind "(unwind-protect" n> " (progn " n> p ")" n> p ")")
+(param "(defparameter *" p "* " p ")")
+(var "(defvar *" p "* " p ")")
+(const "(defconstant +" p "+ " p ")")
+(special "(declare (special " p "))")
+(exit "#+sbcl (sb-ext:exit) #+(or ecl clasp) (si:exit)")
+
 emacs-lisp-mode
 
 (autoload ";;;###autoload")
