@@ -32,7 +32,19 @@
   :ensure nil
   :custom
   (use-package-verbose t)
-  (use-package-minimum-reported-time 0))
+  (use-package-minimum-reported-time 0)
+  :config
+  (use-package use-package-ensure
+    :config
+    (defconst use-package-ensure-keywords '(:pin :ensure))
+    (setq use-package-keywords
+          (let ((use-package-keywords (cl-delete-if (lambda (x) (member x use-package-ensure-keywords))
+                                                    use-package-keywords)))
+            (let* ((pos (cl-position :unless use-package-keywords))
+                   (head (cl-subseq use-package-keywords 0 (+ 1 pos)))
+                   (tail (nthcdr (+ 1 pos) use-package-keywords)))
+              (append head use-package-ensure-keywords tail))))))
+
 
 (use-package quelpa-use-package
   :demand t
@@ -40,9 +52,9 @@
   :init (setq quelpa-update-melpa-p nil
               quelpa-use-package-inhibit-loading-quelpa t))
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;; Internal Packages (Basic) ;;
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Internal Packages (Basic) ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package emacs
   :defer nil
