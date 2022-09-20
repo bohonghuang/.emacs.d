@@ -191,6 +191,11 @@
   :defer t
   :hook (toml-mode . smartparens-mode))
 
+(use-package blueprint-mode
+  :when (member 'blueprint language-support-languages)
+  :quelpa (blueprint-mode :fetcher github :repo "DrBluefall/blueprint-mode")
+  :defer t)
+
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Completion/Goto ;;
 ;;;;;;;;;;;;;;;;;;;;;

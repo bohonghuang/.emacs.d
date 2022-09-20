@@ -28,6 +28,7 @@ lisp-mode sly-mrepl-mode
 (ignble "(declare (ignorable " p "))")
 (optim "(declare (optimize (speed " (p "3") ")" n> "(debug " (p "0") ")" n> "(space " (p "0") ")" n> "(compilation-speed " (p "0") ")" n> "(safety " (p "0") ")))")
 (o3 "(declare (optimize (speed 3)))")
+(d3 "(declare (optimize (debug 3)))")
 (O3 "(declare (optimize (speed 3)" n> "(debug 0)" n> "(safety 0)))")
 (type "(declare (type " p " " p "))")
 (ftype "(declaim (fype (function (" p ") " p ") " p "))")
