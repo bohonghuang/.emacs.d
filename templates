@@ -114,15 +114,13 @@ python-mode
 (cls "class " (p "Class") ":" n> r> n> "pass")
 (main "def main():" n> r> n> "pass" n> n> "if __name__ == '__main__':" n> "main()" n)
 
-c-mode
+c-mode c++-mode
 
 (main "int main(" (p "int argc, char *argv[]") ") {" n> r> n> "return 0;" n "}" >)
 (once "#ifndef " (p (concat (string-inflection-upcase-function (file-name-nondirectory (file-name-sans-extension (or (buffer-file-name) "")))) "_H") header) n> "#define " header n> n> q n> n> "#endif /* " header " */")
 (f (p "void" rettype) " " (p "function" name) "(" p ") {" n> q n> "return" (pcase rettype ((pred (string-prefix-p "*" name)) " NULL;") ((or "int" "char" "short" "long") " 0;") ("float" " 0.0f;") ("double" " 0.0;") (_ ";"))  n "}" >)
-
-c++-mode
-
-(main "int main(" (p "int argc, char *argv[]") ") {" n> q n> "return 0;" n "}" >)
+(defstruct "typedef struct __" (s name) " {" n> r> q n "} " (s name) ";")
+(fori "for(int " (p "i" loop-var) " = " (p "0")"; " (s loop-var) " < " (p "size") "; " (s loop-var) "++)" q)
 
 org-mode
 

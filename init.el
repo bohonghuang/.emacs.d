@@ -100,7 +100,7 @@
   :defer nil
   :hook (prog-mode . toggle-word-wrap)
   :bind (("C-?" . undo-redo)
-         ("S-<backspace>" . delete-indentation))
+         ("S-DEL" . delete-indentation))
   :custom
   (column-number-mode t)
   (visible-bell t)

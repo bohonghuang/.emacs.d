@@ -110,7 +110,7 @@
 
 (defun emms-lyrics-buffer-recenter-after-display (lyrics line)
   (when emms-lyrics-display-buffer
-    (dolist (w (get-buffer-window-list emms-lyrics-buffer))
+    (dolist (w (get-buffer-window-list emms-lyrics-buffer nil t))
       (with-selected-window w
         (when line
           (goto-char (point-min))

@@ -32,6 +32,12 @@
 ;; Languages ;;
 ;;;;;;;;;;;;;;;
 
+(use-package elisp-mode
+  :ensure nil
+  :defer t
+  :bind (:map emacs-lisp-mode-map
+         ("C-c RET" . emacs-lisp-macroexpand)))
+
 (use-package sly
   :when (member 'lisp language-support-languages)
   :ensure t

@@ -336,5 +336,10 @@ the documentation of `org-diary'."
 
 (advice-add #'variable-pitch-mode :around #'org-mode-optional-variable-pitch-mode-wrapper)
 
+(defun org-latex-widen-image ()
+  (interactive)
+  (setq-local org-latex-image-default-width ".9\\linewidth"
+              org-latex-image-default-height nil))
+
 (provide 'org-ext)
 ;;; org-ext.el ends here

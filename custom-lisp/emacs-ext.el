@@ -11,6 +11,11 @@
   (let ((window (selected-window)))
     (set-window-dedicated-p window (not (window-dedicated-p window)))))
 
+(defun toggle-window-frame-decorated ()
+  (interactive)
+  (set-frame-parameter (window-frame) 'undecorated
+                       (not (frame-parameter (window-frame) 'undecorated))))
+
 (defun compile-user-emacs-directory ()
   (interactive)
   (mapc (lambda (file)
