@@ -45,7 +45,6 @@
                    (tail (nthcdr (+ 1 pos) use-package-keywords)))
               (append head use-package-ensure-keywords tail))))))
 
-
 (use-package quelpa-use-package
   :demand t
   :ensure t
@@ -505,7 +504,7 @@
 
 (use-package corfu-terminal
   :ensure t
-  :when (not (display-graphic-p))
+  :unless (display-graphic-p)
   :defer t
   :hook (corfu-mode . corfu-terminal-mode))
 
@@ -560,7 +559,6 @@
     (add-to-list 'corfu-margin-formatters #'kind-all-the-icons-margin-formatter)))
 
 (use-package corfu-doc
-  :when (display-graphic-p)
   :ensure t
   :defer t
   :after corfu
@@ -568,6 +566,12 @@
   (corfu-doc-auto nil)
   :hook (corfu-mode . corfu-doc-mode)
   :bind (:map corfu-map ("M-." . corfu-doc-toggle)))
+
+(use-package corfu-doc-terminal
+  :quelpa (corfu-doc-terminal :fetcher git :url "https://codeberg.org/akib/emacs-corfu-doc-terminal.git")
+  :unless (display-graphic-p)
+  :defer t
+  :hook (corfu-doc-mode . corfu-doc-terminal-mode))
 
 (use-package dabbrev
   :ensure nil

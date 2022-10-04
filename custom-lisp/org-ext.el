@@ -341,5 +341,13 @@ the documentation of `org-diary'."
   (setq-local org-latex-image-default-width ".9\\linewidth"
               org-latex-image-default-height nil))
 
+(with-eval-after-load 'ox-md
+  (defun org-md-src-block (src-block _contents info)
+    (let ((lang (org-element-property :language src-block)))
+      (format "``` %s\n%s```" lang
+              (org-remove-indentation
+               (org-export-format-code-default src-block info)))))
+  (setf (cdr (cl-assoc 'src-block (org-export-backend-transcoders (cl-find-if (lambda (backend) (eq (org-export-backend-name backend) 'md)) org-export-registered-backends)))) 'org-md-src-block))
+
 (provide 'org-ext)
 ;;; org-ext.el ends here

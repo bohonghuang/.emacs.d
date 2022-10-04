@@ -24,4 +24,14 @@
               (native-compile file)))
         (directory-files "~/.emacs.d/" t ".el$")))
 
+(defun url-encode-region ()
+  (interactive)
+  (unless (region-active-p) (error "Region is not activated"))
+  (let* ((beg (region-beginning))
+         (end (region-end))
+         (url (url-encode-url (buffer-substring-no-properties beg end))))
+    (delete-region (region-beginning) (region-end))
+    (goto-char beg)
+    (insert url)))
+
 (provide 'emacs-ext)
