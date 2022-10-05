@@ -14,40 +14,40 @@
             "No playing track")
    :hint nil)
   ("File"
-   (("o l"    (call-interactively #'emms-play-playlist)            "Play Playlist")
-    ("o o"    (call-interactively #'emms-play-file)                "Play File")
-    ("o d"    (call-interactively #'emms-play-directory-tree)      "Play Directory")
-    ("o u"    (call-interactively #'emms-play-url)                 "Play URL"))
+   (("o l"    (call-interactively #'emms-play-playlist)                  "Play Playlist")
+    ("o o"    (call-interactively #'emms-play-file)                      "Play File")
+    ("o d"    (call-interactively #'emms-play-directory-tree)            "Play Directory")
+    ("o u"    (call-interactively #'emms-play-url)                       "Play URL"))
    "Playlist"
-   (("a l"    (call-interactively #'emms-add-playlist)             "Add Playlist")
-    ("a o"    (call-interactively #'emms-add-file)                 "Add File")
-    ("a d"    (call-interactively #'emms-add-directory-tree)       "Add Directory")
-    ("a u"    (call-interactively #'emms-add-url)                  "Add URL")
-    ("a a"    (call-interactively #'consult-emms-library)          "Add Library")
-    ("S"      (emms-shuffle)                                       "Shuffle"))
+   (("a l"    (call-interactively #'emms-add-playlist)                   "Add Playlist")
+    ("a o"    (call-interactively #'emms-add-file)                       "Add File")
+    ("a d"    (call-interactively #'emms-add-directory-tree)             "Add Directory")
+    ("a u"    (call-interactively #'emms-add-url)                        "Add URL")
+    ("a a"    (call-interactively #'consult-emms-library)                "Add Library")
+    ("S"      (emms-shuffle)                                             "Shuffle"))
    "Select"
-   (("l l"    (call-interactively #'consult-emms-playlists)        "Consult Playlists")
-    ("l b"    (call-interactively #'consult-emms-metaplaylist)     "Consult Metaplayerlist")
-    ("l c"    (call-interactively #'consult-emms-current-playlist) "Consult Current Playlist"))
+   (("l l"    (call-interactively #'consult-emms-playlists)              "Consult Playlists")
+    ("l b"    (call-interactively #'consult-emms-metaplaylist)           "Consult Metaplayerlist")
+    ("l c"    (call-interactively #'consult-emms-current-playlist)       "Consult Current Playlist"))
    "Playback"
-   (("<SPC>"  (emms-pause)                                         "Pause/Resume")
-    ("n"      (emms-next)                                          "Next")
-    ("p"      (emms-previous)                                      "Previous")
-    ("f"      (emms-seek-forward)                                  "Seek Forward")
-    ("b"      (emms-seek-backward)                                 "Seek Backward")
-    ("k"      (emms-stop)                                          "Stop"))
+   (("<SPC>"  (emms-pause)                                               "Pause/Resume")
+    ("n"      (emms-next)                                                "Next")
+    ("p"      (emms-previous)                                            "Previous")
+    ("f"      (emms-seek-forward)                                        "Seek Forward")
+    ("b"      (emms-seek-backward)                                       "Seek Backward")
+    ("k"      (emms-stop)                                                "Stop"))
    "Score"
-   (("s"      (call-interactively #'emms-score-set-playing)        "Set Score"))
+   (("s"      (call-interactively #'emms-score-set-playing)              "Set Score"))
    "Lyrics"
-   (("L"      (emms-lyrics-switch-display-position)                "Switch Display"))
+   (("L"      (call-interactively #'emms-lyrics-switch-display-position) "Switch Display"))
    "Volume"
-   (("+"      (emms-volume-raise)                                  "Raise Volume")
-    ("-"      (emms-volume-lower)                                  "Lower Volume"))
+   (("+"      (emms-volume-raise)                                        "Raise Volume")
+    ("-"      (emms-volume-lower)                                        "Lower Volume"))
    "Other"
-   (("m"      (emms)                                               "Emms Buffer"))))
+   (("m"      (emms)                                                     "EMMS Buffer"))))
 
 (defun emms-lyrics-toggle-display-buffer-auto-create-or-kill-wrapper (fun &rest args)
-  (let ((w (and emms-lyrics-buffer (get-buffer-window emms-lyrics-buffer))))
+  (let ((w (and emms-lyrics-buffer (get-buffer-window emms-lyrics-buffer t))))
     (if emms-lyrics-display-buffer
         (progn (apply fun args)
                (when w
@@ -62,8 +62,8 @@
 
 (defconst emms-lyrics-display-positions (ring-convert-sequence-to-ring '((nil nil nil) (t nil nil) (nil t nil) (nil nil t))))
 
-(defun emms-lyrics-switch-display-position ()
-  (interactive)
+(defun emms-lyrics-switch-display-position (arg)
+  (interactive "P")
   (pcase-let ((`(,on-minibuffer ,on-modeline ,buffer) (ring-next emms-lyrics-display-positions (list emms-lyrics-display-on-minibuffer
                                                                                                      emms-lyrics-display-on-modeline
                                                                                                      emms-lyrics-display-buffer))))
@@ -72,7 +72,9 @@
     (unless (eq emms-lyrics-display-on-modeline on-modeline)
       (emms-lyrics-toggle-display-on-modeline))
     (unless (eq emms-lyrics-display-buffer buffer)
-      (emms-lyrics-toggle-display-buffer))))
+      (emms-lyrics-toggle-display-buffer)
+      (when (and arg (buffer-live-p emms-lyrics-buffer))
+        (emms-lyrics-buffer-to-new-frame)))))
 
 (add-to-list 'emms-info-native--accepted-vorbis-fields "lyrics")
 
@@ -117,6 +119,17 @@
           (forward-line (1- line))
           (set-window-point w (point))
           (recenter-top-bottom))))))
+
+(defun emms-lyrics-buffer-to-new-frame ()
+  (mapc #'delete-window (get-buffer-window-list emms-lyrics-buffer))
+  (with-selected-frame (make-frame '((undecorated . t)
+                                     (minibuffer . nil)
+                                     (width . 50)
+                                     (height . 25)
+                                     (alpha-background . 90)))
+    (with-current-buffer (switch-to-buffer emms-lyrics-buffer)
+      (hide-mode-line-mode +1)
+      (set-window-dedicated-p (selected-window) t))))
 
 (define-minor-mode emms-lyrics-buffer-auto-scroll-mode
   "Minor mode to make `emms-lyrics-display-buffer' scroll automatically with current line in lyrics."
