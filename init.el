@@ -220,6 +220,18 @@
   :defer nil
   :hook (prog-mode . hl-line-mode))
 
+(use-package partial-font-lock
+  :load-path "custom-lisp"
+  :defer t
+  :commands (major-mode-fontify-region font-lock-update-dwim)
+  :bind (("C-x x f" . font-lock-update-dwim))
+  :config
+  (defun font-lock-update-dwim ()
+    (interactive)
+    (if (region-active-p)
+        (call-interactively #'major-mode-fontify-region)
+      (call-interactively #'font-lock-update))))
+
 (use-package paragraphs
   :ensure nil
   :defer nil
