@@ -220,16 +220,19 @@
   :defer nil
   :hook (prog-mode . hl-line-mode))
 
-(use-package partial-font-lock
+(use-package mode-fontify
   :load-path "custom-lisp"
   :defer t
-  :commands (major-mode-fontify-region font-lock-update-dwim)
+  :commands (mode-fontify-region
+             mode-fontify-face-region
+             mode-fontify-face-region-at-point
+             font-lock-update-dwim)
   :bind (("C-x x f" . font-lock-update-dwim))
   :config
   (defun font-lock-update-dwim ()
     (interactive)
     (if (region-active-p)
-        (call-interactively #'major-mode-fontify-region)
+        (call-interactively #'mode-fontify-region)
       (call-interactively #'font-lock-update))))
 
 (use-package paragraphs
@@ -1948,7 +1951,7 @@
     :ensure emms-vgm
     :demand t
     :config
-    (nconc emms-player-list emms-vgm-default-players)))
+    (setq emms-player-list (append emms-vgm-default-players emms-player-list))))
 
 (use-package consult-emms
   :quelpa (consult-emms :fetcher github :repo "Hugo-Heagren/consult-emms")
