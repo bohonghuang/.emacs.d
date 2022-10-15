@@ -1103,22 +1103,6 @@
   :defer t
   :hook ((c-mode c++-mode objc-mode java-mode scala-mode rustic-mode python-mode js-mode typescript-mode) . subword-mode))
 
-(use-package tree-sitter
-  :when (member 'tree-sitter extra-features)
-  :ensure t
-  :defer t
-  :hook (prog-mode . (lambda ()
-                       (require 'tree-sitter-langs)
-                       (if (assoc major-mode tree-sitter-major-mode-language-alist)
-                           (tree-sitter-mode +1))))
-  :config
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
-
-(use-package tree-sitter-langs
-  :ensure t
-  :defer t
-  :when (not (eq system-type 'windows-nt)))
-
 (use-package hideshow
   :ensure nil
   :defer t
@@ -1151,6 +1135,23 @@
   :load-path "modules"
   :demand t
   :bind ("C-c l" . language-support-enable))
+
+(use-package tree-sitter
+  :when (member 'tree-sitter extra-features)
+  :ensure t
+  :defer t
+  :hook (prog-mode . (lambda ()
+                       (require 'tree-sitter-langs)
+                       (if (assoc major-mode tree-sitter-major-mode-language-alist)
+                           (tree-sitter-mode +1))))
+  :config
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+
+(use-package tree-sitter-langs
+  :when (member 'tree-sitter extra-features)
+  :ensure t
+  :defer t
+  :when (not (eq system-type 'windows-nt)))
 
 (use-package magit
   :defer t
