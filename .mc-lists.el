@@ -27,6 +27,7 @@
         dired-mark
         electric-newline-and-maybe-indent
         eval-last-sexp
+        filter-and-upcase-initials-region
         forward-sexp
         hs-toggle-hiding-at-point
         ibuffer-do-delete
@@ -89,8 +90,8 @@
         sp-kill-sexp
         sp-split-sexp
         sp-unwrap-sexp
-        transpose-words
         transpose-sexps
+        transpose-words
         vhdl-electric-semicolon
         vhdl-electric-space
         vhdl-electric-tab

@@ -991,6 +991,7 @@
 (use-package indent-yank
   :quelpa (indent-yank :fetcher github :repo "BohongHuang/indent-yank")
   :defer t
+  :commands (indent-yank-yank)
   :hook (prog-mode . indent-yank-mode))
 
 (use-package separedit
