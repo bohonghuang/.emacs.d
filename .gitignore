@@ -44,3 +44,6 @@ octave-workspace
 shadow_todo
 shadows
 srecode-map.el
+nov-places
+racket-mode
+eshell/alias
