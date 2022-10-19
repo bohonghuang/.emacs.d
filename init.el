@@ -64,6 +64,15 @@
   :load-path "custom-lisp"
   :demand t)
 
+(use-package emacs-lisp-mode
+  :defer t
+  :ensure nil)
+
+(use-package emacs-lisp-mode-ext
+  :load-path "custom-lisp"
+  :demand t
+  :after emacs-lisp-mode)
+
 (use-package minibuffer
   :ensure nil
   :defer nil
