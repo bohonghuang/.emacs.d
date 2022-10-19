@@ -5,8 +5,7 @@
 
 ;;; Code:
 (require 'cl-lib)
-;; Produce backtraces when errors occur: can be helpful to diagnose startup issues
-;;(setq debug-on-error t)
+
 (let ((original-gc-cons-threshold gc-cons-threshold))
   (setq gc-cons-threshold most-positive-fixnum)
   (add-hook 'emacs-startup-hook (lambda () (setq gc-cons-threshold original-gc-cons-threshold))))
@@ -14,12 +13,14 @@
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (if (file-exists-p custom-file) (load-file custom-file))
 
-(when (version<= "24" emacs-version)
-  (require 'package)
-  (dolist (archive '(("melpa" . "https://melpa.org/packages/")
-                     ("gnu-devel" . "https://elpa.gnu.org/devel/")
-                     ("nongnu" . "https://elpa.nongnu.org/nongnu/")))
-    (push archive package-archives)))
+(cond ((< 25 emacs-major-version)
+       (require 'package)
+       (dolist (archive '(("melpa" . "https://melpa.org/packages/")
+                          ("gnu-devel" . "https://elpa.gnu.org/devel/")
+                          ("nongnu" . "https://elpa.nongnu.org/nongnu/")))
+         (push archive package-archives)))
+      ((< 26 emacs-major-version)
+       (package-initialize)))
 
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
@@ -166,7 +167,7 @@
     (interactive)
     (other-window -1))
   (global-set-key (kbd "C-x O") #'previous-other-window)
-  (when (version<= "28" emacs-version)
+  (when (<= 28 emacs-major-version)
     (define-key other-window-repeat-map (kbd "O") #'previous-other-window)
     (put #'previous-other-window 'repeat-map 'other-window-repeat-map))
   (defvar buffer-switch-repeat-map
@@ -338,10 +339,16 @@
   :config (savehist-mode +1))
 
 (use-package display-line-numbers
+  :when (<= 26 emacs-major-version)
   :ensure nil
   :defer t
   :hook (prog-mode . display-line-numbers-mode)
   :custom (display-line-numbers-type t))
+
+(use-package hl-line
+  :ensure nil
+  :defer t
+  :hook (prog-mode . hl-line-mode))
 
 (use-package xref
   :ensure nil
@@ -367,7 +374,7 @@
   (ediff-window-setup-function 'ediff-setup-windows-plain))
 
 (use-package project
-  :when (version<= "27.1" emacs-version)
+  :when (<= 27 emacs-major-version)
   :ensure nil
   :defer t
   :config
@@ -399,7 +406,7 @@
       (recentf-add-file buffer-file-name))))
 
 (use-package repeat
-  :when (version<= "28.0.60" emacs-version)
+  :when (<= 28 emacs-major-version)
   :ensure nil
   :defer t
   :init
@@ -475,12 +482,14 @@
   :defer t)
 
 (use-package vertico
+  :when (<= 27 emacs-major-version)
   :ensure t
   :defer nil
   :config
   (vertico-mode +1))
 
 (use-package vertico-directory
+  :when (<= 27 emacs-major-version)
   :quelpa (vertico-directory :fetcher github :repo "minad/vertico" :files ("extensions/vertico-directory.el"))
   :defer t
   :bind(:map vertico-map
@@ -500,6 +509,10 @@
   (company-dabbrev-downcase nil)
   (company-dabbrev-ignore-case t)
   (company-backends '(company-capf))
+  :init
+  (use-package company
+    :when (> 27 emacs-major-version)
+    :hook ((prog-mode ielm-mode tex-mode sly-mode racket-repl-mode) . company-mode))
   :config
   (use-package company
     :after tex
@@ -507,6 +520,7 @@
     :config (add-hook 'TeX-mode-hook (lambda () (delete 'company-dabbrev company-backends)))))
 
 (use-package corfu
+  :when (<= 27 emacs-major-version)
   :ensure t
   :defer t
   :hook
@@ -527,12 +541,14 @@
       (apply #'consult-completion-in-region completion-in-region--data))))
 
 (use-package corfu-terminal
+  :when (<= 27 emacs-major-version)
   :ensure t
   :unless (display-graphic-p)
   :defer t
   :hook (corfu-mode . corfu-terminal-mode))
 
 (use-package cape
+  :when (<= 27 emacs-major-version)
   :ensure t
   :defer t
   :bind (("C-c p p" . completion-at-point) ;; capf
@@ -560,7 +576,7 @@
   (push #'cape-keyword completion-at-point-functions))
 
 (use-package kind-icon
-  :when (version<= "28" emacs-version)
+  :when (<= 28 emacs-major-version)
   :ensure t
   :demand t
   :after corfu
@@ -583,6 +599,7 @@
     (add-to-list 'corfu-margin-formatters #'kind-all-the-icons-margin-formatter)))
 
 (use-package corfu-doc
+  :when (<= 27 emacs-major-version)
   :ensure t
   :defer t
   :after corfu
@@ -592,6 +609,7 @@
   :bind (:map corfu-map ("M-." . corfu-doc-toggle)))
 
 (use-package corfu-doc-terminal
+  :when (<= 27 emacs-major-version)
   :quelpa (corfu-doc-terminal :fetcher git :url "https://codeberg.org/akib/emacs-corfu-doc-terminal.git")
   :unless (display-graphic-p)
   :defer t
@@ -606,6 +624,7 @@
   (dabbrev-check-all-buffers nil))
 
 (use-package orderless
+  :when (<= 26 emacs-major-version)
   :ensure t
   :defer t
   :custom (orderless-matching-styles '(orderless-prefixes))
@@ -623,6 +642,7 @@
   (push #'orderless-regexp-when-regexp-symbol orderless-style-dispatchers))
 
 (use-package marginalia
+  :when (<= 27 emacs-major-version)
   :ensure t
   :bind (("M-A" . marginalia-cycle)
          :map minibuffer-local-map
@@ -631,6 +651,7 @@
   :hook (minibuffer-setup . marginalia-mode))
 
 (use-package consult
+  :when (<= 27 emacs-major-version)
   :ensure t
   :defer t
   :bind (;; C-c bindings (mode-specific-map)
@@ -703,6 +724,7 @@
     :bind (:map org-mode-map ("M-g i" . consult-org-heading))))
 
 (use-package consult-dir
+  :when (<= 27 emacs-major-version)
   :ensure t
   :demand t
   :after consult
@@ -712,6 +734,7 @@
          ("C-x C-j" . consult-dir-jump-file)))
 
 (use-package embark
+  :when (<= 26 emacs-major-version)
   :ensure t
   :defer t
   :bind
@@ -727,6 +750,7 @@
                  (window-parameters (mode-line-format . none)))))
 
 (use-package embark-consult
+  :when (<= 27 emacs-major-version)
   :ensure t
   :after (embark consult)
   :demand t
@@ -734,6 +758,7 @@
   (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package tempel
+  :when (<= 27 emacs-major-version)
   :ensure t
   :defer t
   :custom
@@ -801,11 +826,8 @@
   :config
   (cnfonts-enable))
 
-(use-package posframe
-  :ensure t
-  :defer t)
-
 (use-package popper
+  :when (<= 26 emacs-major-version)
   :defer nil
   :ensure t
   :bind (("C-`"   . popper-toggle-latest)
@@ -852,7 +874,7 @@
     (popper-lower-to-popup buffer))
   
   (use-package project
-    :when (version<= "27.1" emacs-version)
+    :when (<= 27 emacs-major-version)
     :ensure nil
     :defer t
     :config
@@ -1035,14 +1057,14 @@
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode common-lisp-mode) major-mode) (drag-stuff-mode +1)))))
 
 (use-package pixel-scroll
-  :when (and (display-graphic-p) (version<= "29" emacs-version))
+  :when (and (display-graphic-p) (<= 29 emacs-major-version))
   :ensure nil
   :defer nil
   :config
   (pixel-scroll-precision-mode +1))
 
 (use-package good-scroll
-  :when (and (display-graphic-p) (version< emacs-version "29"))
+  :when (and (display-graphic-p) (<= 27 emacs-major-version 28))
   :ensure t
   :defer nil
   :custom (good-scroll-step 100)
@@ -1101,6 +1123,7 @@
     "Keymap to repeat flymake navigation key sequences.  Used in `repeat-mode'."))
 
 (use-package flymake-popon
+  :when (<= 26 emacs-major-version)
   :ensure t
   :defer t
   :hook (flymake-mode . flymake-popon-mode)
@@ -1199,6 +1222,7 @@
   :defer t)
 
 (use-package isearch-mb
+  :when (<= 27 emacs-major-version)
   :ensure t
   :after isearch
   :demand t
@@ -1500,6 +1524,7 @@
   (add-hook 'org-journal-after-header-create-hook #'org-journal-insert-template-after-header))
 
 (use-package org-bars
+  :when (<= 27 emacs-major-version)
   :quelpa (org-bars :fetcher github :repo "BohongHuang/org-bars")
   :defer t
   :hook (org-mode . org-bars-mode)
@@ -1595,6 +1620,7 @@
   :after ox)
 
 (use-package ox-hugo
+  :when (<= 27 emacs-major-version)
   :ensure t
   :demand t
   :after ox)
@@ -1734,6 +1760,7 @@
     (dolist (hook latex-mode-hook) (add-to-list 'LaTeX-mode-hook hook))))
 
 (use-package go-translate
+  :when (<= 27 emacs-major-version)
   :ensure t
   :defer t
   :custom
@@ -1870,7 +1897,7 @@
          ("C-x C-q" . vterm-copy-mode)))
 
 (use-package eshell-vterm
-  :when (member 'vterm extra-features)
+  :when (and (<= 27 emacs-major-version) (member 'vterm extra-features))
   :ensure t
   :demand t
   :after eshell
@@ -1881,6 +1908,7 @@
     (vterm args)))
 
 (use-package quickrun
+  :when (<= 26 emacs-major-version)
   :ensure t
   :defer t
   :init (defalias 'qr 'quickrun)
@@ -1965,6 +1993,7 @@
     (setq emms-player-list (append emms-vgm-default-players emms-player-list))))
 
 (use-package consult-emms
+  :when (and (<= 27 emacs-major-version) (member 'emms extra-features))
   :quelpa (consult-emms :fetcher github :repo "Hugo-Heagren/consult-emms")
   :defer t)
 
@@ -2004,6 +2033,7 @@
   :defer t)
 
 (use-package frameshot
+  :when (<= 26 emacs-major-version)
   :ensure t
   :defer t
   :commands frameshot-temp
@@ -2042,6 +2072,7 @@ Saves to a temp file and puts the filename in the kill ring."
     :bind (("C-x ;" . comment-line))))
 
 (use-package app-launcher
+  :when (<= 27 emacs-major-version)
   :defer t
   :quelpa (app-launcher :fetcher github :repo "BohongHuang/app-launcher")
   :bind (("s-SPC" . app-launcher-run-app))
