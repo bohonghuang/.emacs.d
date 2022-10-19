@@ -44,4 +44,4 @@
   (interactive)
   (emacs-lisp-macroexpand-to-buffer #'macroexpand-all))
 
-(provide 'emacs-lisp-mode-ext)
+(provide 'elisp-mode-ext)

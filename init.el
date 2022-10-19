@@ -4,6 +4,7 @@
 ;; This is an Emacs configuration file, in which modules are loaded lazily by `use-package'.
 
 ;;; Code:
+
 (require 'cl-lib)
 
 (let ((original-gc-cons-threshold gc-cons-threshold))
@@ -65,14 +66,14 @@
   :load-path "custom-lisp"
   :demand t)
 
-(use-package emacs-lisp-mode
+(use-package elisp-mode
   :defer t
   :ensure nil)
 
-(use-package emacs-lisp-mode-ext
+(use-package elisp-mode-ext
   :load-path "custom-lisp"
   :demand t
-  :after emacs-lisp-mode)
+  :after elisp-mode)
 
 (use-package minibuffer
   :ensure nil
