@@ -27,22 +27,26 @@
          (list (lambda ()
                  (citre-global--get-output-lines (list "--single-update" (file-relative-name (buffer-file-name (current-buffer)) default-directory)))))))
 
-(defun citre-global--get-reference-lines-using-relative-path (name &optional case-fold start-file)
+(defun citre-global--get-lines-using-relative-path (name &optional mode case-fold start-file)
   (let* ((name (when name (substring-no-properties name)))
-         inhibit-message
          cmd)
-    (when case-fold (push "--ignore-case" cmd))
     (push (or citre-global-program "global") cmd)
-    ;; Global doesn't know how to expand "~", so we need to expand START-FILE.
+    (pcase mode
+      ('completion (push "--completion" cmd))
+      ('definition (push "--definition" cmd))
+      ('reference (push "--reference" cmd))
+      (_ (error "Invalid MODE")))
+    (push "--symbol" cmd)
+    (when case-fold (push "--ignore-case" cmd))
     (when start-file (push (concat "--nearness=" (file-relative-name (expand-file-name start-file) default-directory))
                            cmd))
-    (setq cmd (append (nreverse cmd) citre-global--find-references-args
+    (setq cmd (append (nreverse cmd) citre-global--args
                       (list "--" name)))
     (citre-get-output-lines cmd)))
 
 (defun citre-auto-update-tags-after-save ()
   (when citre-mode
-    (when citre--tags-file
+    (when-let ((tags-file citre--tags-file))
       (citre-update-this-tags-file))
     (citre-global-update-database-this-file)))
 
@@ -52,10 +56,9 @@
         (citre-use-project-root-when-creating-tags t))
     (citre-create-tags-file)))
 
-(advice-add #'citre-jump-to-reference :around #'citre-global-auto-objdir-wrapper)
-(advice-add #'citre-xref--global-find-reference :around #'citre-global-auto-objdir-wrapper)
 (advice-add #'citre-global-update-database :around #'citre-global-auto-objdir-wrapper)
-(advice-add #'citre-peek-references :around #'citre-global-auto-objdir-wrapper)
-(advice-add #'citre-global--get-reference-lines :override #'citre-global--get-reference-lines-using-relative-path)
+(advice-add #'citre-global--get-lines :override #'citre-global--get-lines-using-relative-path)
+(advice-add #'citre-global-get-tags :around #'citre-global-auto-objdir-wrapper)
+(advice-add #'citre-clear-tags-file-cache :override #'ignore)
 
 (provide 'citre-ext)
