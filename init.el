@@ -1394,6 +1394,16 @@
   (setq org-gtd-default-file-name "tasks")
   (add-to-list 'org-agenda-files org-gtd-directory))
 
+(use-package org-capture
+  :ensure nil
+  :defer t
+  :custom
+  (org-capture-templates `(("p" "Protocol" entry (file+function ,(expand-file-name "org-capture/inbox.org" org-directory)
+                                                                ,(lambda () (org-goto-or-insert-heading (org-capture-get :annotation))))
+                            "* %^{Title}\n #+BEGIN_QUOTE\n%i\n#+END_QUOTE\n\n%?\n\nCaptured On: %U")
+  	                   ("P" "Protocol Link" entry (file+headline ,(expand-file-name "org-capture/inbox.org" org-directory) "Inbox")
+                            "* %? [[%:link][%:description]] \nCaptured On: %U"))))
+
 (use-package org-protocol
   :ensure nil
   :demand t

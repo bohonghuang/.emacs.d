@@ -349,5 +349,16 @@ the documentation of `org-diary'."
                (org-export-format-code-default src-block info)))))
   (setf (cdr (cl-assoc 'src-block (org-export-backend-transcoders (cl-find-if (lambda (backend) (eq (org-export-backend-name backend) 'md)) org-export-registered-backends)))) 'org-md-src-block))
 
+(defun org-goto-or-insert-heading (heading)
+  (goto-char (point-min))
+  (if (re-search-forward (format org-complex-heading-regexp-format
+    				 (regexp-quote heading))
+    			 nil t)
+      (beginning-of-line)
+    (goto-char (point-max))
+    (unless (bolp) (insert "\n"))
+    (insert "* " heading "\n")
+    (beginning-of-line 0)))
+
 (provide 'org-ext)
 ;;; org-ext.el ends here
