@@ -1498,7 +1498,8 @@
 (use-package org-roam
   :when (member 'org-roam extra-features)
   :ensure t
-  :defer t
+  :demand t
+  :after org
   :custom
   (org-roam-directory (expand-file-name "org-roam" org-directory))
   (org-roam-graph-link-den-types '("file" "attachment"))
@@ -1511,8 +1512,8 @@
          ("C-c r j" . org-roam-dailies-capture-today)
          ("C-c r t" . org-roam-buffer-toggle))
   :config
-  (org-roam-db-autosync-mode +1)
-  (require 'org-roam-protocol))
+  (require 'org-roam-protocol)
+  (org-roam-db-autosync-mode +1))
 
 (use-package org-journal
   :when (member 'org-journal extra-features)
