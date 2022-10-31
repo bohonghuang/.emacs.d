@@ -31,7 +31,7 @@ lisp-mode sly-mrepl-mode
 (d3 "(declare (optimize (debug 3)))")
 (O3 "(declare (optimize (speed 3)" n> "(debug 0)" n> "(safety 0)))")
 (type "(declare (type " p " " p "))")
-(ftype "(declaim (fype (function (" p ") " p ") " p "))")
+(ftype "(declaim (ftype (function (" p ") " p ") " p "))")
 (inline "(declaim (inline " p "))")
 (callf "(setf " (s var) " (" p " " (s var) "))")
 (ql "(ql:quickload :" p ")")
