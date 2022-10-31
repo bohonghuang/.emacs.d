@@ -230,15 +230,31 @@
      :defer t
      :ensure t
      :bind (:map prog-mode-map
-                 ("C-c l r r" . eglot-rename)
-                 ("C-c l a a" . eglot-code-actions))
+            ("C-c l" . eglot)
+            :map eglot-mode-map
+            ("C-c l r r" . eglot-rename)
+            ("C-c l a a" . eglot-code-actions))
      :config
-     (setf (cdr (assoc 'python-mode eglot-server-programs)) '("pyright-langserver" "--stdio")
-           (cdr (assoc 'scala-mode eglot-server-programs)) '("metals")
-           (cdr (assoc 'rust-mode eglot-server-programs)) '("rust-analyzer")
-           (cdr (assoc 'java-mode eglot-server-programs)) '("jdtls")
-           (cdr (assoc '(tex-mode context-mode texinfo-mode bibtex-mode) eglot-server-programs)) '("texlab"))
-     (setq completion-category-defaults nil)))
+     (setq completion-category-defaults nil))
+   (use-package eldoc-box
+     :when (display-graphic-p)
+     :defer t
+     :ensure t
+     :hook (eglot-managed-mode . eldoc-box-hover-at-point-mode)
+     :custom (eldoc-box-max-pixel-width 600)
+     :config
+     (defun eldoc-box--bottom-left-at-point-position-function (width height)
+       (let* ((point-pos (eldoc-box--point-position-relative-to-native-frame))
+              (x (car point-pos))
+              (y (cdr point-pos))
+              (em (frame-char-height)))
+         (cons (if (< (- (frame-inner-width) width) x)
+                   (max 0 (- x width))
+                 x)
+               (if (< y height)
+                   (+ y em)
+                 (- y height)))))
+     (advice-add #'eldoc-box--default-at-point-position-function :override #'eldoc-box--bottom-left-at-point-position-function)))
   ('lsp-mode
    (use-package lsp-mode
      :ensure t
