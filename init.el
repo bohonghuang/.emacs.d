@@ -1335,7 +1335,8 @@
   :bind (:map org-mode-map
          ("C-c C-x C-S-o" . org-resolve-clocks)
          :map org-agenda-mode-map
-         ("C-c C-x C-S-o" . org-resolve-clocks))
+         ("C-c C-x C-S-o" . org-resolve-clocks)
+         ("C-c C-x C-q" . org-clock-cancel))
   :custom
   (org-agenda-files (list (expand-file-name "org-agenda" org-directory)))
   (org-agenda-window-setup 'current-window)
@@ -1401,7 +1402,7 @@
   (org-capture-templates `(("p" "Protocol" entry (file+function ,(expand-file-name "org-capture/inbox.org" org-directory)
                                                                 ,(lambda () (org-goto-or-insert-heading (org-capture-get :annotation))))
                             "* %^{Title}\n #+BEGIN_QUOTE\n%i\n#+END_QUOTE\n\n%?\n\nCaptured On: %U")
-  	                   ("P" "Protocol Link" entry (file+headline ,(expand-file-name "org-capture/inbox.org" org-directory) "Inbox")
+  	                   ("P" "Protocol Link" entry (file ,(expand-file-name "org-capture/inbox.org" org-directory))
                             "* %? [[%:link][%:description]] \nCaptured On: %U"))))
 
 (use-package org-protocol
@@ -1498,8 +1499,7 @@
 (use-package org-roam
   :when (member 'org-roam extra-features)
   :ensure t
-  :demand t
-  :after org
+  :defer t
   :custom
   (org-roam-directory (expand-file-name "org-roam" org-directory))
   (org-roam-graph-link-den-types '("file" "attachment"))
@@ -1511,6 +1511,7 @@
          ;; Dailies
          ("C-c r j" . org-roam-dailies-capture-today)
          ("C-c r t" . org-roam-buffer-toggle))
+  :hook (org-mode . (lambda () (require 'org-roam)))
   :config
   (require 'org-roam-protocol)
   (org-roam-db-autosync-mode +1))
@@ -1836,7 +1837,7 @@
         (with-temp-buffer
           (insert earliest)
           (newline)
-          (write-region (point-min) (point-max) (print (concat eshell-history-file-name ".old")) 'append)))
+          (write-region (point-min) (point-max) (print (concat eshell-history-file-name "_archive")) 'append)))
       (unless (and index eshell-hist-ignoredups (not (eq eshell-hist-ignoredups 'erase)))
         (let ((eshell-hist-ignoredups nil))
           (eshell-add-input-to-history (string-trim input)))))
