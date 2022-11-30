@@ -32,6 +32,7 @@ lisp-mode sly-mrepl-mode
 (O3 "(declare (optimize (speed 3)" n> "(debug 0)" n> "(safety 0)))")
 (type "(declare (type " p " " p "))")
 (ftype "(declaim (ftype (function (" p ") " p ") " p "))")
+(dyn "(declare (dynamic-extent " p "))")
 (inline "(declaim (inline " p "))")
 (callf "(setf " (s var) " (" p " " (s var) "))")
 (ql "(ql:quickload :" p ")")
@@ -43,6 +44,7 @@ lisp-mode sly-mrepl-mode
 (const "(defconstant +" p "+ " p ")")
 (special "(declare (special " p "))")
 (exit "#+sbcl (sb-ext:exit) #+(or ecl clasp) (si:exit)")
+(eval "(eval-when (" (p ":compile-toplevel :load-toplevel :execute") ")" n> q ")")
 
 emacs-lisp-mode
 

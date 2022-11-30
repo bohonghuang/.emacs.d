@@ -70,6 +70,11 @@
   :defer t
   :ensure nil)
 
+(use-package disass
+  :ensure nil
+  :defer t
+  :bind (("C-x M-d" . disassemble)))
+
 (use-package elisp-mode-ext
   :load-path "custom-lisp"
   :demand t
@@ -291,12 +296,9 @@
   (dired-dwim-target t)
   (dired-listing-switches "-alh")
   (browse-url-handlers '(("\\`file:" . browse-url-default-browser)))
-  :config
-  (put 'dired-find-alternate-file 'disabled nil)
-  :hook
-  (dired-mode . toggle-truncate-lines)
-  :bind
-  (:map dired-mode-map ("/ n" . dired-narrow)))
+  :hook (dired-mode . toggle-truncate-lines)
+  :bind (:map dired-mode-map ("/ n" . dired-narrow))
+  :config (put 'dired-find-alternate-file 'disabled nil))
 
 (use-package dired-aux
   :ensure nil
@@ -526,7 +528,10 @@
   :defer t
   :hook
   ((prog-mode ielm-mode tex-mode sly-mode racket-repl-mode) . corfu-mode)
-  :bind (:map corfu-map ("C-M-i" . corfu-move-to-minibuffer))
+  (corfu-mode . corfu-popupinfo-mode)
+  :bind (:map corfu-map
+         ("C-M-i" . corfu-move-to-minibuffer)
+         ("M-." . corfu-popupinfo-toggle))
   :custom
   (corfu-auto t)
   (corfu-separator ?\s)
@@ -534,6 +539,7 @@
   (corfu-on-exact-match nil)
   (corfu-max-width 60)
   (corfu-preview-current nil)
+  (corfu-popupinfo-delay nil)
   :config
   (defun corfu-move-to-minibuffer ()
     (interactive)
@@ -599,22 +605,17 @@
   (when (null corfu-margin-formatters)
     (add-to-list 'corfu-margin-formatters #'kind-all-the-icons-margin-formatter)))
 
-(use-package corfu-doc
-  :when (<= 27 emacs-major-version)
-  :ensure t
-  :defer t
-  :after corfu
-  :custom
-  (corfu-doc-auto nil)
-  :hook (corfu-mode . corfu-doc-mode)
-  :bind (:map corfu-map ("M-." . corfu-doc-toggle)))
 
-(use-package corfu-doc-terminal
-  :when (<= 27 emacs-major-version)
-  :quelpa (corfu-doc-terminal :fetcher git :url "https://codeberg.org/akib/emacs-corfu-doc-terminal.git")
-  :unless (display-graphic-p)
-  :defer t
-  :hook (corfu-doc-mode . corfu-doc-terminal-mode))
+;; (use-package corfu-doc
+;;   :when (<= 27 emacs-major-version)
+;;   :ensure t
+;;   :defer t
+;;   :after corfu
+;;   :custom
+;;   (corfu-doc-auto nil)
+;;   :hook (corfu-mode . corfu-doc-mode)
+;;   :bind (:map corfu-map ("M-." . corfu-doc-toggle)))
+
 
 (use-package dabbrev
   :ensure nil
@@ -962,6 +963,7 @@
   (sp-pair "（" "）")
   (sp-pair "【" "】")
   (sp-pair "《" "》")
+  (sp-pair "「" "」")
   (sp-pair "“" "”")
   (sp-pair "’" "’")
   (use-package smartparens
@@ -1503,14 +1505,11 @@
   :custom
   (org-roam-directory (expand-file-name "org-roam" org-directory))
   (org-roam-graph-link-den-types '("file" "attachment"))
-  :bind (("C-c r l" . org-roam-buffer-toggle)
-         ("C-c r f" . org-roam-node-find)
-         ("C-c r g" . org-roam-graph)
+  :bind (("C-c r t" . org-roam-buffer-toggle)
+         ("C-c r n" . org-roam-node-find)
          ("C-c r i" . org-roam-node-insert)
          ("C-c r c" . org-roam-capture)
-         ;; Dailies
-         ("C-c r j" . org-roam-dailies-capture-today)
-         ("C-c r t" . org-roam-buffer-toggle))
+         ("C-c r j" . org-roam-dailies-capture-today))
   :hook (org-mode . (lambda () (require 'org-roam)))
   :config
   (require 'org-roam-protocol)
@@ -1821,27 +1820,28 @@
   :ensure nil
   :defer t
   :custom
-  (eshell-history-size 500)
+  (eshell-history-size 1000)
   (eshell-hist-ignoredups 'erase)
   :config
   (defun eshell-hist-write-after-command (&rest _)
-    (eshell-read-history)
-    (let ((input (buffer-substring-no-properties
-                  eshell-last-input-start (1- eshell-last-input-end)))
-          index
-          earliest)
-      (while (when (and (setq index (ring-member eshell-history-ring input)) (eq eshell-hist-ignoredups 'erase))
-               (ring-remove eshell-history-ring index)))
-      (when (>= (ring-length eshell-history-ring) (ring-size eshell-history-ring))
-        (setq earliest (ring-ref eshell-history-ring (1- (ring-length eshell-history-ring))))
-        (with-temp-buffer
-          (insert earliest)
-          (newline)
-          (write-region (point-min) (point-max) (print (concat eshell-history-file-name "_archive")) 'append)))
-      (unless (and index eshell-hist-ignoredups (not (eq eshell-hist-ignoredups 'erase)))
-        (let ((eshell-hist-ignoredups nil))
-          (eshell-add-input-to-history (string-trim input)))))
-    (eshell-write-history))
+    (when eshell-hist-mode
+      (eshell-read-history)
+      (let ((input (buffer-substring-no-properties
+                    eshell-last-input-start (1- eshell-last-input-end)))
+            index
+            earliest)
+        (while (when (and (setq index (ring-member eshell-history-ring input)) (eq eshell-hist-ignoredups 'erase))
+                 (ring-remove eshell-history-ring index)))
+        (when (>= (ring-length eshell-history-ring) (ring-size eshell-history-ring))
+          (setq earliest (ring-ref eshell-history-ring (1- (ring-length eshell-history-ring))))
+          (with-temp-buffer
+            (insert earliest)
+            (newline)
+            (write-region (point-min) (point-max) (print (concat eshell-history-file-name "_archive")) 'append)))
+        (unless (and index eshell-hist-ignoredups (not (eq eshell-hist-ignoredups 'erase)))
+          (let ((eshell-hist-ignoredups nil))
+            (eshell-add-input-to-history (string-trim input)))))
+      (eshell-write-history)))
   (add-hook 'eshell-input-filter-functions #'eshell-hist-write-after-command)
   (defun eshell-hist-initialize@after (&rest _)
     (remove-hook 'eshell-input-filter-functions #'eshell-add-to-history t)
