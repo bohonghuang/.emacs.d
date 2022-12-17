@@ -31,6 +31,7 @@ lisp-mode sly-mrepl-mode
 (d3 "(declare (optimize (debug 3)))")
 (O3 "(declare (optimize (speed 3)" n> "(debug 0)" n> "(safety 0)))")
 (type "(declare (type " p " " p "))")
+(val "(declare (values " p "))")
 (ftype "(declaim (ftype (function (" p ") " p ") " p "))")
 (dyn "(declare (dynamic-extent " p "))")
 (inline "(declaim (inline " p "))")

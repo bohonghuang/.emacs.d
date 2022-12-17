@@ -42,10 +42,13 @@
   :when (member 'lisp language-support-languages)
   :ensure t
   :defer t
-  :hook
-  (sly-mode . (lambda () (setq-local corfu-auto-delay 0.3)))
   :custom
   (org-babel-lisp-eval-fn 'sly-eval))
+
+(use-package geiser
+  :when (member 'scheme language-support-languages)
+  :ensure t
+  :defer t)
 
 (use-package racket-mode
   :when (member 'racket language-support-languages)

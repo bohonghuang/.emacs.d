@@ -237,7 +237,7 @@
   :hook (prog-mode . hl-line-mode))
 
 (use-package mode-fontify
-  :load-path "custom-lisp"
+  :quelpa (mode-fontify :fetcher github :repo "bohonghuang/mode-fontify")
   :defer t
   :commands (mode-fontify-region
              mode-fontify-face-region
@@ -527,7 +527,7 @@
   :ensure t
   :defer t
   :hook
-  ((prog-mode ielm-mode tex-mode sly-mode racket-repl-mode) . corfu-mode)
+  ((prog-mode ielm-mode tex-mode sly-mode racket-repl-mode geiser-repl-mode) . corfu-mode)
   (corfu-mode . corfu-popupinfo-mode)
   :bind (:map corfu-map
          ("C-M-i" . corfu-move-to-minibuffer)
@@ -917,7 +917,7 @@
   (defalias 'sp-mode #'smartparens-mode)
   (require 'smartparens-config)
   :hook
-  ((prog-mode text-mode minibuffer-setup eshell-mode lisp-mode scheme-mode ielm-mode sly-mrepl-mode racket-repl-mode inferior-scheme-mode) . smartparens-mode)
+  ((prog-mode text-mode minibuffer-setup eshell-mode lisp-mode scheme-mode ielm-mode sly-mrepl-mode racket-repl-mode inferior-scheme-mode geiser-repl-mode) . smartparens-mode)
   (smartparens-mode . show-smartparens-mode)
   :bind (:map smartparens-mode-map
          ("C-*"               . sp-join-sexp)
@@ -1050,7 +1050,7 @@
   :ensure t
   :defer t
   :hook
-  ((lisp-mode lisp-data-mode emacs-lisp-mode scheme-mode inferior-scheme-mode racket-mode clojure-mode racket-repl-mode sly-mrepl-mode) . rainbow-delimiters-mode))
+  ((lisp-mode lisp-data-mode emacs-lisp-mode scheme-mode inferior-scheme-mode racket-mode clojure-mode racket-repl-mode sly-mrepl-mode geiser-repl-mode) . rainbow-delimiters-mode))
 
 (use-package drag-stuff
   :ensure t
