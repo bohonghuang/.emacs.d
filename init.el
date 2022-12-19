@@ -23,7 +23,7 @@
       ((< 26 emacs-major-version)
        (package-initialize)))
 
-(unless (package-installed-p 'use-package)
+(unless (or (<= 29 emacs-major-version) (package-installed-p 'use-package))
   (package-refresh-contents)
   (package-install 'use-package))
 
@@ -73,7 +73,8 @@
 (use-package disass
   :ensure nil
   :defer t
-  :bind (("C-x M-d" . disassemble)))
+  :bind (:map emacs-lisp-mode-map
+         ("C-c M-d" . disassemble)))
 
 (use-package elisp-mode-ext
   :load-path "custom-lisp"
@@ -328,7 +329,7 @@
   :ensure t
   :defer t
   :bind (:map dired-mode-map
-              ("/" . dired-narrow)))
+         ("/" . dired-narrow)))
 
 (use-package fd-dired
   :ensure t
@@ -958,7 +959,17 @@
   (sp-highlight-pair-overlay nil)
   (sp-highlight-wrap-overlay nil)
   (sp-highlight-wrap-tag-overlay nil)
-  (sp-c-modes '(c-mode c++-mode objc-mode java-mode scala-mode rust-mode rustic-mode js-mode dart-mode scad-mode js-mode typescript-mode))
+  (sp-c-modes '(c-mode c-ts-mode
+                c++-mode c++-ts-mode
+                objc-mode objc-ts-mode
+                java-mode java-ts-mode
+                scala-mode scala-ts-mode
+                rust-mode rust-ts-mode
+                rustic-mode rustic-ts-mode
+                js-mode js-ts-mode
+                dart-mode dart-ts-mode
+                scad-mode scad-ts-mode
+                typescript-mode typescript-ts-mode))
   :config
   (sp-pair "（" "）")
   (sp-pair "【" "】")
@@ -978,6 +989,7 @@
     :after lisp-mode
     :demand t
     :config
+    (sp-local-pair 'lisp-mode "|" "|")
     (sp-local-pair 'lisp-mode "#|" "|#"))
   (use-package smartparens
     :after eshell
@@ -1005,7 +1017,7 @@
   (highlight-indent-guides-auto-stack-even-face-perc 40)
   (highlight-indent-guides-auto-top-character-face-perc 75)
   (highlight-indent-guides-auto-stack-character-face-perc 70)
-  :hook ((python-mode toml-mode yaml-mode haskell-mode lua-mode ruby-mode octave-mode matlab-mode) . highlight-indent-guides-mode))
+  :hook ((python-mode python-ts-mode toml-mode toml-ts-mode yaml-mode yaml-ts-mode haskell-mode haskell-ts-mode lua-mode lua-ts-mode ruby-mode ruby-ts-mode octave-mode matlab-mode) . highlight-indent-guides-mode))
 
 (use-package string-inflection
   :ensure t
@@ -1044,7 +1056,7 @@
    :map help-mode-map
    ("C-c '" . separedit))
   :config
-  (add-to-list 'separedit-comment-faces 'tree-sitter-hl-face:comment))
+  (add-to-list 'separedit-comment-faces))
 
 (use-package rainbow-delimiters
   :ensure t
@@ -1177,23 +1189,6 @@
   :demand t
   :bind ("C-c l" . language-support-enable))
 
-(use-package tree-sitter
-  :when (member 'tree-sitter extra-features)
-  :ensure t
-  :defer t
-  :hook (prog-mode . (lambda ()
-                       (require 'tree-sitter-langs)
-                       (if (assoc major-mode tree-sitter-major-mode-language-alist)
-                           (tree-sitter-mode +1))))
-  :config
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
-
-(use-package tree-sitter-langs
-  :when (member 'tree-sitter extra-features)
-  :ensure t
-  :defer t
-  :when (not (eq system-type 'windows-nt)))
-
 (use-package magit
   :defer t
   :ensure t
@@ -1241,8 +1236,20 @@
   :load-path "custom-lisp"
   :defer t
   :hook
-  ((c-mode c++-mode objc-mode java-mode scala-mode rust-mode rustic-mode js-mode dart-mode scad-mode js-mode typescript-mode) . intellij-edit-cc-mode)
-  ((python-mode) . intellij-edit-python-mode)
+  ((c-mode c-ts-mode
+    c++-mode c++-ts-mode
+    objc-mode objc-ts-mode
+    java-mode java-ts-mode
+    scala-mode scala-ts-mode
+    rust-mode rust-ts-mode
+    rustic-mode rustic-ts-mode
+    js-mode js-ts-mode
+    dart-mode dart-ts-mode
+    scad-mode scad-ts-mode
+    js-mode js-ts-mode
+    typescript-mode typescript-ts-mode)
+   . intellij-edit-cc-mode)
+  ((python-mode python-ts-mode) . intellij-edit-python-mode)
   :commands (intellij-edit-cc-mode intellij-edit-indent-mode))
 
 (use-package time

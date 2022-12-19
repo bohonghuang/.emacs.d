@@ -104,20 +104,20 @@ rst-mode
 
 (title (make-string (length title) ?=) n (p "Title: " title) n (make-string (length title) ?=) n)
 
-java-mode
+java-mode java-ts-mode
 
 (cls (p "public ") "class " (p (file-name-base (or (buffer-file-name) (buffer-name)))) " {" n> r> n "}" >)
 (main "public static void main(String[] args) {" n> r> n "}" >)
 (f (p "public") " " (p "void") " " (p "function") "(" p ") {" n> r> n "}" >)
 
-python-mode
+python-mode python-ts-mode
 
 (f "def " (p "function") "(" (p "*args, **kwds") "):" n> r> n> "pass")
 (m "def " (p "method") "(self, " (p "*args, **kwds") "):" n> r> n> "pass")
 (cls "class " (p "Class") ":" n> r> n> "pass")
 (main "def main():" n> r> n> "pass" n> n> "if __name__ == '__main__':" n> "main()" n)
 
-c-mode c++-mode
+c-mode c-ts-mode c++-mode c++-ts-mode
 
 (main "int main(" (p "int argc, char *argv[]") ") {" n> r> n> "return 0;" n "}" >)
 (once "#ifndef " (p (concat (string-inflection-upcase-function (file-name-nondirectory (file-name-sans-extension (or (buffer-file-name) "")))) "_H") header) n> "#define " header n> n> q n> n> "#endif /* " header " */")

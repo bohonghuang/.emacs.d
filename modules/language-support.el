@@ -84,8 +84,10 @@
   :when (cl-intersection '(c++ c objective-c) language-support-languages)
   :ensure nil
   :defer t
-  :init (defalias 'cpp-mode 'c++-mode)
-  :hook ((c-mode c++-mode objc-mode) . language-support-auto-enable))
+  :init
+  (defalias 'cpp-mode 'c++-mode)
+  (defalias 'cpp-ts-mode 'c++-ts-mode)
+  :hook ((c-mode c-ts-mode c++-mode c++-ts-mode objc-mode objc-ts-mode) . language-support-auto-enable))
 
 (use-package rustic
   :when (member 'rust language-support-languages)
@@ -106,7 +108,7 @@
   :when (member 'groovy language-support-languages)
   :ensure t
   :defer t
-  :hook (groovy-mode . language-support-auto-enable))
+  :hook ((groovy-mode groovy-ts-mode) . language-support-auto-enable))
 
 (use-package python
   :when (member 'python language-support-languages)
@@ -114,7 +116,7 @@
   :defer t
   :hook
   (inferior-python-mode . (lambda () (add-hook 'comint-output-filter-functions #'comint-truncate-buffer nil 'local)))
-  (python-mode . language-support-auto-enable)
+  ((python-mode python-ts-mode) . language-support-auto-enable)
   :config
   (defvar python-indent-repeat-map
     (let ((map (make-sparse-keymap)))
@@ -158,7 +160,7 @@
   :when (member 'javascript language-support-languages)
   :ensure nil
   :defer t
-  :hook (js-mode . language-support-auto-enable))
+  :hook ((js-mode js-ts-mode) . language-support-auto-enable))
 
 (use-package typescript-mode
   :when (member 'typescript language-support-languages)
@@ -166,13 +168,13 @@
   :defer t
   :mode ("\\.ts\\'" . typescript-mode)
   :preface (defalias 'ts-mode 'typescript-mode)
-  :hook (typescript-mode . language-support-auto-enable))
+  :hook ((typescript-mode typescript-ts-mode) . language-support-auto-enable))
 
 (use-package vhdl-capf
   :when (member 'vhdl language-support-languages)
   :ensure t
   :defer t
-  :hook (vhdl-mode . vhdl-capf-enable)
+  :hook ((vhdl-mode vhdl-ts-mode) . vhdl-capf-enable)
   :config
   (defun vhdl-capf-flatten (l) (-flatten l)))
 
@@ -363,7 +365,7 @@
      :config
      (lsp-register-client
       (make-lsp-client :new-connection (lsp-tramp-connection "metals")
-                       :major-modes '(scala-mode)
+                       :major-modes '(scala-mode scala-ts-mode)
                        :remote? t
                        :server-id 'metals-remote)))
 
@@ -387,7 +389,9 @@
      :config
      (lsp-register-client
       (make-lsp-client :new-connection (lsp-tramp-connection "clangd")
-                       :major-modes '(c-mode c++-mode objc-mode)
+                       :major-modes '(c-mode c-ts-mode
+                                      c++-mode c++-ts-mode
+                                      objc-mode objc-ts-mode)
                        :remote? t
                        :server-id 'clangd-remote)))
 
@@ -398,7 +402,7 @@
      :config
      (lsp-register-client
       (make-lsp-client :new-connection (lsp-tramp-connection "pyright")
-                       :major-modes '(python-mode)
+                       :major-modes '(python-mode python-ts-mode)
                        :remote? t
                        :server-id 'pyright-remote))
      (require 'dap-python)
@@ -418,25 +422,34 @@
      :config
      (lsp-register-client
       (make-lsp-client :new-connection (lsp-tramp-connection "java-language-server")
-                       :major-modes '(java-mode)
+                       :major-modes '(java-mode java-ts-mode)
                        :remote? t
                        :server-id 'lsp-java-remote)))
 
    (use-package lsp-vhdl
      :when (member 'vhdl language-support-languages)
      :defer t
-     :hook
-     (vhdl-mode . (lambda () (ligature-mode -1)))
      :custom
      (lsp-vhdl-server 'ghdl-ls)
      (lsp-register-client
       (make-lsp-client :new-connection (lsp-tramp-connection "ghdl-ls")
-                       :major-modes '(vhdl-mode)
+                       :major-modes '(vhdl-mode vhdl-ts-mode)
                        :remote? t
                        :server-id 'ghdl-ls-remote)))
    (use-package lsp-tex
      :when (member 'tex language-support-languages)
      :defer t)))
+
+;;;;;;;;;;;;;
+;; Treesit ;;
+;;;;;;;;;;;;;
+
+(when (and (<= 29 emacs-major-version) (treesit-available-p))
+  (pcase-dolist ((or `(,lang . ,mode-lang) (and lang mode-lang)) '(c (cpp . c++) objc python java (javascript . js) rust go scala kotlin typescript bash toml json yaml))
+    (when (treesit-language-available-p lang)
+      (push (cons (intern (concat (symbol-name mode-lang) "-mode")) (intern (concat (symbol-name mode-lang) "-ts-mode"))) major-mode-remap-alist)))
+  (when-let ((bash-cons (assoc 'bash-mode major-mode-remap-alist)))
+    (setf (car bash-cons) 'sh-mode)))
 
 (provide 'language-support)
 
