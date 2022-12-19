@@ -5,10 +5,11 @@
   "Specify GTAGSLABEL for running `gtags' or `global'.")
 
 (defun citre-global-auto-objdir ()
-  (kill-local-variable 'citre-gtags-args)
-  (setq-local citre-gtags-args (append citre-gtags-args
-                                       (list "--gtagslabel" citre-gtags-label)
-                                       (list "--objdir" (file-relative-name (file-name-directory citre--tags-file) (project-root (project-current t)))))))
+  (when-let ((project (project-current nil)))
+    (kill-local-variable 'citre-gtags-args)
+    (setq-local citre-gtags-args (append citre-gtags-args
+                                         (list "--gtagslabel" citre-gtags-label)
+                                         (list "--objdir" (file-relative-name (file-name-directory citre--tags-file) (project-root project)))))))
 
 (defun citre-global-auto-objdir-wrapper (fun &rest args)
   (when-let* ((file (buffer-file-name (current-buffer)))
@@ -34,21 +35,28 @@
     (pcase mode
       ('completion (push "--completion" cmd))
       ('definition (push "--definition" cmd))
-      ('reference (push "--reference" cmd))
+      ('reference (push "--reference" cmd)
+                  (push "--symbol" cmd))
       (_ (error "Invalid MODE")))
-    (push "--symbol" cmd)
     (when case-fold (push "--ignore-case" cmd))
+    ;; Global doesn't know how to expand "~", so we need to expand START-FILE.
     (when start-file (push (concat "--nearness=" (file-relative-name (expand-file-name start-file) default-directory))
                            cmd))
-    (setq cmd (append (nreverse cmd) citre-global--args
-                      (list "--" name)))
+    (setq cmd (append (nreverse cmd)
+                      (list "--color=never"
+                            "--encode-path= :"
+                            "--result=grep"
+                            "--literal"
+                            "--" name)))
     (citre-get-output-lines cmd)))
 
 (defun citre-auto-update-tags-after-save ()
-  (when citre-mode
-    (when-let ((tags-file citre--tags-file))
-      (citre-update-this-tags-file))
-    (citre-global-update-database-this-file)))
+  (run-with-idle-timer
+   0.5 nil (lambda ()
+             (when citre-mode
+               (when-let ((tags-file citre--tags-file))
+                 (citre-update-this-tags-file))
+               (citre-global-update-database-this-file)))))
 
 (defun citre-init-in-project ()
   (interactive)
