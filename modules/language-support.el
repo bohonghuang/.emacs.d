@@ -221,7 +221,6 @@
             :map citre-mode-map
             ("M-?" . citre-jump-to-reference))
      :custom
-     (citre-auto-enable-citre-mode-modes '(prog-mode))
      (citre-project-root-function (lambda  () (project-root (or (project-current nil) (list 'vc nil default-directory)))))
      (citre-gtags-args '("--compact")))
    (use-package citre-ext
