@@ -16,16 +16,35 @@
 (defun language-support--enable ()
   (pcase language-support
     ('lsp-mode (lsp))
-    ('eglot (eglot-ensure))))
+    ('eglot (eglot-ensure))
+    ('citre (citre-mode))))
 
 (defun language-support-enable ()
   "Enable language support for current project or directory."
   (interactive)
-  (language-support--enable)
-  (add-to-list 'language-support-enabled-directories (language-support-directory) nil #'string-equal))
+  (let ((current-buffer (current-buffer)))
+    (language-support--enable)
+    (unless (cl-member (language-support-directory) language-support-enabled-directories :test #'string-equal)
+      (push (language-support-directory) language-support-enabled-directories)
+      (unless (eql language-support 'eglot)
+        (let ((buffers (cl-delete current-buffer
+                                  (if-let ((proj (project-current)))
+                                      (project-buffers proj)
+                                    (if-let* ((file (buffer-file-name))
+                                              (dir (file-name-directory file)))
+                                        (cl-loop for buffer in (buffer-list)
+                                                 for file = (buffer-file-name)
+                                                 when (and file (f-parent-of-p dir file))
+                                                 collect buffer))))))
+          (when (and buffers (y-or-n-p "Enable language support for other buffers that belongs to current project or directory?"))
+            (dolist (buffer buffers)
+              (with-current-buffer buffer
+                (let ((hooksym (intern (concat (symbol-name major-mode) "-hook"))))
+                  (when (and (boundp hooksym) (cl-member #'language-support-auto-enable (symbol-value hooksym)))
+                    (language-support--enable)))))))))))
 
 (defun language-support-auto-enable ()
-  (when (member (language-support-directory) language-support-enabled-directories)
+  (when (and language-support (cl-member (language-support-directory) language-support-enabled-directories :test #'string-equal))
     (language-support-enable)))
 
 ;;;;;;;;;;;;;;;
@@ -96,7 +115,7 @@
   :custom
   (rustic-lsp-setup-p nil)
   (rustic-lsp-client (when (member language-support '(lsp-mode eglot)) language-support))
-  :hook (rustic-mode . language-support-auto-enable)
+  :hook ((rustic-mode rust-mode rust-ts-mode) . language-support-auto-enable)
   :config
   (defun language-support--enable-rustic (fun &rest args)
     (if (eq major-mode 'rustic-mode)
@@ -220,22 +239,21 @@
      :bind (("C-M-?" . citre-peek)
             :map citre-mode-map
             ("M-?" . citre-jump-to-reference))
+     :hook ((citre-mode . citre-tags-file-path))
      :custom
      (citre-project-root-function (lambda  () (project-root (or (project-current nil) (list 'vc nil default-directory)))))
+     (citre-auto-enable-citre-mode-modes nil)
      (citre-gtags-args '("--compact")))
    (use-package citre-ext
      :load-path "custom-lisp"
      :demand t
-     :hook ((after-save . citre-auto-update-tags-after-save)
-            (citre-mode . citre-global-auto-objdir))
+     :hook ((after-save . citre-auto-update-tags-after-save))
      :after citre))
   ('eglot
    (use-package eglot
      :defer t
      :ensure t
-     :bind (:map prog-mode-map
-            ("C-c l" . eglot)
-            :map eglot-mode-map
+     :bind (:map eglot-mode-map
             ("C-c l r r" . eglot-rename)
             ("C-c l a a" . eglot-code-actions))
      :config
@@ -448,7 +466,7 @@
     (when (treesit-language-available-p lang)
       (push (cons (intern (concat (symbol-name mode-lang) "-mode")) (intern (concat (symbol-name mode-lang) "-ts-mode"))) major-mode-remap-alist)))
   (when-let ((bash-cons (assoc 'bash-mode major-mode-remap-alist)))
-    (setf (car bash-cons) 'sh-mode)))
+    (setf (car bash-cons) #'sh-mode)))
 
 (provide 'language-support)
 
