@@ -4,12 +4,13 @@
 (defcustom citre-gtags-label "native"
   "Specify GTAGSLABEL for running `gtags' or `global'.")
 
-(defun citre-global-auto-objdir ()
-  (when-let ((project (project-current nil)))
-    (kill-local-variable 'citre-gtags-args)
-    (setq-local citre-gtags-args (append citre-gtags-args
-                                         (list "--gtagslabel" citre-gtags-label)
-                                         (list "--objdir" (file-relative-name (file-name-directory citre--tags-file) (project-root project)))))))
+(defun citre-gtags-auto-objdir-wrapper (fun &rest args)
+  (when-let ((project (project-current))
+             (tags-file citre--tags-file))
+    (let ((citre-gtags-args (append (default-value 'citre-gtags-args)
+                                    (list "--gtagslabel" citre-gtags-label)
+                                    (list "--objdir" (file-relative-name (file-name-directory tags-file) (project-root project))))))
+      (apply fun args))))
 
 (defun citre-global-auto-objdir-wrapper (fun &rest args)
   (when-let* ((file (buffer-file-name (current-buffer)))
@@ -51,9 +52,9 @@
     (citre-get-output-lines cmd)))
 
 (defun citre-auto-update-tags-after-save ()
-  (run-with-idle-timer
-   0.5 nil (lambda ()
-             (when citre-mode
+  (when citre-mode
+    (run-with-idle-timer
+     0.5 nil (lambda ()
                (when-let ((tags-file citre--tags-file))
                  (citre-update-this-tags-file))
                (citre-global-update-database-this-file)))))
@@ -64,6 +65,7 @@
         (citre-use-project-root-when-creating-tags t))
     (citre-create-tags-file)))
 
+(advice-add #'citre-global-create-database :around #'citre-gtags-auto-objdir-wrapper)
 (advice-add #'citre-global-update-database :around #'citre-global-auto-objdir-wrapper)
 (advice-add #'citre-global--get-lines :override #'citre-global--get-lines-using-relative-path)
 (advice-add #'citre-global-get-tags :around #'citre-global-auto-objdir-wrapper)
