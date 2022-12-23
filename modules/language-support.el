@@ -289,7 +289,9 @@
      (lsp-completion-provider :none)
      (read-process-output-max (* 1024 1024 16))
      (lsp-idle-delay 0.5)
-     (lsp-log-io nil))
+     (lsp-log-io nil)
+     :config
+     (advice-add #'lsp-completion-at-point :around #'cape-wrap-noninterruptible))
 
    (use-package lsp-lens
      :ensure lsp-mode

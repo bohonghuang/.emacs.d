@@ -34,18 +34,20 @@
   :ensure nil
   :custom
   (use-package-verbose t)
-  (use-package-minimum-reported-time 0)
+  (use-package-minimum-reported-time 0))
+
+(use-package use-package-ensure
+  :defer nil
+  :ensure nil
   :config
-  (use-package use-package-ensure
-    :config
-    (defconst use-package-ensure-keywords '(:pin :ensure))
-    (setq use-package-keywords
-          (let ((use-package-keywords (cl-delete-if (lambda (x) (member x use-package-ensure-keywords))
-                                                    use-package-keywords)))
-            (let* ((pos (cl-position :unless use-package-keywords))
-                   (head (cl-subseq use-package-keywords 0 (+ 1 pos)))
-                   (tail (nthcdr (+ 1 pos) use-package-keywords)))
-              (append head use-package-ensure-keywords tail))))))
+  (defconst use-package-ensure-keywords '(:pin :ensure))
+  (setq use-package-keywords
+        (let ((use-package-keywords (cl-delete-if (lambda (x) (member x use-package-ensure-keywords))
+                                                  use-package-keywords)))
+          (let* ((pos (cl-position :unless use-package-keywords))
+                 (head (cl-subseq use-package-keywords 0 (+ 1 pos)))
+                 (tail (nthcdr (+ 1 pos) use-package-keywords)))
+            (append head use-package-ensure-keywords tail)))))
 
 (use-package quelpa-use-package
   :demand t
@@ -1862,13 +1864,7 @@
   :custom
   (eshell-destroy-buffer-when-process-dies t)
   :config
-  (nconc eshell-visual-commands '("nvtop" "bashtop" "btop" "vim" "nvim" "cmatrix" "ssh"))
-  (defun eshell-term-hide-mode-line-after-buffer-change (&rest _)
-    (when (and (boundp 'hide-mode-line-mode) hide-mode-line-mode)
-      (add-hook 'window-buffer-change-functions (defun eshell-exec-visual-hide-mode-line-after-switch-to-buffer (&rest _)
-                                                  (hide-mode-line-mode +1)
-                                                  (remove-hook 'window-buffer-change-functions #'eshell-exec-visual-hide-mode-line-after-switch-to-buffer)
-                                                  (fmakunbound #'eshell-exec-visual-hide-mode-line-after-switch-to-buffer))))))
+  (nconc eshell-visual-commands '("nvtop" "bashtop" "btop" "vim" "nvim" "cmatrix" "ssh")))
 
 (use-package eshell-syntax-highlighting
   :when (member 'eshell extra-features)
@@ -1919,6 +1915,15 @@
          ("C-x C-q" . vterm-copy-mode)
          :map vterm-copy-mode-map
          ("C-x C-q" . vterm-copy-mode)))
+
+(use-package eat
+  :when (<= 28 emacs-major-version)
+  :unless (member 'vterm extra-features)
+  :ensure t
+  :defer t
+  :hook
+  (eshell-mode . eat-eshell-mode)
+  (eshell-mode . eat-eshell-visual-command-mode))
 
 (use-package eshell-vterm
   :when (and (<= 27 emacs-major-version) (member 'vterm extra-features))
