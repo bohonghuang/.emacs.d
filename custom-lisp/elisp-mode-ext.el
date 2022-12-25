@@ -14,7 +14,9 @@
                   (let ((buffer-read-only nil))
                     (emacs-lisp-mode)
                     (delete-region (point-min) (point-max))
-                    (pp (funcall function (car (read-from-string exp-string))) (current-buffer))
+                    (pp (save-window-excursion
+                          (funcall function (car (read-from-string exp-string))))
+                        (current-buffer))
                     (indent-region (point-min) (point-max))
                     (goto-char (point-min))
                     (let ((map (make-sparse-keymap)))

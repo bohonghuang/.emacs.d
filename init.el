@@ -1919,11 +1919,23 @@
 (use-package eat
   :when (<= 28 emacs-major-version)
   :unless (member 'vterm extra-features)
+  :commands (eat-other-window)
   :ensure t
   :defer t
   :hook
+  (eat-mode . toggle-truncate-lines)
   (eshell-mode . eat-eshell-mode)
-  (eshell-mode . eat-eshell-visual-command-mode))
+  (eshell-mode . eat-eshell-visual-command-mode)
+  :config
+  (defun eat-other-window (&optional program args)
+    (interactive)
+    (switch-to-buffer-other-window
+     (let ((buffer (save-window-excursion
+                     (if program (eat program args) (call-interactively #'eat)))))
+       (with-current-buffer buffer
+         (set (make-local-variable 'eat-kill-buffer-on-exit) t)
+         (add-hook 'kill-buffer-hook #'quit-window nil t))
+       buffer))))
 
 (use-package eshell-vterm
   :when (and (<= 27 emacs-major-version) (member 'vterm extra-features))
@@ -1931,10 +1943,7 @@
   :demand t
   :after eshell
   :config
-  (eshell-vterm-mode +1)
-  (defun eshell/vterm (&optional args)
-    (eshell-term-hide-mode-line-after-buffer-change)
-    (vterm args)))
+  (eshell-vterm-mode +1))
 
 (use-package quickrun
   :when (<= 26 emacs-major-version)
