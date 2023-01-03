@@ -1051,13 +1051,11 @@
   :defer t
   :bind
   (:map prog-mode-map
-        ("C-c '" . separedit)
+   ("C-c '" . separedit)
    :map minibuffer-local-map
-        ("C-c '" . separedit)
+   ("C-c '" . separedit)
    :map help-mode-map
-   ("C-c '" . separedit))
-  :config
-  (add-to-list 'separedit-comment-faces))
+   ("C-c '" . separedit)))
 
 (use-package rainbow-delimiters
   :ensure t

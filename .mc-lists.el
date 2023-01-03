@@ -7,6 +7,7 @@
         TeX-insert-backslash
         asm-comment
         backward-sexp
+        c-electric-colon
         c-electric-delete-forward
         c-electric-paren
         c-electric-semi&comma

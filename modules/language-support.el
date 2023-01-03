@@ -29,7 +29,10 @@
       (unless (eql language-support 'eglot)
         (let ((buffers (cl-delete current-buffer
                                   (if-let ((proj (project-current)))
-                                      (project-buffers proj)
+                                      (cl-delete-if (lambda (buffer)
+                                                      (and (string-prefix-p "*" (buffer-name buffer))
+                                                           (string-suffix-p "*" (buffer-name buffer))))
+                                                    (project-buffers proj))
                                     (if-let* ((file (buffer-file-name))
                                               (dir (file-name-directory file)))
                                         (cl-loop for buffer in (buffer-list)
