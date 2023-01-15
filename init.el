@@ -139,7 +139,26 @@
 (use-package subr
   :ensure nil
   :defer t
-  :init (defalias 'yes-or-no-p 'y-or-n-p))
+  :init (defalias 'yes-or-no-p 'y-or-n-p)
+  (defun adjust-frame-alpha-background (offset)
+    (set-frame-parameter (selected-frame) 'alpha-background (max 0 (min (+ (frame-parameter (selected-frame) 'alpha-background) offset) 100))))
+  (global-set-key (kbd "C-x 5 +") (defun increase-frame-alpha-background ()
+                                    (interactive)
+                                    (adjust-frame-alpha-background 10)))
+  (global-set-key (kbd "C-x 5 -") (defun decrease-frame-alpha-background ()
+                                    (interactive)
+                                    (adjust-frame-alpha-background -10)))
+  (when (<= 28 emacs-major-version)
+    (defvar frame-alpha-background-adjust-repeat-map
+      (let ((map (make-sparse-keymap)))
+        (define-key map (kbd "+") #'increase-frame-alpha-background)
+        (define-key map (kbd "=") #'increase-frame-alpha-background)
+        (define-key map (kbd "-") #'decrease-frame-alpha-background)
+        (define-key map (kbd "_") #'decrease-frame-alpha-background)
+        (dolist (it '(increase-frame-alpha-background decrease-frame-alpha-background))
+          (put it 'repeat-map 'frame-alpha-background-adjust-repeat-map))
+        map)
+      "Keymap to repeat adjustment for the background alpha of the selected window. Used in `repeat-mode'.")))
 
 (use-package files
   :ensure nil
