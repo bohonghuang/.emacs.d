@@ -1098,6 +1098,9 @@
   :when (and (display-graphic-p) (<= 29 emacs-major-version))
   :ensure nil
   :defer nil
+  :custom
+  (pixel-scroll-precision-use-momentum t)
+  (pixel-scroll-precision-momentum-seconds 0.5)
   :config
   (pixel-scroll-precision-mode +1))
 
