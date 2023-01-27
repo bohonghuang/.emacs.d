@@ -1231,7 +1231,24 @@
 (use-package expand-region
   :ensure t
   :defer t
-  :bind (("C-=" . er/expand-region)))
+  :bind (("C-=" . er/expand-region))
+  :config
+  (use-package treesit
+    :when (<= 29 emacs-major-version)
+    :config
+    (defun treesit-expand-region ()
+      (let* ((root (treesit-buffer-root-node))
+             (node (treesit-node-descendant-for-range root (region-beginning) (region-end)))
+             (node-start (treesit-node-start node))
+             (node-end (treesit-node-end node)))
+        ;; Node fits the region exactly. Try its parent node instead.
+        (when (and (= (region-beginning) node-start) (= (region-end) node-end))
+          (when-let ((node (treesit-node-parent node)))
+            (setq node-start (treesit-node-start node)
+                  node-end (treesit-node-end node))))
+        (set-mark node-end)
+        (goto-char node-start)))
+    (add-to-list 'er/try-expand-list #'treesit-expand-region)))
 
 (use-package multiple-cursors
   :ensure t
