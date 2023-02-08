@@ -1444,6 +1444,31 @@
   (setq org-gtd-default-file-name "tasks")
   (add-to-list 'org-agenda-files org-gtd-directory))
 
+(use-package buffer-timer
+  :when (member 'org-gtd extra-features)
+  :quelpa (buffer-timer :fetcher github :repo "bohonghuang/elisp-buffer-timer")
+  :defer t
+  :commands (buffer-timer-start buffer-timer-stop)
+  :custom
+  (buffer-timer-output-file (expand-file-name "org-agenda/track/%Y-%m-%d_buffer-timer" org-directory))
+  :bind (;; reporting
+         ("C-c g t s" . buffer-timer-summarize)
+         ("C-c g t r" . buffer-timer-report)
+         ("C-c g t S" . buffer-timer-write-results)
+         ("C-c g t c" . buffer-timer-clear)
+         ("C-c g t m" . buffer-timer-munge)
+         ("C-c g t M" . buffer-timer-munge-date-range)
+         ;; modifying data
+         ("C-c g t t" . buffer-timer-transfer-time)
+         ("C-c g t a" . buffer-timer-adjust-time)
+         ("C-c g t A" . buffer-timer-adjust-older-time)
+         ;; locking to a subject
+         ("C-c g t i" . buffer-timer-toggle-idle)
+         ("C-c g t l" . buffer-timer-lock)
+         ("C-c g t u" . buffer-timer-unlock)
+         ("C-c g t U" . buffer-timer-do-idle-calculations)
+         ("C-c g t L" . buffer-timer-view-log)))
+
 (use-package org-capture
   :ensure nil
   :defer t
