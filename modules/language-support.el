@@ -1,6 +1,6 @@
 ;; -*- lexical-binding: t; -*-
 
-(defcustom language-support nil
+(defcustom language-support (intern (completing-read "Select language support: " '("lsp-mode" "eglot" "citre" "nil") nil t))
   "The language support used in `prog-mode'.")
 
 (defcustom language-support-languages nil
