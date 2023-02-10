@@ -362,8 +362,9 @@
      :defer t
      :after lsp-mode
      :bind (:map lsp-mode-map
-                 ("M-g i" . consult-lsp-file-symbols)
-                 ("M-g F" . consult-lsp-diagnostics)))
+            ("M-g i" . consult-lsp-file-symbols)
+            ("M-g I" . consult-lsp-symbols)
+            ("M-g F" . consult-lsp-diagnostics)))
 
    (use-package yasnippet
      :ensure t
