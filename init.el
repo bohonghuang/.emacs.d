@@ -741,7 +741,7 @@
    consult-ripgrep consult-git-grep consult-grep
    consult-bookmark consult-recent-file consult-xref
    consult--source-recent-file consult--source-project-recent-file consult--source-bookmark
-   :preview-key (kbd "M-."))
+   :preview-key "M-.")
   (setq consult-narrow-key "<")
   (use-package consult-org
     :after org
@@ -849,7 +849,7 @@
   (cnfonts-use-face-font-rescale t)
   (cnfonts-use-cache t)
   :config
-  (cnfonts-enable))
+  (cnfonts-mode +1))
 
 (use-package popper
   :when (<= 26 emacs-major-version)

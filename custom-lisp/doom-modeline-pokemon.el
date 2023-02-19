@@ -142,10 +142,10 @@ Including the current working directory, the file name, and its state (modified,
 read-only or non-existent)."
   (concat
    (doom-modeline-pokemon-buffer-mode-icon)
-   doom-modeline-spc
+   (doom-modeline-spc)
    (doom-modeline--buffer-state-icon)
    (doom-modeline--buffer-name)
-   doom-modeline-spc
+   (doom-modeline-spc)
    (doom-modeline-pokemon-buffer-name-icon)))
 
 (doom-modeline-def-segment buffer-default-directory-pokemon
