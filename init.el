@@ -772,7 +772,8 @@
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
-                 (window-parameters (mode-line-format . none)))))
+                 (window-parameters (mode-line-format . none))))
+  (define-key embark-function-map (kbd "M-d") #'disassemble))
 
 (use-package embark-consult
   :when (<= 27 emacs-major-version)
@@ -1504,7 +1505,7 @@
   :defer t
   :custom
   (org-remark-global-tracking-mode +1)
-  (org-remark-notes-file-path (expand-file-name "org-remark/notes.org" org-directory))
+  (org-remark-notes-file-name #'org-remark-notes-auto-file-name)
   (org-remark-create-default-pen-set nil)
   (org-remark-notes-display-buffer-action '((display-buffer-in-side-window)
                                             (side . right)
@@ -1515,13 +1516,22 @@
          ("C-c n n" . org-remark-view-next)
          ("C-c n p" . org-remark-view-prev)
          ("C-c n r" . org-remark-remove)
+         ("C-c n k" . org-remark-delete)
          ("C-c n c" . org-remark-change)
          ("C-c n ." . org-remark-view))
-  :commands (org-remark-notes-file-auto-path)
+  :commands (org-remark-notes-auto-file-name)
   :config
+  (defun org-remark-notes-auto-file-name ()
+    (if buffer-file-name
+        (concat (file-name-sans-extension
+                 (file-name-nondirectory (org-remark-source-find-file-name)))
+                ".remark.org")
+      (expand-file-name "org-remark/notes.org" org-directory)))
   (org-remark-create "red"
                      '(:underline "red" :background "dark red")
                      '(CATEGORY "important"))
+  (org-remark-create "blank"
+                     `(:underline ,(face-foreground 'default) :foreground ,(face-background 'default)))
   (defvar org-remark-repeat-map
         (let ((map (make-sparse-keymap)))
           (define-key map (kbd "n") #'org-remark-view-next)
@@ -2222,7 +2232,7 @@ Saves to a temp file and puts the filename in the kill ring."
           (sis-global-respect-mode +1)))
       (setq sis-global-respect-mode-previous-defining-kbd-macro defining-kbd-macro)))
   (add-hook 'post-command-hook #'sis-defining-kbd-macro-watcher)
-  (when (fboundp 'native-compile) (native-compile #'sis-defining-kbd-macro-watcher))
+  (when (featurep 'native-compile) (native-compile #'sis-defining-kbd-macro-watcher))
   (defun sis-update-cursor-color-after-theme-load (&rest _)
     (sis-global-cursor-color-mode -1)
     (let ((cursor-color (face-background 'cursor)))

@@ -49,6 +49,7 @@
         lsp-signature-activate
         lsp-ui-doc--handle-mouse-movement
         markdown-enter-key
+        markdown-outdent-or-delete
         org-beginning-of-line
         org-cdlatex-underscore-caret
         org-ctrl-c-ctrl-c
@@ -105,7 +106,6 @@
         embark-act
         find-file
         kmacro-end-or-call-macro
-        markdown-outdent-or-delete
         mouse-drag-mode-line
         mouse-select-window
         phi-search

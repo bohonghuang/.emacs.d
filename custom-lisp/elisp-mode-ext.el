@@ -36,7 +36,7 @@
               (apply #'pulse-momentary-highlight-region (sexp-range)))))))))
 
 (defun emacs-lisp-macroexpand@around (fun &rest args)
-  (if (called-interactively-p)
+  (if (called-interactively-p nil)
       (emacs-lisp-macroexpand-to-buffer #'macroexpand-1)
     (apply fun args)))
 
@@ -45,5 +45,19 @@
 (defun emacs-lisp-macroexpand-all ()
   (interactive)
   (emacs-lisp-macroexpand-to-buffer #'macroexpand-all))
+
+(defvar disassemble-buffer-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "q") #'quit-window)
+    map))
+
+(defun disassemble@after (&rest args)
+  (current-local-map)
+  (with-current-buffer (get-buffer "*Disassemble*")
+    (when (eq major-mode 'asm-mode)
+      (unless (eql (current-local-map) disassemble-buffer-map)
+        (use-local-map disassemble-buffer-map)))))
+
+(advice-add #'disassemble :after #'disassemble@after)
 
 (provide 'elisp-mode-ext)
