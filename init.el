@@ -131,10 +131,9 @@
 
 (use-package simple-ext
   :load-path "custom-lisp"
-  :after simple
+  :defer t
   :bind (("M-C" . filter-and-upcase-initials-region)
-         ("M-SPC" . cycle-spacing-dwim))
-  :demand t)
+         ("M-SPC" . cycle-spacing-dwim)))
 
 (use-package subr
   :ensure nil
@@ -939,7 +938,6 @@
   :defer t
   :init
   (defalias 'sp-mode #'smartparens-mode)
-  (require 'smartparens-config)
   :hook
   ((prog-mode text-mode minibuffer-setup eshell-mode lisp-mode scheme-mode ielm-mode sly-mrepl-mode racket-repl-mode inferior-scheme-mode geiser-repl-mode) . smartparens-mode)
   (smartparens-mode . show-smartparens-mode)
@@ -994,6 +992,7 @@
                 scad-mode scad-ts-mode
                 typescript-mode typescript-ts-mode))
   :config
+  (require 'smartparens-config)
   (sp-pair "（" "）")
   (sp-pair "【" "】")
   (sp-pair "《" "》")
