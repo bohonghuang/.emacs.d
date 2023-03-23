@@ -5,6 +5,8 @@
       '(
         LaTeX-babel-insert-hyphen
         TeX-insert-backslash
+        artist-backward-char
+        artist-forwad-char
         asm-comment
         backward-sexp
         c-electric-colon

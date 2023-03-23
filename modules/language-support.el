@@ -467,12 +467,12 @@
 ;; Treesit ;;
 ;;;;;;;;;;;;;
 
-(when (and (<= 29 emacs-major-version) (treesit-available-p))
-  (pcase-dolist ((or `(,lang . ,mode-lang) (and lang mode-lang)) '(c (cpp . c++) objc python java (javascript . js) rust go scala kotlin typescript bash toml json yaml))
-    (when (treesit-language-available-p lang)
-      (push (cons (intern (concat (symbol-name mode-lang) "-mode")) (intern (concat (symbol-name mode-lang) "-ts-mode"))) major-mode-remap-alist)))
-  (when-let ((bash-cons (assoc 'bash-mode major-mode-remap-alist)))
-    (setf (car bash-cons) #'sh-mode)))
+(use-package treesit-auto
+  :when (require 'treesit nil t)
+  :ensure t
+  :defer nil
+  :commands (global-treesit-auto-mode)
+  :config (global-treesit-auto-mode +1))
 
 (provide 'language-support)
-
+;;; language-support.el ends here
