@@ -64,6 +64,19 @@
   :when (member 'lisp language-support-languages)
   :ensure t
   :defer t
+  :init
+  (defmacro sly-define-lisp-implementations (impl-list)
+    `(progn
+       ,@(mapcar (lambda (impl)
+                   (when (executable-find (symbol-name impl))
+                     `(defun ,impl ()
+                        ,(format "Start a %s session and connect to it." (upcase (symbol-name impl)))
+                        (interactive)
+                        (let ,(when (eq impl 'ecl)
+                                `((sly-init-function #'sly-init-using-slynk-loader)))
+                          (sly ,(symbol-name impl))))))
+                 impl-list)))
+  (sly-define-lisp-implementations (sbcl ccl abcl clasp clisp ecl))
   :custom
   (org-babel-lisp-eval-fn 'sly-eval))
 
