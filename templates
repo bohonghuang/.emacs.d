@@ -54,6 +54,12 @@ lisp-mode sly-mrepl-mode
 (special "(declare (special " p "))")
 (exit "#+sbcl (sb-ext:exit) #+(or ecl clasp) (si:exit)")
 (eval "(eval-when (" (p ":compile-toplevel :load-toplevel :execute") ")" n> q ")")
+(arr "(make-array " (p "0") " :element-type " (p "t") ")")
+(vec "(make-array " (p "0") " :element-type " (p "t") " :adjustable t :fill-pointer t)")
+(u "(unsigned-byte " (p "32") ")")
+(i "(signed-byte " (p "32") ")")
+(f "single-float")
+(d "double-float")
 
 emacs-lisp-mode
 

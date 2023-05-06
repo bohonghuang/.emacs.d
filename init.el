@@ -347,12 +347,6 @@
   :defer t
   :hook (dired-mode . diredfl-mode))
 
-(use-package dired-narrow
-  :ensure t
-  :defer t
-  :bind (:map dired-mode-map
-         ("/" . dired-narrow)))
-
 (use-package fd-dired
   :ensure t
   :defer t
@@ -379,6 +373,8 @@
 (use-package xref
   :ensure nil
   :defer t
+  :bind (("<mouse-8>" . xref-go-back)
+         ("<mouse-9>" . xref-go-forward))
   :custom (xref-backend-functions '(t)))
 
 (use-package compile
@@ -627,18 +623,6 @@
   (when (null corfu-margin-formatters)
     (add-to-list 'corfu-margin-formatters #'kind-all-the-icons-margin-formatter)))
 
-
-;; (use-package corfu-doc
-;;   :when (<= 27 emacs-major-version)
-;;   :ensure t
-;;   :defer t
-;;   :after corfu
-;;   :custom
-;;   (corfu-doc-auto nil)
-;;   :hook (corfu-mode . corfu-doc-mode)
-;;   :bind (:map corfu-map ("M-." . corfu-doc-toggle)))
-
-
 (use-package dabbrev
   :ensure nil
   :defer t
@@ -869,6 +853,7 @@
                               "\\*Go-Translate\\*"
                               "\\*Compile-Log\\*"
                               "^\\*lsp-install"
+                              "^\\*sly-mrepl"
                               dap-ui-repl-mode
                               help-mode
                               compilation-mode
@@ -1992,13 +1977,14 @@
 (use-package eat
   :when (<= 28 emacs-major-version)
   :unless (member 'vterm extra-features)
-  :commands (eat-other-window ensure-eat-eshell-mode ensure-eat-eshell-visual-command-mode)
+  :commands (eat-other-window)
   :ensure t
   :defer t
   :hook
   (eat-mode . toggle-truncate-lines)
-  (eshell-mode . ensure-eat-eshell-mode)
-  (eshell-mode . ensure-eat-eshell-visual-command-mode)
+  (eshell-load . eat-eshell-mode)
+  (eshell-load . eat-eshell-visual-command-mode)
+  (eshell-load . (lambda () (setf eshell-visual-commands nil)))
   :config
   (defun eat-other-window (&optional program args)
     (interactive)
@@ -2008,13 +1994,7 @@
        (with-current-buffer buffer
          (set (make-local-variable 'eat-kill-buffer-on-exit) t)
          (add-hook 'kill-buffer-hook #'quit-window nil t))
-       buffer)))
-  (defun ensure-eat-eshell-mode ()
-    (interactive)
-    (unless eat-eshell-mode (eat-eshell-mode +1)))
-  (defun ensure-eat-eshell-visual-command-mode ()
-    (interactive)
-    (unless eat-eshell-visual-command-mode (eat-eshell-visual-command-mode +1))))
+       buffer))))
 
 (use-package eshell-vterm
   :when (and (<= 27 emacs-major-version) (member 'vterm extra-features))
@@ -2079,8 +2059,7 @@
   (emms-all)
   (unless emms-player-list
     (emms-default-players))
-  (emms-mode-line-disable)
-  (emms-playing-time-mode -1))
+  (emms-mode-line-disable))
 
 (use-package emms-mark
   :when (member 'emms extra-features)

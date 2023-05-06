@@ -94,6 +94,7 @@
         sp-kill-sexp
         sp-split-sexp
         sp-unwrap-sexp
+        tempel-next
         transpose-sexps
         transpose-words
         vhdl-electric-semicolon

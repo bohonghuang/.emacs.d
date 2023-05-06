@@ -1,3 +1,5 @@
+(require 'cl-lib)
+
 (defun emacs-lisp-macroexpand-buffer-undo ()
   (interactive)
   (let ((buffer-read-only nil))
@@ -32,6 +34,8 @@
               (save-excursion
                 (delete-region beg end)
                 (pp (funcall function (car (read-from-string exp-string))) (current-buffer))
+                (when (looking-back (rx bol) (point-min))
+                  (delete-char -1))
                 (indent-region beg (point)))
               (apply #'pulse-momentary-highlight-region (sexp-range)))))))))
 
