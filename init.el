@@ -305,12 +305,11 @@
   :defer t
   :init (defalias 'list-buffers 'ibuffer))
 
-(use-package all-the-icons-ibuffer
+(use-package nerd-icons-ibuffer
+  :when (member 'nerd-icons extra-features)
   :ensure t
   :defer t
-  :when (member 'all-the-icons extra-features)
-  :hook (ibuffer-mode . all-the-icons-ibuffer-mode)
-  :custom (all-the-icons-dired-monochrome nil))
+  :hook (ibuffer-mode . nerd-icons-ibuffer-mode))
 
 (use-package dired
   :ensure nil
@@ -335,11 +334,11 @@
   :after dired
   :demand t)
 
-(use-package all-the-icons-dired
-  :when (member 'all-the-icons extra-features)
+(use-package nerd-icons-dired
+  :when (member 'nerd-icons extra-features)
   :ensure t
   :defer t
-  :hook (dired-mode . all-the-icons-dired-mode))
+  :hook (dired-mode . nerd-icons-dired-mode))
 
 (use-package diredfl
   :after dired
@@ -484,10 +483,56 @@
   :config
   (which-key-mode t))
 
+(use-package nerd-icons
+  :when (member 'nerd-icons extra-features)
+  :ensure t
+  :defer nil
+  :config
+  (use-package kind-icon
+    :after nerd-icons
+    :custom
+    (kind-icon-mapping
+     `((array ,(nerd-icons-codicon "nf-cod-symbol_array") :face font-lock-type-face)
+       (boolean ,(nerd-icons-codicon "nf-cod-symbol_boolean") :face font-lock-builtin-face)
+       (class ,(nerd-icons-codicon "nf-cod-symbol_class") :face font-lock-type-face)
+       (color ,(nerd-icons-codicon "nf-cod-symbol_color") :face success)
+       (command ,(nerd-icons-codicon "nf-cod-terminal") :face default)
+       (constant ,(nerd-icons-codicon "nf-cod-symbol_constant") :face font-lock-constant-face)
+       (constructor ,(nerd-icons-codicon "nf-cod-triangle_right") :face font-lock-function-name-face)
+       (enummember ,(nerd-icons-codicon "nf-cod-symbol_enum_member") :face font-lock-builtin-face)
+       (enum-member ,(nerd-icons-codicon "nf-cod-symbol_enum_member") :face font-lock-builtin-face)
+       (enum ,(nerd-icons-codicon "nf-cod-symbol_enum") :face font-lock-builtin-face)
+       (event ,(nerd-icons-codicon "nf-cod-symbol_event") :face font-lock-warning-face)
+       (field ,(nerd-icons-codicon "nf-cod-symbol_field") :face font-lock-variable-name-face)
+       (file ,(nerd-icons-codicon "nf-cod-symbol_file") :face font-lock-string-face)
+       (folder ,(nerd-icons-codicon "nf-cod-folder") :face font-lock-doc-face)
+       (interface ,(nerd-icons-codicon "nf-cod-symbol_interface") :face font-lock-type-face)
+       (keyword ,(nerd-icons-codicon "nf-cod-symbol_keyword") :face font-lock-keyword-face)
+       (macro ,(nerd-icons-codicon "nf-cod-symbol_misc") :face font-lock-keyword-face)
+       (magic ,(nerd-icons-codicon "nf-cod-wand") :face font-lock-builtin-face)
+       (method ,(nerd-icons-codicon "nf-cod-symbol_method") :face font-lock-function-name-face)
+       (function ,(nerd-icons-codicon "nf-cod-symbol_method") :face font-lock-function-name-face)
+       (module ,(nerd-icons-codicon "nf-cod-file_submodule") :face font-lock-preprocessor-face)
+       (numeric ,(nerd-icons-codicon "nf-cod-symbol_numeric") :face font-lock-builtin-face)
+       (operator ,(nerd-icons-codicon "nf-cod-symbol_operator") :face font-lock-comment-delimiter-face)
+       (param ,(nerd-icons-codicon "nf-cod-symbol_parameter") :face default)
+       (property ,(nerd-icons-codicon "nf-cod-symbol_property") :face font-lock-variable-name-face)
+       (reference ,(nerd-icons-codicon "nf-cod-references") :face font-lock-variable-name-face)
+       (snippet ,(nerd-icons-codicon "nf-cod-symbol_snippet") :face font-lock-string-face)
+       (string ,(nerd-icons-codicon "nf-cod-symbol_string") :face font-lock-string-face)
+       (struct ,(nerd-icons-codicon "nf-cod-symbol_structure") :face font-lock-variable-name-face)
+       (text ,(nerd-icons-codicon "nf-cod-text_size") :face font-lock-doc-face)
+       (typeparameter ,(nerd-icons-codicon "nf-cod-list_unordered") :face font-lock-type-face)
+       (type-parameter ,(nerd-icons-codicon "nf-cod-list_unordered") :face font-lock-type-face)
+       (unit ,(nerd-icons-codicon "nf-cod-symbol_ruler") :face font-lock-constant-face)
+       (value ,(nerd-icons-codicon "nf-cod-symbol_field") :face font-lock-builtin-face)
+       (variable ,(nerd-icons-codicon "nf-cod-symbol_variable") :face font-lock-variable-name-face)
+       (t ,(nerd-icons-codicon "nf-cod-code") :face font-lock-warning-face)))))
+
 (use-package doom-modeline
   :ensure t
   :defer nil
-  :custom (doom-modeline-icon (member 'all-the-icons extra-features))
+  :custom (doom-modeline-icon (member 'nerd-icons extra-features))
   :config
   (doom-modeline-mode +1))
 
@@ -606,22 +651,12 @@
   :demand t
   :after corfu
   :custom
+  (kind-icon-use-icons nil)
   (kind-icon-default-face 'corfu-default)
-  (kind-icon-use-icons (display-graphic-p))
+  (kind-icon-extra-space t)
   :config
   (when (null corfu-margin-formatters)
     (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter)))
-
-(use-package kind-all-the-icons
-  :when (member 'all-the-icons extra-features)
-  :load-path "custom-lisp"
-  :after kind-icon
-  :demand t
-  :config
-  (unless (display-graphic-p)
-    (dolist (icon kind-all-the-icons--icons) (setf (cdr icon) (concat (cdr icon) " "))))
-  (when (null corfu-margin-formatters)
-    (add-to-list 'corfu-margin-formatters #'kind-all-the-icons-margin-formatter)))
 
 (use-package dabbrev
   :ensure nil
@@ -799,11 +834,11 @@
       (define-key tempel-map (kbd "TAB") nil)
       (define-key tempel-map (kbd "<backtab>") nil))))
 
-(use-package all-the-icons-completion
-  :when (member 'all-the-icons extra-features)
+(use-package nerd-icons-completion
+  :when (member 'nerd-icons extra-features)
   :ensure t
   :defer t
-  :hook (marginalia-mode . all-the-icons-completion-mode))
+  :hook (marginalia-mode . nerd-icons-completion-mode))
 
 (use-package crux
   :ensure t
@@ -828,7 +863,7 @@
          ("C-M-+" . cnfonts-increase-fontsize)
          ("C-M-)" . cnfonts-reset-fontsize))
   :custom
-  (cnfonts-personal-fontnames '(("JetBrains Mono") ("Noto Serif CJK SC" "Noto Serif CJK TC") nil nil nil))
+  (cnfonts-personal-fontnames '(("Noto Serif CJK SC" "Noto Serif CJK TC") nil nil nil))
   (cnfonts-profiles '("program" "document"))
   (cnfonts-use-face-font-rescale t)
   (cnfonts-use-cache t)
