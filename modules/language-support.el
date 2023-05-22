@@ -47,6 +47,7 @@
                     (language-support--enable)))))))))))
 
 (defun language-support-auto-enable ()
+  (interactive)
   (when (and language-support (cl-member (language-support-directory) language-support-enabled-directories :test #'string-equal))
     (language-support-enable)))
 
@@ -103,6 +104,13 @@
   :mode ("\\.sc\\'" . scala-mode)
   :hook (scala-mode . language-support-auto-enable))
 
+(use-package ruby-mode
+  :when (member 'ruby language-support-languages)
+  :ensure t
+  :defer t
+  :hook (ruby-mode . language-support-auto-enable)
+  :config (setf ruby-ts-mode-hook ruby-mode-hook))
+
 (use-package sbt-mode
   :when (member 'scala language-support-languages)
   :ensure t
@@ -113,7 +121,7 @@
    'minibuffer-complete-word
    'self-insert-command
    minibuffer-local-completion-map)
-   (setq sbt:program-options '("-Dsbt.supershell=false")))
+   (setf sbt:program-options '("-Dsbt.supershell=false")))
 
 (use-package cc-mode
   :when (cl-intersection '(c++ c objective-c) language-support-languages)
@@ -122,7 +130,17 @@
   :init
   (defalias 'cpp-mode 'c++-mode)
   (defalias 'cpp-ts-mode 'c++-ts-mode)
-  :hook ((c-mode c-ts-mode c++-mode c++-ts-mode objc-mode objc-ts-mode) . language-support-auto-enable))
+  :hook ((c-mode c++-mode objc-mode) . language-support-auto-enable))
+
+(use-package c-ts-mode
+  :when (>= emacs-major-version 29)
+  :ensure nil
+  :defer t
+  :config
+  (require 'cc-mode)
+  (setf c-ts-mode-hook c-mode-hook
+        c++-ts-mode-hook c++-mode-hook
+        objc-ts-mode-hook objc-mode-hook))
 
 (use-package rustic
   :when (member 'rust language-support-languages)
@@ -143,7 +161,9 @@
   :when (member 'groovy language-support-languages)
   :ensure t
   :defer t
-  :hook ((groovy-mode groovy-ts-mode) . language-support-auto-enable))
+  :hook (groovy-mode . language-support-auto-enable)
+  :config
+  (setf groovy-ts-mode-hook groovy-mode-hook))
 
 (use-package python
   :when (member 'python language-support-languages)
@@ -151,8 +171,9 @@
   :defer t
   :hook
   (inferior-python-mode . (lambda () (add-hook 'comint-output-filter-functions #'comint-truncate-buffer nil 'local)))
-  ((python-mode python-ts-mode) . language-support-auto-enable)
+  (python-mode . language-support-auto-enable)
   :config
+  (setf python-ts-mode-hook python-mode-hook)
   (defvar python-indent-repeat-map
     (let ((map (make-sparse-keymap)))
       (define-key map (kbd "<") #'python-indent-shift-left)
@@ -195,7 +216,9 @@
   :when (member 'javascript language-support-languages)
   :ensure nil
   :defer t
-  :hook ((js-mode js-ts-mode) . language-support-auto-enable))
+  :hook (js-mode . language-support-auto-enable)
+  :config
+  (setf js-ts-mode-hook js-mode-hook))
 
 (use-package typescript-mode
   :when (member 'typescript language-support-languages)
@@ -203,13 +226,15 @@
   :defer t
   :mode ("\\.ts\\'" . typescript-mode)
   :preface (defalias 'ts-mode 'typescript-mode)
-  :hook ((typescript-mode typescript-ts-mode) . language-support-auto-enable))
+  :hook (typescript-mode . language-support-auto-enable)
+  :config
+  (setf typescript-ts-mode-hook typescript-mode-hook))
 
 (use-package vhdl-capf
   :when (member 'vhdl language-support-languages)
   :ensure t
   :defer t
-  :hook ((vhdl-mode vhdl-ts-mode) . vhdl-capf-enable)
+  :hook (vhdl-mode . vhdl-capf-enable)
   :config
   (defun vhdl-capf-flatten (l) (-flatten l)))
 
@@ -229,13 +254,17 @@
 (use-package yaml-mode
   :when (member 'yaml language-support-languages)
   :ensure t
-  :defer t)
+  :defer t
+  :config
+  (setf yaml-ts-mode-hook yaml-mode-hook))
 
 (use-package toml-mode
   :when (member 'toml language-support-languages)
   :ensure t
   :defer t
-  :hook (toml-mode . smartparens-mode))
+  :hook (toml-mode . smartparens-mode)
+  :config
+  (setf toml-ts-mode-hook toml-mode-hook))
 
 (use-package blueprint-mode
   :when (member 'blueprint language-support-languages)
@@ -469,7 +498,7 @@
      (lsp-vhdl-server 'ghdl-ls)
      (lsp-register-client
       (make-lsp-client :new-connection (lsp-tramp-connection "ghdl-ls")
-                       :major-modes '(vhdl-mode vhdl-ts-mode)
+                       :major-modes '(vhdl-mode)
                        :remote? t
                        :server-id 'ghdl-ls-remote)))
    (use-package lsp-tex

@@ -245,7 +245,7 @@
   (xclip-mode +1))
 
 (use-package monokai-theme
-  :quelpa (monokai-theme :fetcher github :repo "BohongHuang/monokai-emacs")
+  :quelpa (monokai-theme :fetcher github :repo "bohonghuang/monokai-emacs")
   :when (null custom-enabled-themes)
   :config
   (load-theme 'monokai t))
@@ -1059,7 +1059,7 @@
   (highlight-indent-guides-auto-stack-even-face-perc 40)
   (highlight-indent-guides-auto-top-character-face-perc 75)
   (highlight-indent-guides-auto-stack-character-face-perc 70)
-  :hook ((python-mode python-ts-mode toml-mode toml-ts-mode yaml-mode yaml-ts-mode haskell-mode haskell-ts-mode lua-mode lua-ts-mode ruby-mode ruby-ts-mode octave-mode matlab-mode) . highlight-indent-guides-mode))
+  :hook ((python-mode toml-mode yaml-mode haskell-mode lua-mode ruby-mode octave-mode matlab-mode) . highlight-indent-guides-mode))
 
 (use-package string-inflection
   :ensure t
@@ -1082,7 +1082,7 @@
     "Keymap to repeat string inflection key sequences.  Used in `repeat-mode'."))
 
 (use-package indent-yank
-  :quelpa (indent-yank :fetcher github :repo "BohongHuang/indent-yank")
+  :quelpa (indent-yank :fetcher github :repo "bohonghuang/indent-yank")
   :defer t
   :commands (indent-yank-yank)
   :hook (prog-mode . indent-yank-mode))
@@ -1296,20 +1296,8 @@
   :load-path "custom-lisp"
   :defer t
   :hook
-  ((c-mode c-ts-mode
-    c++-mode c++-ts-mode
-    objc-mode objc-ts-mode
-    java-mode java-ts-mode
-    scala-mode scala-ts-mode
-    rust-mode rust-ts-mode
-    rustic-mode rustic-ts-mode
-    js-mode js-ts-mode
-    dart-mode dart-ts-mode
-    scad-mode scad-ts-mode
-    js-mode js-ts-mode
-    typescript-mode typescript-ts-mode)
-   . intellij-edit-cc-mode)
-  ((python-mode python-ts-mode) . intellij-edit-python-mode)
+  ((c-mode c++-mode objc-mode java-mode scala-mode rust-mode rustic-mode js-mode dart-mode scad-mode js-mode typescript-mode) . intellij-edit-cc-mode)
+  (python-mode . intellij-edit-python-mode)
   :commands (intellij-edit-cc-mode intellij-edit-indent-mode))
 
 (use-package time
@@ -1387,7 +1375,7 @@
   (org-attach-id-dir (expand-file-name "org-attach/data" org-directory)))
 
 (use-package org-attach-refactor
-  :quelpa (org-attach-refactor :fetcher github :repo "BohongHuang/org-attach-refactor")
+  :quelpa (org-attach-refactor :fetcher github :repo "bohonghuang/org-attach-refactor")
   :defer t
   :commands (org-attach-refactor-remove-id org-attach-refactor-add-id))
 
@@ -1643,7 +1631,7 @@
 
 (use-package org-bars
   :when (<= 27 emacs-major-version)
-  :quelpa (org-bars :fetcher github :repo "BohongHuang/org-bars")
+  :quelpa (org-bars :fetcher github :repo "bohonghuang/org-bars")
   :defer t
   :hook (org-mode . org-bars-mode)
   :config
@@ -1788,7 +1776,7 @@
 
 (use-package org-englearn
   :when (member 'org-englearn extra-features)
-  :quelpa (org-englearn :fetcher github :repo "BohongHuang/org-englearn")
+  :quelpa (org-englearn :fetcher github :repo "bohonghuang/org-englearn")
   :defer t
   :commands org-englearn-capture org-englearn-process-inbox org-englearn-capture-process-region
   :bind
@@ -2113,7 +2101,7 @@
 
 (use-package emms-vgm
   :when (member 'emms extra-features)
-  :quelpa (emms-vgm :fetcher github :repo "BohongHuang/emms-vgm")
+  :quelpa (emms-vgm :fetcher github :repo "bohonghuang/emms-vgm")
   :demand t
   :after emms
   :config
@@ -2205,7 +2193,7 @@ Saves to a temp file and puts the filename in the kill ring."
 (use-package app-launcher
   :when (<= 27 emacs-major-version)
   :defer t
-  :quelpa (app-launcher :fetcher github :repo "BohongHuang/app-launcher")
+  :quelpa (app-launcher :fetcher github :repo "bohonghuang/app-launcher")
   :bind (("s-SPC" . app-launcher-run-app))
   :commands (app-launcher-make-frame-and-run-app)
   :config
