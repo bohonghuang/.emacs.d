@@ -1446,11 +1446,11 @@
    ("C-c g n" . org-gtd-show-all-next)
    ("C-c g s" . org-gtd-show-stuck-projects)
    ("C-c g a" . org-agenda-list)
-   :map org-gtd-process-map
-   ("C-c C-c" . org-gtd-choose))
+   :map org-gtd-clarify-map
+   ("C-c C-c" . org-gtd-organize))
   :config
-  (setq org-gtd-default-file-name "tasks")
-  (add-to-list 'org-agenda-files org-gtd-directory))
+  (setf org-gtd-default-file-name "tasks")
+  (cl-pushnew org-gtd-directory org-agenda-files))
 
 (use-package buffer-timer
   :when (member 'org-gtd extra-features)
