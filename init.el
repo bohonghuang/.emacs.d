@@ -386,7 +386,7 @@
   :ensure nil
   :defer t
   :config
-  (add-to-list 'comint-output-filter-functions #'comint-truncate-buffer))
+  (cl-pushnew #'comint-truncate-buffer comint-output-filter-functions))
 
 (use-package ediff
   :ensure nil
@@ -656,7 +656,7 @@
   (kind-icon-extra-space t)
   :config
   (when (null corfu-margin-formatters)
-    (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter)))
+    (cl-pushnew #'kind-icon-margin-formatter corfu-margin-formatters)))
 
 (use-package dabbrev
   :ensure nil
@@ -787,10 +787,10 @@
   :init
   (setq prefix-help-command #'embark-prefix-help-command)
   :config
-  (add-to-list 'display-buffer-alist
-               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                 nil
-                 (window-parameters (mode-line-format . none))))
+  (cl-pushnew '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                nil
+                (window-parameters (mode-line-format . none)))
+              display-buffer-alist)
   (define-key embark-function-map (kbd "M-d") #'disassemble))
 
 (use-package embark-consult
@@ -932,8 +932,7 @@
     :defer t
     :bind ("C-<tab>" . eshell-popper-request)
     :config
-    (add-to-list 'eshell-modules-list 'eshell-tramp)
-    
+    (cl-pushnew 'eshell-tramp eshell-modules-list)
     (defun eshell-popper-buffer-p (buffer)
         (and (eq (with-current-buffer buffer major-mode) 'eshell-mode) (popper-display-control-p buffer) (string-match-p "\\*eshell-popper\\*\\(<[0-9]+>\\)\\{0,1\\}" (buffer-name buffer))))
     
@@ -1264,11 +1263,11 @@
         ;; Node fits the region exactly. Try its parent node instead.
         (when (and (= (region-beginning) node-start) (= (region-end) node-end))
           (when-let ((node (treesit-node-parent node)))
-            (setq node-start (treesit-node-start node)
+            (setf node-start (treesit-node-start node)
                   node-end (treesit-node-end node))))
         (set-mark node-end)
         (goto-char node-start)))
-    (add-to-list 'er/try-expand-list #'treesit-expand-region)))
+    (cl-pushnew #'treesit-expand-region er/try-expand-list)))
 
 (use-package multiple-cursors
   :ensure t
@@ -1785,10 +1784,11 @@
    :map org-capture-mode-map
    ("C-c e c" . org-englearn-capture-process-region))
   :config
-  (add-to-list 'org-capture-templates `("e" "English sentence"
-   entry (file ,(expand-file-name "org-capture/english.org" org-directory))
-   "* %?\n%U\n\n  %i\n  %a"
-   :kill-buffer t)))
+  (cl-pushnew `("e" "English sentence"
+                entry (file ,(expand-file-name "org-capture/english.org" org-directory))
+                "* %?\n%U\n\n  %i\n  %a"
+                :kill-buffer t)
+              org-capture-templates))
 
 (use-package org-englearn-pdf-view
   :when (and (member 'org-englearn extra-features) (member 'pdf-tools extra-features))
@@ -1855,7 +1855,7 @@
                      (nil "stackrel"   "Log-like")))
   :config
   (when (boundp 'tex-mode-hook)
-    (dolist (hook tex-mode-hook) (add-to-list 'TeX-mode-hook hook))))
+    (dolist (hook tex-mode-hook) (cl-pushnew hook TeX-mode-hook))))
 
 (use-package latex
   :when (and (member 'tex language-support-languages) (member 'auctex extra-features))
@@ -1863,7 +1863,7 @@
   :defer t
   :config
   (when (boundp 'latex-mode-hook)
-    (dolist (hook latex-mode-hook) (add-to-list 'LaTeX-mode-hook hook))))
+    (dolist (hook latex-mode-hook) (cl-pushnew hook LaTeX-mode-hook))))
 
 (use-package go-translate
   :when (<= 27 emacs-major-version)
@@ -1902,7 +1902,7 @@
   :ensure nil
   :defer t
   :config
-  (add-to-list 'eshell-output-filter-functions #'eshell-truncate-buffer))
+  (cl-pushnew #'eshell-truncate-buffer eshell-output-filter-functions))
 
 (use-package em-hist
   :when (member 'eshell extra-features)
@@ -2060,7 +2060,7 @@
   (default-input-method "rime")
   (rime-show-candidate 'posframe)
   :config
-  (dolist (it '("C-v" "M-v" "S-<delete>" "<tab>")) (add-to-list 'rime-translate-keybindings it)))
+  (dolist (it '("C-v" "M-v" "S-<delete>" "<tab>")) (cl-pushnew it rime-translate-keybindings)))
 
 (use-package redacted
   :ensure t
