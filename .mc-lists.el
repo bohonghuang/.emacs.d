@@ -94,6 +94,7 @@
         sp-kill-sexp
         sp-split-sexp
         sp-unwrap-sexp
+        string-inflection-kebab-case
         tempel-next
         transpose-sexps
         transpose-words

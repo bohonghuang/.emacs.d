@@ -874,7 +874,7 @@
   :when (<= 26 emacs-major-version)
   :defer nil
   :ensure t
-  :bind (("C-`"   . popper-toggle-latest)
+  :bind (("C-`"   . popper-toggle)
          ("M-`"   . popper-cycle)
          ("C-M-`" . popper-toggle-type))
   :commands popper-delete-other-windows
@@ -1683,8 +1683,7 @@
   (org-latex-custom-lang-environments '((Chinese "")))
   (org-latex-pdf-process '("%latex -shell-escape -interaction nonstopmode -output-directory %o %f" "%latex -shell-escape -interaction nonstopmode -output-directory %o %f" "%latex -shell-escape -interaction nonstopmode -output-directory %o %f"))
   (org-latex-packages-alist
-   '(("a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm" "geometry" nil nil)
-     ("" "ctex" nil nil)
+   '(("" "ctex" nil nil)
      ("" "svg" nil nil)))
   (org-latex-image-default-width nil)
   (org-latex-image-default-height ".2\\linewidth")
@@ -1709,10 +1708,10 @@
       (setf (nth 4 args) 'imagemagick-xelatex))
     (apply fun args))
   (advice-add #'org-create-formula-image :around #'org-create-formula-image-with-auto-processing-type)
-  (let ((article-class (copy-sequence (assoc-string "article" org-latex-classes))))
+  (let ((article-class (cl-copy-list (assoc-string "article" (default-value 'org-latex-classes)))))
     (setf (car article-class) "article-ctex"
           (cadr article-class) "\\documentclass[11pt]{ctexart}")
-    (push article-class org-latex-classes)))
+    (push article-class (default-value 'org-latex-classes))))
 
 (use-package ox-md
   :ensure nil

@@ -78,6 +78,8 @@
                           (sly ,(symbol-name impl))))))
                  impl-list)))
   (sly-define-lisp-implementations (sbcl ccl abcl clasp clisp ecl))
+  :bind (:map sly-inspector-mode-map
+         ("<mouse-8>" . sly-inspector-pop))
   :custom
   (org-babel-lisp-eval-fn 'sly-eval))
 
@@ -270,6 +272,13 @@
   :when (member 'blueprint language-support-languages)
   :quelpa (blueprint-mode :fetcher github :repo "DrBluefall/blueprint-mode")
   :defer t)
+
+(use-package glsl-mode
+  :when (member 'glsl language-support-languages)
+  :ensure t
+  :defer t
+  :mode ("\\.\\(fs\\|vs\\)\\'" . glsl-mode)
+  :hook (glsl-mode . language-support-auto-enable))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Completion/Goto ;;
