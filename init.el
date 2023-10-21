@@ -882,6 +882,8 @@
   (popper-reference-buffers '("\\*Messages\\*"
                               "Output\\*$"
                               "out\\*$"
+                              "REPL\\*$"
+                              "\\*ielm\\*"
                               "\\*Async Shell Command\\*"
                               "\\*rustic-compilation\\*"
                               "\\*cargo-run\\*"
@@ -1164,6 +1166,12 @@
                                     (not (or (nth 3 state)
                                              (nth 4 state))))))
                               ,@match-highlights)))))
+
+(use-package macrostep
+  :ensure t
+  :defer t
+  :bind (:map emacs-lisp-mode-map
+         ("C-c C-<return>" . macrostep-expand)))
 
 (use-package flymake
   :ensure nil

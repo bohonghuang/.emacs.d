@@ -73,9 +73,7 @@
                      `(defun ,impl ()
                         ,(format "Start a %s session and connect to it." (upcase (symbol-name impl)))
                         (interactive)
-                        (let ,(when (eq impl 'ecl)
-                                `((sly-init-function #'sly-init-using-slynk-loader)))
-                          (sly ,(symbol-name impl))))))
+                        (sly ,(symbol-name impl)))))
                  impl-list)))
   (sly-define-lisp-implementations (sbcl ccl abcl clasp clisp ecl))
   :bind (:map sly-inspector-mode-map
@@ -83,10 +81,29 @@
   :custom
   (org-babel-lisp-eval-fn 'sly-eval))
 
+(use-package sly-macrostep
+  :when (member 'lisp language-support-languages)
+  :ensure t
+  :demand t
+  :after sly
+  :bind (:map sly-mode-map
+         ("C-c C-<return>" . macrostep-expand))
+  :config (cl-pushnew 'sly-macrostep sly-contribs))
+
 (use-package geiser
   :when (member 'scheme language-support-languages)
   :ensure t
   :defer t)
+
+(use-package macrostep-geiser
+  :when (member 'scheme language-support-languages)
+  :ensure t
+  :demand t
+  :after geiser-mode
+  :bind (:map geiser-mode-map
+         ("C-c C-<return>" . macrostep-geiser-expand-all))
+  :hook (geiser-mode . macrostep-geiser-setup)
+  :config (keymap-unset geiser-mode-map "M-`" t))
 
 (use-package racket-mode
   :when (member 'racket language-support-languages)
