@@ -18,6 +18,7 @@
         c-indent-line-or-region
         cdlatex-pbb
         cdlatex-tab
+        comint-delchar-or-maybe-eof
         comment-dwim
         comment-line
         crux-eval-and-replace
@@ -103,6 +104,7 @@
         vhdl-electric-tab
         wdired--self-insert
         wdired-abort-changes
+        wdired-downcase-word
         ))
 
 (setq mc/cmds-to-run-once

@@ -1358,6 +1358,7 @@
   (org-hide-emphasis-markers t)
   (org-default-notes-file (expand-file-name "org-capture/captures.org" org-directory))
   (org-highlight-latex-and-related '(native))
+  (org-startup-folded 'showall)
   :bind (:map org-mode-map
               ("M-," . org-mark-ring-goto)
               ("M-." . org-open-at-point)))
@@ -1464,8 +1465,6 @@
   :quelpa (buffer-timer :fetcher github :repo "bohonghuang/elisp-buffer-timer")
   :defer t
   :commands (buffer-timer-start buffer-timer-stop)
-  :custom
-  (buffer-timer-output-file (expand-file-name "org-agenda/track/%Y-%m-%d_buffer-timer" org-directory))
   :bind (;; reporting
          ("C-c g t s" . buffer-timer-summarize)
          ("C-c g t r" . buffer-timer-report)

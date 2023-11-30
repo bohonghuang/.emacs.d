@@ -143,13 +143,13 @@
    (setf sbt:program-options '("-Dsbt.supershell=false")))
 
 (use-package cc-mode
-  :when (cl-intersection '(c++ c objective-c) language-support-languages)
+  :when (cl-intersection '(c++ c objective-c java) language-support-languages)
   :ensure nil
   :defer t
   :init
   (defalias 'cpp-mode 'c++-mode)
   (defalias 'cpp-ts-mode 'c++-ts-mode)
-  :hook ((c-mode c++-mode objc-mode) . language-support-auto-enable))
+  :hook ((c-mode c++-mode objc-mode java-mode) . language-support-auto-enable))
 
 (use-package c-ts-mode
   :when (>= emacs-major-version 29)
@@ -160,6 +160,13 @@
   (setf c-ts-mode-hook c-mode-hook
         c++-ts-mode-hook c++-mode-hook
         objc-ts-mode-hook objc-mode-hook))
+
+(use-package java-ts-mode
+  :when (>= emacs-major-version 29)
+  :ensure nil
+  :defer t
+  :config
+  (setf java-ts-mode-hook java-mode-hook))
 
 (use-package rustic
   :when (member 'rust language-support-languages)
