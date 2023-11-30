@@ -76,11 +76,11 @@
       (when (and arg (buffer-live-p emms-lyrics-buffer))
         (emms-lyrics-buffer-to-new-frame)))))
 
-(add-to-list 'emms-info-native--accepted-vorbis-fields "lyrics")
+(cl-pushnew "lyrics" emms-info-native-vorbis--accepted-fields :test #'string=)
 
 (defconst emms-info-lyrics-temp-file (make-temp-file "emms-info-lyrics-" nil ".lrc"))
 
-(defun emms-info-native--split-vorbis-comment-multiline (comment)
+(defun emms-info-native-vorbis--split-comment-multiline (comment)
   (let ((comment-string (decode-coding-string (mapconcat
                                                #'byte-to-string
                                                comment
@@ -90,7 +90,7 @@
       (cons (downcase (match-string 1 comment-string))
             (match-string 2 comment-string)))))
 
-(advice-add #'emms-info-native--split-vorbis-comment :override #'emms-info-native--split-vorbis-comment-multiline)
+(advice-add #'emms-info-native-vorbis--split-comment :override #'emms-info-native-vorbis--split-comment-multiline)
 
 (defun emms-lyrics-find-with-info-lyric (file)
   (if-let ((file (emms-lyrics-find-lyric file)))
