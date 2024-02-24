@@ -863,7 +863,7 @@
          ("C-M-+" . cnfonts-increase-fontsize)
          ("C-M-)" . cnfonts-reset-fontsize))
   :custom
-  (cnfonts-personal-fontnames '(("Noto Serif CJK SC" "Noto Serif CJK TC") nil nil nil))
+  (cnfonts-personal-fontnames '(("Noto Serif CJK SC" "Noto Serif CJK TC" "Jetbrains Mono") nil nil nil))
   (cnfonts-profiles '("program" "document"))
   (cnfonts-use-face-font-rescale t)
   (cnfonts-use-cache t)
@@ -2215,14 +2215,17 @@ Saves to a temp file and puts the filename in the kill ring."
           (let ((enable-recursive-minibuffers nil)) (app-launcher-run-app))
         (delete-frame)))))
 
+(defcustom sis-ism-lazyman-config nil
+  "Out-of-the-box configuration used by SIS.")
+
 (use-package sis
   :when (member 'sis extra-features)
   :ensure t
   :defer nil
   :config
-  (sis-ism-lazyman-config "1" "2" 'fcitx5)
-  (push "M-g" sis-prefix-override-keys)
-  (push "<f1>" sis-prefix-override-keys)
+  (cl-case sis-ism-lazyman-config
+    (fcitx5 (sis-ism-lazyman-config "1" "2" 'fcitx5))
+    (ibus (sis-ism-lazyman-config "xkb:us::eng" "rime" 'ibus)))
   (sis-global-cursor-color-mode +1)
   (sis-global-respect-mode +1)
   (sis-global-context-mode +1)

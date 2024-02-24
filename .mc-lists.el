@@ -9,6 +9,8 @@
         artist-forwad-char
         asm-comment
         backward-sexp
+        beginning-of-visual-line
+        end-of-visual-line
         c-electric-colon
         c-electric-delete-forward
         c-electric-paren
