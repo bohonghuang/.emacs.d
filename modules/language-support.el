@@ -168,6 +168,14 @@
   :config
   (setf java-ts-mode-hook java-mode-hook))
 
+(use-package csharp-mode
+  :when (and (member 'csharp language-support-languages) (>= emacs-major-version 29))
+  :ensure nil
+  :defer t
+  :hook (csharp-mode . language-support-auto-enable)
+  :config
+  (setf csharp-ts-mode-hook csharp-mode-hook))
+
 (use-package rustic
   :when (member 'rust language-support-languages)
   :ensure t
