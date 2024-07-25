@@ -486,48 +486,7 @@
 (use-package nerd-icons
   :when (member 'nerd-icons extra-features)
   :ensure t
-  :defer nil
-  :config
-  (use-package kind-icon
-    :after nerd-icons
-    :custom
-    (kind-icon-mapping
-     `((array ,(nerd-icons-codicon "nf-cod-symbol_array") :face font-lock-type-face)
-       (boolean ,(nerd-icons-codicon "nf-cod-symbol_boolean") :face font-lock-builtin-face)
-       (class ,(nerd-icons-codicon "nf-cod-symbol_class") :face font-lock-type-face)
-       (color ,(nerd-icons-codicon "nf-cod-symbol_color") :face success)
-       (command ,(nerd-icons-codicon "nf-cod-terminal") :face default)
-       (constant ,(nerd-icons-codicon "nf-cod-symbol_constant") :face font-lock-constant-face)
-       (constructor ,(nerd-icons-codicon "nf-cod-triangle_right") :face font-lock-function-name-face)
-       (enummember ,(nerd-icons-codicon "nf-cod-symbol_enum_member") :face font-lock-builtin-face)
-       (enum-member ,(nerd-icons-codicon "nf-cod-symbol_enum_member") :face font-lock-builtin-face)
-       (enum ,(nerd-icons-codicon "nf-cod-symbol_enum") :face font-lock-builtin-face)
-       (event ,(nerd-icons-codicon "nf-cod-symbol_event") :face font-lock-warning-face)
-       (field ,(nerd-icons-codicon "nf-cod-symbol_field") :face font-lock-variable-name-face)
-       (file ,(nerd-icons-codicon "nf-cod-symbol_file") :face font-lock-string-face)
-       (folder ,(nerd-icons-codicon "nf-cod-folder") :face font-lock-doc-face)
-       (interface ,(nerd-icons-codicon "nf-cod-symbol_interface") :face font-lock-type-face)
-       (keyword ,(nerd-icons-codicon "nf-cod-symbol_keyword") :face font-lock-keyword-face)
-       (macro ,(nerd-icons-codicon "nf-cod-symbol_misc") :face font-lock-keyword-face)
-       (magic ,(nerd-icons-codicon "nf-cod-wand") :face font-lock-builtin-face)
-       (method ,(nerd-icons-codicon "nf-cod-symbol_method") :face font-lock-function-name-face)
-       (function ,(nerd-icons-codicon "nf-cod-symbol_method") :face font-lock-function-name-face)
-       (module ,(nerd-icons-codicon "nf-cod-file_submodule") :face font-lock-preprocessor-face)
-       (numeric ,(nerd-icons-codicon "nf-cod-symbol_numeric") :face font-lock-builtin-face)
-       (operator ,(nerd-icons-codicon "nf-cod-symbol_operator") :face font-lock-comment-delimiter-face)
-       (param ,(nerd-icons-codicon "nf-cod-symbol_parameter") :face default)
-       (property ,(nerd-icons-codicon "nf-cod-symbol_property") :face font-lock-variable-name-face)
-       (reference ,(nerd-icons-codicon "nf-cod-references") :face font-lock-variable-name-face)
-       (snippet ,(nerd-icons-codicon "nf-cod-symbol_snippet") :face font-lock-string-face)
-       (string ,(nerd-icons-codicon "nf-cod-symbol_string") :face font-lock-string-face)
-       (struct ,(nerd-icons-codicon "nf-cod-symbol_structure") :face font-lock-variable-name-face)
-       (text ,(nerd-icons-codicon "nf-cod-text_size") :face font-lock-doc-face)
-       (typeparameter ,(nerd-icons-codicon "nf-cod-list_unordered") :face font-lock-type-face)
-       (type-parameter ,(nerd-icons-codicon "nf-cod-list_unordered") :face font-lock-type-face)
-       (unit ,(nerd-icons-codicon "nf-cod-symbol_ruler") :face font-lock-constant-face)
-       (value ,(nerd-icons-codicon "nf-cod-symbol_field") :face font-lock-builtin-face)
-       (variable ,(nerd-icons-codicon "nf-cod-symbol_variable") :face font-lock-variable-name-face)
-       (t ,(nerd-icons-codicon "nf-cod-code") :face font-lock-warning-face)))))
+  :defer nil)
 
 (use-package doom-modeline
   :ensure t
@@ -606,9 +565,11 @@
   :config
   (defun corfu-move-to-minibuffer ()
     (interactive)
-    (let ((completion-extra-properties corfu--extra)
-          completion-cycle-threshold completion-cycling)
-      (apply #'consult-completion-in-region completion-in-region--data))))
+    (pcase completion-in-region--data
+      (`(,beg ,end ,table ,pred ,extras)
+       (let ((completion-extra-properties extras)
+             completion-cycle-threshold completion-cycling)
+         (consult-completion-in-region beg end table pred))))))
 
 (use-package corfu-terminal
   :when (<= 27 emacs-major-version)
@@ -645,18 +606,14 @@
   (push #'cape-dabbrev completion-at-point-functions)
   (push #'cape-keyword completion-at-point-functions))
 
-(use-package kind-icon
-  :when (<= 28 emacs-major-version)
+(use-package nerd-icons-corfu
+  :when (member 'nerd-icons extra-features)
   :ensure t
   :demand t
   :after corfu
-  :custom
-  (kind-icon-use-icons nil)
-  (kind-icon-default-face 'corfu-default)
-  (kind-icon-extra-space t)
   :config
-  (when (null corfu-margin-formatters)
-    (cl-pushnew #'kind-icon-margin-formatter corfu-margin-formatters)))
+  (unless corfu-margin-formatters
+    (cl-pushnew #'nerd-icons-corfu-formatter corfu-margin-formatters)))
 
 (use-package dabbrev
   :ensure nil
@@ -692,6 +649,13 @@
          ("M-A" . marginalia-cycle))
   :defer t
   :hook (minibuffer-setup . marginalia-mode))
+
+(use-package nerd-icons-completion
+  :when (member 'nerd-icons extra-features)
+  :ensure t
+  :defer t
+  :hook (marginalia-mode . nerd-icons-completion-marginalia-setup)
+  :config (nerd-icons-completion-mode +1))
 
 (use-package consult
   :when (<= 27 emacs-major-version)
@@ -833,12 +797,6 @@
                (define-key tempel-map (kbd "<backtab>") #'tempel-previous))
       (define-key tempel-map (kbd "TAB") nil)
       (define-key tempel-map (kbd "<backtab>") nil))))
-
-(use-package nerd-icons-completion
-  :when (member 'nerd-icons extra-features)
-  :ensure t
-  :defer t
-  :hook (marginalia-mode . nerd-icons-completion-mode))
 
 (use-package crux
   :ensure t
@@ -1407,7 +1365,7 @@
   (org-agenda-window-setup 'current-window)
   :config
   (require 'recentf)
-  (require 'org-gtd)
+  (require 'org-gtd nil t)
   (nconc recentf-exclude (org-agenda-files))
   (use-package appt
     :when (member 'appt-org-agenda extra-features)
