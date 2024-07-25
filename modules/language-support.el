@@ -329,12 +329,7 @@
      :custom
      (citre-project-root-function (lambda  () (project-root (or (project-current nil) (list 'vc nil default-directory)))))
      (citre-auto-enable-citre-mode-modes nil)
-     (citre-gtags-args '("--compact")))
-   (use-package citre-ext
-     :load-path "custom-lisp"
-     :demand t
-     :hook ((after-save . citre-auto-update-tags-after-save))
-     :after citre))
+     (citre-gtags-args '("--compact"))))
   ('eglot
    (use-package eglot
      :defer t
