@@ -621,7 +621,10 @@
   :bind (("M-/" . dabbrev-completion)
          ("C-M-/" . dabbrev-expand))
   :custom
-  (dabbrev-check-all-buffers nil))
+  (dabbrev-check-all-buffers nil)
+  :hook (prog-mode . (lambda ()
+                       (setq-local dabbrev-case-replace nil
+                                   dabbrev-case-fold-search nil))))
 
 (use-package orderless
   :when (<= 26 emacs-major-version)
@@ -784,7 +787,7 @@
   (defconst tempel-maybe-expand `(menu-item "" ,(lambda () (interactive) (tempel-expand t)) :filter ,(lambda (cmd) (when (tempel-expand nil) cmd))))
   (defvar tempel-tab-mode-map
     (let ((map (make-sparse-keymap)))
-      (define-key map [tab] tempel-maybe-expand)
+      (define-key map (kbd "TAB") tempel-maybe-expand)
       map)
     "Keymap for `tempel-tab-mode'.")
   (define-minor-mode tempel-tab-mode
@@ -1076,7 +1079,7 @@
   :hook (prog-mode . (lambda () (unless (-contains-p '(emacs-lisp-mode lisp-mode common-lisp-mode) major-mode) (drag-stuff-mode +1)))))
 
 (use-package pixel-scroll
-  :when (and (display-graphic-p) (<= 29 emacs-major-version))
+  :when (<= 29 emacs-major-version)
   :ensure nil
   :defer nil
   :custom
