@@ -514,14 +514,21 @@
   :config
   (vertico-mode +1))
 
+(use-package vertico-mouse
+  :after vertico
+  :ensure nil
+  :demand t
+  :config
+  (vertico-mouse-mode +1))
+
 (use-package vertico-directory
   :after vertico
   :ensure nil
   :defer t
-  :bind(:map vertico-map
-        ("RET" . vertico-directory-enter)
-        ("DEL" . vertico-directory-delete-char)
-        ("C-DEL" . vertico-directory-delete-word))
+  :bind (:map vertico-map
+         ("RET" . vertico-directory-enter)
+         ("DEL" . vertico-directory-delete-char)
+         ("C-DEL" . vertico-directory-delete-word))
   :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
 
 (use-package company
