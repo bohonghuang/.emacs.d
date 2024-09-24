@@ -245,8 +245,9 @@
   (xclip-mode +1))
 
 (use-package monokai-theme
-  :quelpa (monokai-theme :fetcher github :repo "bohonghuang/monokai-emacs")
   :when (null custom-enabled-themes)
+  :ensure t
+  :demand t
   :config
   (load-theme 'monokai t))
 
@@ -374,7 +375,7 @@
   :defer t
   :bind (("<mouse-8>" . xref-go-back)
          ("<mouse-9>" . xref-go-forward))
-  :custom (xref-backend-functions '(t)))
+  :custom (xref-history-storage 'xref-window-local-history))
 
 (use-package compile
   :ensure nil
@@ -392,7 +393,8 @@
   :ensure nil
   :defer t
   :custom
-  (ediff-window-setup-function 'ediff-setup-windows-plain))
+  (ediff-window-setup-function 'ediff-setup-windows-plain)
+  (ediff-split-window-function 'split-window-horizontally))
 
 (use-package project
   :when (<= 27 emacs-major-version)
@@ -628,10 +630,7 @@
   :bind (("M-/" . dabbrev-completion)
          ("C-M-/" . dabbrev-expand))
   :custom
-  (dabbrev-check-all-buffers nil)
-  :hook (prog-mode . (lambda ()
-                       (setq-local dabbrev-case-replace nil
-                                   dabbrev-case-fold-search nil))))
+  (dabbrev-check-all-buffers nil))
 
 (use-package orderless
   :when (<= 26 emacs-major-version)
@@ -1243,6 +1242,7 @@
                   node-end (treesit-node-end node))))
         (set-mark node-end)
         (goto-char node-start)))
+    (cl-pushnew #'treesit-expand-region (default-value 'er/try-expand-list))
     (cl-pushnew #'treesit-expand-region er/try-expand-list)))
 
 (use-package multiple-cursors
