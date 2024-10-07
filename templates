@@ -1,6 +1,7 @@
 fundamental-mode ;; Available everywhere
 
 (today (format-time-string "%Y-%m-%d"))
+(now (format-time-string "%Y-%m-%d") (p "_" delim) (format-time-string (pcase delim ((or "_" "-") "%H-%M-%S") (_ "%H:%M:%S"))))
 (file (file-name-nondirectory (or (buffer-file-name) (buffer-name))))
 (pfile (file-relative-name (or (buffer-file-name) (buffer-name)) (project-root (project-current))))
 

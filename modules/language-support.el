@@ -1,7 +1,10 @@
 ;; -*- lexical-binding: t; -*-
 
-(defcustom language-support (intern (completing-read "Select language support: " '("lsp-mode" "eglot" "citre" "nil") nil t))
+(defcustom language-support nil
   "The language support used in `prog-mode'.")
+
+(unless language-support
+  (setf language-support (intern (completing-read "Select language support: " '("lsp-mode" "eglot" "citre" "nil") nil t))))
 
 (defcustom language-support-languages nil
   "All programming languages that this configured Emacs need to support.")
@@ -14,37 +17,48 @@
       (when-let ((file (buffer-file-name))) (file-name-directory file))))
 
 (defun language-support--enable ()
-  (pcase language-support
-    ('lsp-mode (lsp))
-    ('eglot (eglot-ensure))
-    ('citre (citre-mode))))
+  (cl-ecase language-support
+    (lsp-mode (lsp))
+    (eglot (eglot-ensure))
+    (citre (citre-mode))))
 
 (defun language-support-enable ()
   "Enable language support for current project or directory."
   (interactive)
   (let ((current-buffer (current-buffer)))
     (language-support--enable)
-    (unless (cl-member (language-support-directory) language-support-enabled-directories :test #'string-equal)
+    (unless (cl-member (language-support-directory) language-support-enabled-directories :test #'f-equal-p)
       (push (language-support-directory) language-support-enabled-directories)
-      (unless (eql language-support 'eglot)
-        (let ((buffers (cl-delete current-buffer
-                                  (if-let ((proj (project-current)))
-                                      (cl-delete-if (lambda (buffer)
-                                                      (and (string-prefix-p "*" (buffer-name buffer))
-                                                           (string-suffix-p "*" (buffer-name buffer))))
-                                                    (project-buffers proj))
-                                    (if-let* ((file (buffer-file-name))
-                                              (dir (file-name-directory file)))
-                                        (cl-loop for buffer in (buffer-list)
-                                                 for file = (buffer-file-name)
-                                                 when (and file (f-parent-of-p dir file))
-                                                 collect buffer))))))
-          (when (and buffers (y-or-n-p "Enable language support for other buffers that belongs to current project or directory?"))
+      (unless (eq language-support 'eglot)
+        (when-let ((buffers (cl-loop with buffers = (if-let ((project (project-current)))
+                                                        (project-buffers project)
+                                                      (cl-loop with root = (f-parent (buffer-file-name))
+                                                               initially (unless root (cl-return nil))
+                                                               for buffer in (buffer-list)
+                                                               for file = (buffer-file-name buffer)
+                                                               when file
+                                                               when (f-ancestor-of-p root file)
+                                                               collect buffer))
+                                     for buffer in buffers
+                                     unless (eq current-buffer buffer)
+                                     when (eq major-mode (with-current-buffer buffer major-mode))
+                                     collect buffer)))
+          (when (y-or-n-p "Enable language support for other buffers that belongs to current project or directory?")
             (dolist (buffer buffers)
               (with-current-buffer buffer
                 (let ((hooksym (intern (concat (symbol-name major-mode) "-hook"))))
                   (when (and (boundp hooksym) (cl-member #'language-support-auto-enable (symbol-value hooksym)))
                     (language-support--enable)))))))))))
+
+(defun language-support-disable ()
+  (interactive)
+  (cl-ecase language-support
+    (lsp-mode
+     (lsp-workspace-shutdown (lsp--read-workspace)))
+    (eglot
+     (eglot-shutdown (eglot--current-server-or-lose)))
+    (citre))
+  (setf language-support-enabled-directories (cl-delete (language-support-directory) language-support-enabled-directories :test #'f-equal-p)))
 
 (defun language-support-auto-enable ()
   (interactive)
@@ -216,11 +230,6 @@
       map)
     "Keymap to repeat Python indentation key sequences.  Used in `repeat-mode'."))
 
-(use-package ein
-  :when (member 'python language-support-languages)
-  :ensure t
-  :defer t)
-
 (use-package cmake-mode
   :when (member 'cmake language-support-languages)
   :ensure t
@@ -339,6 +348,7 @@
             ("C-c l a a" . eglot-code-actions))
      :config
      (setq completion-category-defaults nil))
+   
    (use-package eldoc-box
      :when (display-graphic-p)
      :defer t
@@ -357,7 +367,13 @@
                (if (< y height)
                    (+ y em)
                  (- y height)))))
-     (advice-add #'eldoc-box--default-at-point-position-function :override #'eldoc-box--bottom-left-at-point-position-function)))
+     (advice-add #'eldoc-box--default-at-point-position-function :override #'eldoc-box--bottom-left-at-point-position-function))
+
+   (use-package eglot-tempel
+     :ensure t
+     :demand t
+     :after eglot
+     :config (eglot-tempel-mode +1)))
   ('lsp-mode
    (use-package lsp-mode
      :ensure t
@@ -373,6 +389,12 @@
      (lsp-log-io nil)
      :config
      (advice-add #'lsp-completion-at-point :around #'cape-wrap-noninterruptible))
+
+   (use-package lsp-diagnostics
+     :ensure lsp-mode
+     :after lsp-mode
+     :defer t
+     :custom (lsp-diagnostic-package t))
 
    (use-package lsp-lens
      :ensure lsp-mode

@@ -1653,6 +1653,27 @@
 (use-package ox-latex
   :ensure nil
   :defer t
+  :init
+  (use-package org
+    :defer t
+    :config
+    (cl-pushnew
+     `(imagemagick-xelatex
+       :programs ("xelatex" "convert")
+       :description "pdf > png"
+       :message "you need to install the programs: xelatex and imagemagick."
+       :image-input-type "pdf"
+       :image-output-type "png"
+       :image-size-adjust (1.0 . 1.0)
+       :latex-compiler ("xelatex -interaction nonstopmode -output-directory %o %f")
+       :latex-header ,(string-join '("\\documentclass[crop,varwidth=\\maxdimen]{standalone}"
+                                     "\\usepackage[usenames]{color}"
+                                     "\\usepackage{amsmath}"
+                                     "\\usepackage{amssymb}"
+                                     "\\usepackage{ctex}")
+                                   "\n")
+       :image-converter ("convert -density %D -trim -antialias %f -quality 100 %O"))
+     org-preview-latex-process-alist :key #'car))
   :custom
   (org-latex-compiler "xelatex")
   (org-latex-custom-lang-environments '((Chinese "")))
@@ -1662,22 +1683,6 @@
      ("" "svg" nil nil)))
   (org-latex-image-default-width nil)
   (org-latex-image-default-height ".2\\linewidth")
-  :config
-  (push `(imagemagick-xelatex :programs ("xelatex" "convert")
-                  :description "pdf > png"
-                  :message "you need to install the programs: xelatex and imagemagick."
-                  :image-input-type "pdf"
-                  :image-output-type "png"
-                  :image-size-adjust (1.0 . 1.0)
-                  :latex-compiler ("xelatex -interaction nonstopmode -output-directory %o %f")
-                  :latex-header ,(string-join '("\\documentclass[crop,varwidth=\\maxdimen]{standalone}"
-                                                "\\usepackage[usenames]{color}"
-                                                "\\usepackage{amsmath}"
-                                                "\\usepackage{amssymb}"
-                                                "\\usepackage{ctex}")
-                                              "\n")
-                  :image-converter ("convert -density %D -trim -antialias %f -quality 100 %O"))
-        org-preview-latex-process-alist)
   (defun org-create-formula-image-with-auto-processing-type (fun &rest args)
     (when (string-match "[^[:ascii:]]" (car args))
       (setf (nth 4 args) 'imagemagick-xelatex))
