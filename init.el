@@ -854,7 +854,7 @@
                               "\\*Async Shell Command\\*"
                               "\\*rustic-compilation\\*"
                               "\\*cargo-run\\*"
-                              "\\*Go-Translate\\*"
+                              "\\*gt-result\\*"
                               "\\*Compile-Log\\*"
                               "^\\*lsp-install"
                               "^\\*sly-mrepl"
@@ -1756,18 +1756,11 @@
   :when (member 'org-englearn extra-features)
   :quelpa (org-englearn :fetcher github :repo "bohonghuang/org-englearn")
   :defer t
-  :commands org-englearn-capture org-englearn-process-inbox org-englearn-capture-process-region
   :bind
   (("C-c e c" . org-englearn-capture)
    ("C-c e p" . org-englearn-process-inbox)
    :map org-capture-mode-map
-   ("C-c e c" . org-englearn-capture-process-region))
-  :config
-  (cl-pushnew `("e" "English sentence"
-                entry (file ,(expand-file-name "org-capture/english.org" org-directory))
-                "* %?\n%U\n\n  %i\n  %a"
-                :kill-buffer t)
-              org-capture-templates))
+   ("C-c e c" . org-englearn-capture-process-region)))
 
 (use-package org-englearn-pdf-view
   :when (and (member 'org-englearn extra-features) (member 'pdf-tools extra-features))
@@ -1848,14 +1841,25 @@
   :when (<= 27 emacs-major-version)
   :ensure t
   :defer t
-  :custom
-  (gts-translate-list '(("en" "zh")))
-  :bind (("C-c t t" . gts-do-translate))
+  :bind (("C-c t t" . gt-do-translate))
   :config
-  (defalias 'subseq 'cl-subseq)
-  (defun gts-text-replace-redundant-empty (ret)
-    (when ret (replace-regexp-in-string "[ \n\t]+" " " ret)))
-  (advice-add #'gts-text :filter-return #'gts-text-replace-redundant-empty))
+  (setf (alist-get 'direction (cdr gt-buffer-render-window-config)) 'bottom
+        (alist-get 'window-height (cdr gt-buffer-render-window-config)) (/ 3.0))
+  (defcustom gt-default-taker (make-instance
+                               'gt-taker
+                               :text gt-taker-text
+                               :pick gt-taker-pick
+                               :langs '(en zh)
+                               :then (lambda (translator)
+                                       (with-slots (text) translator
+                                         (setf text (mapcar (apply-partially #'replace-regexp-in-string "[[:space:]\n]+" " ") text)))))
+    "The default taker used by `go-translate'.")
+  (unless gt-default-translator
+    (setf gt-default-translator (make-instance
+                                 'gt-translator
+                                 :taker gt-default-taker
+                                 :engines (make-instance 'gt-youdao-dict-engine)
+                                 :render (make-instance 'gt-buffer-render)))))
 
 ;;;;;;;;;;;;
 ;; Eshell ;;
