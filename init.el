@@ -347,11 +347,6 @@
   :defer t
   :hook (dired-mode . diredfl-mode))
 
-(use-package fd-dired
-  :ensure t
-  :defer t
-  :init (defalias 'fd 'fd-dired))
-
 (use-package savehist
   :ensure nil
   :defer t
@@ -376,6 +371,10 @@
   :bind (("<mouse-8>" . xref-go-back)
          ("<mouse-9>" . xref-go-forward))
   :custom (xref-history-storage 'xref-window-local-history))
+
+(use-package wgrep
+  :ensure t
+  :defer t)
 
 (use-package compile
   :ensure nil
