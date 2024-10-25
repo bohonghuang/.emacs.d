@@ -2162,16 +2162,6 @@ Saves to a temp file and puts the filename in the kill ring."
   (advice-add #'xwidget-webkit-begin-edit-textarea :after #'xwidget-webkit-begin-edit-textarea-bind-key)
   (advice-add #'xwidget-webkit-end-edit-textarea :after #'kill-current-buffer))
 
-(when (not (display-graphic-p))
-  (use-package expand-region
-    :bind ("M-=" . er/expand-region))
-  (use-package embark
-    :bind (("M-." . embark-act)
-           :map embark-general-map
-           ("M-." . embark-cycle)))
-  (use-package newcomment
-    :bind (("C-x ;" . comment-line))))
-
 (use-package app-launcher
   :when (<= 27 emacs-major-version)
   :defer t
