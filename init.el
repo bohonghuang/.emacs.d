@@ -108,6 +108,7 @@
 (use-package startup
   :ensure nil
   :defer nil
+  :init (provide 'startup)
   :custom
   (inhibit-startup-screen t)
   (initial-major-mode 'fundamental-mode)
@@ -278,10 +279,12 @@
 (use-package paragraphs
   :ensure nil
   :defer nil
+  :init (provide 'paragraphs)
   :custom
   (sentence-end-double-space nil))
 
 (use-package menu-bar
+  :unless (string= system-type "android")
   :ensure nil
   :defer t
   :custom (menu-bar-mode nil))
@@ -829,7 +832,7 @@
          ("C-M-+" . cnfonts-increase-fontsize)
          ("C-M-)" . cnfonts-reset-fontsize))
   :custom
-  (cnfonts-personal-fontnames '(("Noto Serif CJK SC" "Noto Serif CJK TC" "Jetbrains Mono") nil nil nil))
+  (cnfonts-personal-fontnames '(("Jetbrains Mono") ("MiSans VF") nil nil))
   (cnfonts-profiles '("program" "document"))
   (cnfonts-use-face-font-rescale t)
   (cnfonts-use-cache t)
@@ -892,7 +895,7 @@
     :defer t
     :config
     (defun project-eshell@around (fun &rest _)
-      (popper-popup-buffer (funcall fun)))    
+      (popper-popup-buffer (funcall fun)))
     (advice-add #'project-eshell :around #'project-eshell@around))
   
   (use-package eshell
@@ -1951,12 +1954,12 @@
   :demand t
   :custom (eshell-prompt-function 'epe-theme-pipeline)
   :config
-  (defun eshell-prompt-make-read-only (ret)
+  (defun eshell-prompt--make-read-only (ret)
     (concat (propertize (substring ret 0 -1) 'read-only t) (propertize " " 'read-only t 'rear-nonsticky '(font-lock-face read-only))))
   (advice-add #'epe-remote-host :filter-return #'concat)
   (advice-add #'epe-remote-user :filter-return #'concat)
   (dolist (prompt #'(epe-theme-lambda epe-theme-dakrone epe-theme-pipeline epe-theme-pipeline epe-theme-multiline-with-status))
-    (advice-add prompt :filter-return #'eshell-prompt-make-read-only)))
+    (advice-add prompt :filter-return #'eshell-prompt--make-read-only)))
 
 (use-package esh-autosuggest
   :when (member 'eshell extra-features)

@@ -1,10 +1,9 @@
 ;; -*- lexical-binding: t; -*-
 
-(defcustom language-support nil
+(defcustom language-support
+  (unless (boundp 'language-support)
+    (intern (completing-read "Select language support: " '("lsp-mode" "eglot" "citre" "nil") nil t)))
   "The language support used in `prog-mode'.")
-
-(unless language-support
-  (setf language-support (intern (completing-read "Select language support: " '("lsp-mode" "eglot" "citre" "nil") nil t))))
 
 (defcustom language-support-languages nil
   "All programming languages that this configured Emacs need to support.")
@@ -283,7 +282,7 @@
 
 (use-package markdown-mode
   :when (member 'markdown language-support-languages)
-  :ensure nil
+  :ensure t
   :defer t
   :init
   (defalias 'md-mode 'markdown-mode))
