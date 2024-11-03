@@ -284,7 +284,6 @@
   (sentence-end-double-space nil))
 
 (use-package menu-bar
-  :unless (string= system-type "android")
   :ensure nil
   :defer t
   :custom (menu-bar-mode nil))
@@ -783,8 +782,8 @@
   :custom
   (tempel-trigger-prefix "<")
   :hook
-  ((tex-mode prog-mode org-mode) . tempel-setup-capf)
-  ((tex-mode prog-mode org-mode) . tempel-tab-mode)
+  ((tex-mode prog-mode org-mode minibuffer-setup) . tempel-setup-capf)
+  ((tex-mode prog-mode org-mode minibuffer-setup) . tempel-tab-mode)
   :bind (("M-+" . tempel-complete) ;; Alternative tempel-expand
          ("M-*" . tempel-insert))
   :commands (tempel-tab-mode)
@@ -802,7 +801,6 @@
     "Minor mode to make tempel use <tab> for template expansion as well as `tempel-next', and use <backtab> for `tempel-previous'."
     :group 'tempel
     :keymap tempel-tab-mode-map
-    :global t
     (if tempel-tab-mode
         (progn (define-key tempel-map (kbd "TAB") #'tempel-next)
                (define-key tempel-map (kbd "<backtab>") #'tempel-previous))
@@ -1207,6 +1205,11 @@
   :load-path "modules"
   :demand t
   :bind ("C-c l" . language-support-enable))
+
+(use-package android-support
+  :when (string= system-type "android")
+  :load-path "modules"
+  :demand t)
 
 (use-package magit
   :defer t
