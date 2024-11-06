@@ -283,6 +283,26 @@
   :custom
   (sentence-end-double-space nil))
 
+(use-package mule-cmds
+  :ensure nil
+  :defer nil
+  :init (provide 'mule-cmds)
+  :commands (switch-input-method)
+  :bind (("C-\\" . switch-input-method))
+  :config
+  (defcustom switch-input-method-candidates nil "Input method candidates used by `switch-input-method'.")
+  (defvar switch-input-method-count 0)
+  (defun switch-input-method ()
+    (interactive)
+    (let* ((candidates (cl-delete-if #'null (cl-remove-duplicates (cons default-input-method switch-input-method-candidates) :test #'equal)))
+           (index (setf switch-input-method-count
+                        (cond
+                         ((null current-input-method) 0)
+                         ((eq last-command 'switch-input-method) (1+ switch-input-method-count))
+                         (t 1))))
+           (candidates (unless (and (cl-plusp index) (zerop (mod index (length candidates)))) candidates)))
+      (activate-input-method (when candidates (nth (mod (1+ (or (cl-position current-input-method candidates :test #'string=) -1)) (length candidates)) candidates))))))
+
 (use-package menu-bar
   :ensure nil
   :defer t
