@@ -1163,21 +1163,7 @@
 (use-package flymake
   :ensure nil
   :defer t
-  :hook (emacs-lisp-mode . flymake-mode)
-  :bind
-  ("C-c f f" . flymake-show-buffer-diagnostics)
-  ("C-c f P" . flymake-show-project-diagnostics)
-  ("C-c f n" . flymake-goto-next-error)
-  ("C-c f p" . flymake-goto-prev-error)
-  :config
-  (defvar flymake-navigation-repeat-map
-    (let ((map (make-sparse-keymap)))
-      (define-key map (kbd "n") #'flymake-goto-next-error)
-      (define-key map (kbd "p") #'flymake-goto-prev-error)
-      (dolist (it '(flymake-goto-next-error flymake-goto-prev-error))
-        (put it 'repeat-map 'flymake-navigation-repeat-map))
-      map)
-    "Keymap to repeat flymake navigation key sequences.  Used in `repeat-mode'."))
+  :hook (emacs-lisp-mode . flymake-mode))
 
 (use-package flymake-popon
   :when (<= 26 emacs-major-version)
