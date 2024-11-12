@@ -417,6 +417,25 @@
   (ediff-window-setup-function 'ediff-setup-windows-plain)
   (ediff-split-window-function 'split-window-horizontally))
 
+(use-package vc
+  :ensure nil
+  :defer t
+  :init
+  (use-package log-view
+    :ensure nil
+    :defer t
+    :bind (:map log-view-mode-map ("+" . vc-checkout-revision)))
+  :commands (vc-checkout-revision)
+  :config
+  (cl-defun vc-checkout-revision (&optional (rev (when (derived-mode-p 'log-view-mode) (log-view-current-tag))))
+    (interactive)
+    (let* ((files (condition-case nil (cadr (vc-deduce-fileset t))
+                    (t (list (vc-root-dir)))))
+           (rev (or rev (vc-read-revision "Revision: " files))))
+      (dolist (file files)
+        (vc-checkout file rev))
+      (message "Checked out revision %s" rev))))
+
 (use-package project
   :when (<= 27 emacs-major-version)
   :ensure nil
