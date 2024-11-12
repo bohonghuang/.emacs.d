@@ -2054,7 +2054,8 @@
   (default-input-method "rime")
   (rime-show-candidate 'posframe)
   :config
-  (dolist (it '("C-v" "M-v" "S-<delete>" "<tab>")) (cl-pushnew it rime-translate-keybindings)))
+  (dolist (it '("C-a" "C-e" "C-k" "C-v" "M-v" "TAB"))
+    (cl-pushnew it rime-translate-keybindings)))
 
 (use-package redacted
   :ensure t
