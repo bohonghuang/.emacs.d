@@ -782,8 +782,7 @@
 (use-package consult-dir
   :when (<= 27 emacs-major-version)
   :ensure t
-  :demand t
-  :after consult
+  :defer t
   :bind (("C-x C-d" . consult-dir)
          :map minibuffer-local-completion-map
          ("C-x C-d" . consult-dir)
