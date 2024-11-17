@@ -6,6 +6,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'rx)
 
 (let ((original-gc-cons-threshold gc-cons-threshold))
   (setq gc-cons-threshold most-positive-fixnum)
@@ -55,9 +56,9 @@
   :init (setq quelpa-update-melpa-p nil
               quelpa-use-package-inhibit-loading-quelpa t))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Internal Packages (Basic) ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Built-in Packages ;;
+;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package emacs
   :defer nil
@@ -372,8 +373,7 @@
 (use-package savehist
   :ensure nil
   :defer t
-  :hook (minibuffer-setup . (lambda () (require 'savehist)))
-  :config (savehist-mode +1))
+  :hook (minibuffer-setup . savehist-mode))
 
 (use-package display-line-numbers
   :when (<= 26 emacs-major-version)
@@ -456,17 +456,26 @@
   (winner-mode +1))
 
 (use-package recentf
+  :ensure nil
   :defer t
-  :hook (find-file . (lambda () (require 'recentf)))
+  :hook
+  (find-file . recentf-mode)
+  (recentf-mode . recentf-track-opened-file)
   :commands recentf-open-files
   :custom
-  (recentf-exclude '("~$" "/tmp/" "/ssh:" "/sshx:" "/sudo:" "ftp://" "http://" "https://"))
+  (recentf-exclude (list (rx bos (literal temporary-file-directory)) #'backup-file-name-p))
   (recentf-max-saved-items 100)
   :config
-  (recentf-mode +1)
-  (let ((file-name (buffer-file-name)))
-    (if (and file-name (file-exists-p file-name))
-      (recentf-add-file buffer-file-name))))
+  (recentf-mode +1))
+
+(use-package tramp
+  :ensure nil
+  :defer t
+  :config
+  (use-package recentf
+    :ensure nil
+    :defer t
+    :config (cl-pushnew tramp-file-name-regexp recentf-exclude :test #'string=)))
 
 (use-package repeat
   :when (<= 28 emacs-major-version)
@@ -766,6 +775,7 @@
   (setq xref-show-xrefs-function #'consult-xref
         xref-show-definitions-function #'consult-xref)
   :config
+  (require 'recentf)
   (consult-customize
    consult-theme
    :preview-key '(:debounce 0.2 any)
@@ -941,8 +951,7 @@
     :config
     (cl-pushnew 'eshell-tramp eshell-modules-list)
     (defun eshell-popper-buffer-p (buffer)
-        (and (eq (with-current-buffer buffer major-mode) 'eshell-mode) (popper-display-control-p buffer) (string-match-p "\\*eshell-popper\\*\\(<[0-9]+>\\)\\{0,1\\}" (buffer-name buffer))))
-    
+        (and (eq (with-current-buffer buffer major-mode) 'eshell-mode) (popper-display-control-p buffer) (string-match-p "\\*eshell-popper\\*\\(<[0-9]+>\\)\\{0,1\\}" (buffer-name buffer))))    
     (defun eshell-popper-request ()
       (interactive)
       (if (eshell-popper-buffer-p (current-buffer))
