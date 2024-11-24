@@ -830,8 +830,8 @@
   :custom
   (tempel-trigger-prefix "<")
   :hook
-  ((tex-mode prog-mode org-mode minibuffer-setup) . tempel-setup-capf)
-  ((tex-mode prog-mode org-mode minibuffer-setup) . tempel-tab-mode)
+  ((text-mode prog-mode minibuffer-setup) . tempel-setup-capf)
+  ((text-mode prog-mode minibuffer-setup) . tempel-tab-mode)
   :bind (("M-+" . tempel-complete) ;; Alternative tempel-expand
          ("M-*" . tempel-insert))
   :commands (tempel-tab-mode)
@@ -1003,7 +1003,7 @@
          ("M-<right>"         . sp-forward-slurp-sexp)
          ("M-<left>"          . sp-forward-barf-sexp)
          ("C-M-t"             . sp-transpose-sexp)
-         ("C-M-T"             . sp-convolute-sexp)
+         ("C-M-S-t"           . sp-convolute-sexp)
          ("C-M-<left>"        . sp-backward-slurp-sexp)
          ("C-M-<right>"       . sp-backward-barf-sexp)
          ("C-M-<delete>"      . sp-splice-sexp-killing-forward)
@@ -1213,14 +1213,19 @@
   :bind (:map hs-minor-mode-map
          ("<backtab>" . hs-toggle-hiding-all))
   :config
+  (defvar hs-last-looking-position nil)
   (defun hs-togglable-p (&optional cmd)
-    (when hs-minor-mode                 ; Prevent errors in describe-map
-      (let ((at-indent (looking-back "^[[:blank:]]*" (line-beginning-position)))
-            (beg (point)))
-        (when (and (hs-looking-at-block-start-p)
-                   (not (region-active-p))
-                   (or (not at-indent) (eq (point) (save-excursion (back-to-indentation) (point)))))
-          (or cmd beg)))))
+    (when hs-minor-mode
+      (let ((at-indentation-p (when (looking-back (rx bol (* blank)) (line-beginning-position)) (match-beginning 0))))
+        (and
+         (or (and (or (eq last-command 'hs-toggle-hiding-at-point)
+                      (eq last-command (or (keymap-local-lookup "TAB") (keymap-global-lookup "TAB"))))
+                  at-indentation-p (save-excursion (goto-char at-indentation-p) (hs-looking-at-block-start-p)))
+             (hs-looking-at-block-start-p))
+         (not (region-active-p))
+         (or (not at-indentation-p)
+             (eq (point) (save-excursion (back-to-indentation) (point))))
+         (or cmd (point))))))
   (defun hs-toggle-hiding-at-point (&optional arg)
     (interactive "P")
     (save-excursion (hs-toggle-hiding)))
