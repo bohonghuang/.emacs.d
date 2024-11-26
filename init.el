@@ -425,7 +425,7 @@
     :ensure nil
     :defer t
     :bind (:map log-view-mode-map ("+" . vc-checkout-revision)))
-  :commands (vc-checkout-revision)
+  :commands (vc-checkout-revision vc-clone-repository)
   :config
   (cl-defun vc-checkout-revision (&optional (rev (when (derived-mode-p 'log-view-mode) (log-view-current-tag))))
     (interactive)
@@ -434,7 +434,25 @@
            (rev (or rev (vc-read-revision "Revision: " files))))
       (dolist (file files)
         (vc-checkout file rev))
-      (message "Checked out revision %s" rev))))
+      (message "Checked out revision %s" rev)))
+  (defun vc-clone-repository (remote &optional directory revision backend)
+    (interactive
+     (let ((prefix (or (car current-prefix-arg) 1)) (args nil))
+       (when (>= prefix 1)
+         (push (setf remote (read-string "Repository: ")) args))
+       (let ((directory (file-name-nondirectory (directory-file-name remote))))
+         (if (>= prefix 4) (push (read-file-name "Directory: " nil nil nil directory) args) (push directory args)))
+       (when (>= prefix 16)
+         (let ((revision (read-string "Revision: ")))
+           (push (unless (string-empty-p revision) revision) args)))
+       (when (>= prefix 64)
+         (push (vc-read-backend "Backend: ") args))
+       (nreverse args)))
+    (when (file-exists-p directory)
+      (cl-assert (file-directory-p directory)))
+    (when-let ((result (vc-clone (if (url-p remote) remote (expand-file-name remote)) backend (expand-file-name directory) revision)))
+      (setf directory (or directory result))
+      (message "Cloned repository %s into %s" remote directory))))
 
 (use-package project
   :when (<= 27 emacs-major-version)
