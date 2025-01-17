@@ -21,48 +21,61 @@
     (eglot (eglot-ensure))
     (citre (citre-mode))))
 
-(defun language-support-enable ()
-  "Enable language support for current project or directory."
-  (interactive)
-  (let ((current-buffer (current-buffer)))
-    (language-support--enable)
-    (unless (cl-member (language-support-directory) language-support-enabled-directories :test #'f-equal-p)
-      (push (language-support-directory) language-support-enabled-directories)
-      (unless (eq language-support 'eglot)
-        (when-let ((buffers (cl-loop with buffers = (if-let ((project (project-current)))
-                                                        (project-buffers project)
-                                                      (cl-loop with root = (f-parent (buffer-file-name))
-                                                               initially (unless root (cl-return nil))
-                                                               for buffer in (buffer-list)
-                                                               for file = (buffer-file-name buffer)
-                                                               when file
-                                                               when (f-ancestor-of-p root file)
-                                                               collect buffer))
-                                     for buffer in buffers
-                                     unless (eq current-buffer buffer)
-                                     when (eq major-mode (with-current-buffer buffer major-mode))
-                                     collect buffer)))
-          (when (y-or-n-p "Enable language support for other buffers that belongs to current project or directory?")
-            (dolist (buffer buffers)
-              (with-current-buffer buffer
-                (let ((hooksym (intern (concat (symbol-name major-mode) "-hook"))))
-                  (when (and (boundp hooksym) (cl-member #'language-support-auto-enable (symbol-value hooksym)))
-                    (language-support--enable)))))))))))
+(defun language-support-disjoin (&rest predicates)
+  (lambda (&rest args) (cl-loop for predicate in predicates thereis (apply predicate args))))
 
-(defun language-support-disable ()
-  (interactive)
-  (cl-ecase language-support
-    (lsp-mode
-     (lsp-workspace-shutdown (lsp--read-workspace)))
-    (eglot
-     (eglot-shutdown (eglot--current-server-or-lose)))
-    (citre))
-  (setf language-support-enabled-directories (cl-delete (language-support-directory) language-support-enabled-directories :test #'f-equal-p)))
+(defun language-support-enable (arg)
+  (interactive "p")
+  (let ((current-buffer (current-buffer))
+        (directory (if (> arg 1) (read-directory-name "Enable language support in directory: " nil nil t nil)
+                     (language-support-directory))))
+    (if (cl-member (buffer-file-name current-buffer) language-support-enabled-directories :test #'f-descendant-of-p)
+        (language-support--enable)
+      (cl-loop initially (language-support--enable)
+               for buffer in (buffer-list)
+               for file-name = (buffer-file-name)
+               when (f-descendant-of-p file-name directory)
+               unless (eq current-buffer buffer)
+               when (let ((hooksym (intern (concat (symbol-name major-mode) "-hook"))))
+                      (and (boundp hooksym) (cl-member #'language-support-auto-enable (symbol-value hooksym))))
+               do (with-current-buffer buffer (language-support--enable))
+               finally (push directory language-support-enabled-directories)))))
+
+(defun language-support-disable (arg)
+  (interactive "p")
+  (let ((directory (cond
+                    ((> arg 4)
+                     (read-directory-name "Disable language support in directory: " nil nil t))
+                    ((> arg 1)
+                     (completing-read
+                      "Disable language support in directory: "
+                      language-support-enabled-directories nil t))
+                    (t (language-support-directory)))))
+    (setf language-support-enabled-directories
+          (cl-delete
+           directory language-support-enabled-directories
+           :test (if (cl-member directory language-support-enabled-directories :test #'string-equal)
+                     #'string-equal (language-support-disjoin #'f-equal-p #'f-ancestor-of-p))))
+    (cl-loop for buffer in (buffer-list)
+             for file-name = (buffer-file-name buffer)
+             when file-name
+             when (f-descendant-of-p file-name directory)
+             do (with-current-buffer buffer
+                  (cl-ecase language-support
+                    (lsp-mode
+                     (ignore-errors (lsp-workspace-shutdown (lsp--read-workspace))))
+                    (eglot
+                     (ignore-errors (eglot-shutdown (eglot--current-server-or-lose))))
+                    (citre))))))
 
 (defun language-support-auto-enable ()
   (interactive)
-  (when (and language-support (cl-member (language-support-directory) language-support-enabled-directories :test #'string-equal))
-    (language-support-enable)))
+  (when language-support
+    (when-let ((file-name (buffer-file-name)))
+      (when (cl-member
+             file-name language-support-enabled-directories
+             :test (language-support-disjoin #'f-equal-p #'f-descendant-of-p))
+        (call-interactively #'language-support-enable)))))
 
 ;;;;;;;;;;;;;;;
 ;; Languages ;;
