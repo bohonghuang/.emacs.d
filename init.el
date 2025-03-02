@@ -481,7 +481,7 @@
   (recentf-mode . recentf-track-opened-file)
   :commands recentf-open-files
   :custom
-  (recentf-exclude (list (rx bos (literal temporary-file-directory)) #'backup-file-name-p))
+  (recentf-exclude (list (rx bos (literal temporary-file-directory)) (rx "_archive" eos) #'backup-file-name-p))
   (recentf-max-saved-items 100)
   :config
   (recentf-mode +1))
@@ -2011,14 +2011,12 @@
   :ensure t
   :after eshell
   :demand t
-  :custom (eshell-prompt-function 'epe-theme-pipeline)
+  :custom
+  (eshell-prompt-function 'epe-theme-pipeline)
+  (eshell-highlight-prompt t)
   :config
-  (defun eshell-prompt--make-read-only (ret)
-    (concat (propertize (substring ret 0 -1) 'read-only t) (propertize " " 'read-only t 'rear-nonsticky '(font-lock-face read-only))))
   (advice-add #'epe-remote-host :filter-return #'concat)
-  (advice-add #'epe-remote-user :filter-return #'concat)
-  (dolist (prompt #'(epe-theme-lambda epe-theme-dakrone epe-theme-pipeline epe-theme-pipeline epe-theme-multiline-with-status))
-    (advice-add prompt :filter-return #'eshell-prompt--make-read-only)))
+  (advice-add #'epe-remote-user :filter-return #'concat))
 
 (use-package esh-autosuggest
   :when (member 'eshell extra-features)
