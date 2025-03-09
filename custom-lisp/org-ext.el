@@ -344,7 +344,7 @@ the documentation of `org-diary'."
 (with-eval-after-load 'ox-md
   (defun org-md-src-block (src-block _contents info)
     (let ((lang (org-element-property :language src-block)))
-      (format "``` %s\n%s```" lang
+      (format "```%s\n%s```" lang
               (org-remove-indentation
                (org-export-format-code-default src-block info)))))
   (setf (cdr (cl-assoc 'src-block (org-export-backend-transcoders (cl-find-if (lambda (backend) (eq (org-export-backend-name backend) 'md)) org-export-registered-backends)))) 'org-md-src-block))

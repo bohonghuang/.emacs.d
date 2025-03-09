@@ -10,6 +10,7 @@
         asm-comment
         backward-sexp
         beginning-of-visual-line
+        beginning-of-visual-line
         c-electric-colon
         c-electric-delete-forward
         c-electric-paren
@@ -31,7 +32,6 @@
         dired-do-delete
         dired-mark
         electric-newline-and-maybe-indent
-        beginning-of-visual-line
         end-of-visual-line
         eval-last-sexp
         filter-and-upcase-initials-region
@@ -109,6 +109,7 @@
         vhdl-electric-tab
         wdired--self-insert
         wdired-abort-changes
+        wdired-capitalize-word
         wdired-downcase-word
         ))
 
