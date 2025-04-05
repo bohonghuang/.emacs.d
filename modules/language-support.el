@@ -24,57 +24,65 @@
 (defun language-support-disjoin (&rest predicates)
   (lambda (&rest args) (cl-loop for predicate in predicates thereis (apply predicate args))))
 
+(defun language-support-file-mode-descendant-of-p (elem-a elem-b)
+  (and (f-descendant-of-p (car elem-a) (car elem-b)) (or (eq (cdr elem-a) (cdr elem-b)) (let ((major-mode (cdr elem-a))) (derived-mode-p (cdr elem-b))))))
+
 (defun language-support-enable (arg)
   (interactive "p")
   (let ((current-buffer (current-buffer))
-        (directory (if (> arg 1) (read-directory-name "Enable language support in directory: " nil nil t nil)
-                     (language-support-directory))))
-    (if (cl-member (buffer-file-name current-buffer) language-support-enabled-directories :test #'f-descendant-of-p)
+        (directory-mode (cons (if (> arg 1) (read-directory-name "Enable language support in directory: " nil nil t nil)
+                                (language-support-directory))
+                              major-mode)))
+    (if (cl-member (cons (buffer-file-name current-buffer) (buffer-local-value 'major-mode current-buffer))
+                   language-support-enabled-directories :test #'language-support-file-mode-descendant-of-p)
         (language-support--enable)
       (cl-loop initially (language-support--enable)
                for buffer in (buffer-list)
-               for file-name = (buffer-file-name)
-               when (f-descendant-of-p file-name directory)
+               for file-name = (buffer-file-name buffer)
+               for buffer-mode = (buffer-local-value 'major-mode buffer)
+               when file-name
+               when (language-support-file-mode-descendant-of-p (cons file-name buffer-mode) directory-mode)
                unless (eq current-buffer buffer)
                when (let ((hooksym (intern (concat (symbol-name major-mode) "-hook"))))
                       (and (boundp hooksym) (cl-member #'language-support-auto-enable (symbol-value hooksym))))
                do (with-current-buffer buffer (language-support--enable))
-               finally (push directory language-support-enabled-directories)))))
+               finally (push directory-mode language-support-enabled-directories)))))
 
 (defun language-support-disable (arg)
   (interactive "p")
-  (let ((directory (cond
-                    ((> arg 4)
-                     (read-directory-name "Disable language support in directory: " nil nil t))
-                    ((> arg 1)
-                     (completing-read
-                      "Disable language support in directory: "
-                      language-support-enabled-directories nil t))
-                    (t (language-support-directory)))))
+  (let ((directory-mode (cond
+                         ((> arg 4)
+                          (cons (read-directory-name "Disable language support in directory: " nil nil t) 'prog-mode))
+                         ((> arg 1)
+                          (let ((collection (cl-loop for elem in language-support-enabled-directories
+                                                     collect (cons (format "%s" elem) elem))))
+                            (alist-get (completing-read "Disable language support: " collection nil t) collection nil nil #'equal)))
+                         (t (cons (language-support-directory) major-mode)))))
     (setf language-support-enabled-directories
           (cl-delete
-           directory language-support-enabled-directories
-           :test (if (cl-member directory language-support-enabled-directories :test #'string-equal)
-                     #'string-equal (language-support-disjoin #'f-equal-p #'f-ancestor-of-p))))
+           directory-mode language-support-enabled-directories
+           :test (if (cl-member directory-mode language-support-enabled-directories :test #'equal)
+                     #'equal (language-support-disjoin #'equal #'language-support-file-mode-descendant-of-p))))
     (cl-loop for buffer in (buffer-list)
              for file-name = (buffer-file-name buffer)
+             for file-mode = (buffer-local-value 'major-mode buffer)
              when file-name
-             when (f-descendant-of-p file-name directory)
+             when (language-support-file-mode-descendant-of-p (cons file-name file-mode) directory-mode)
              do (with-current-buffer buffer
                   (cl-ecase language-support
                     (lsp-mode
                      (ignore-errors (lsp-workspace-shutdown (lsp--read-workspace))))
                     (eglot
                      (ignore-errors (eglot-shutdown (eglot--current-server-or-lose))))
-                    (citre))))))
+                    (citre))
+                  (flymake-mode -1)))))
 
 (defun language-support-auto-enable ()
   (interactive)
   (when language-support
     (when-let ((file-name (buffer-file-name)))
-      (when (cl-member
-             file-name language-support-enabled-directories
-             :test (language-support-disjoin #'f-equal-p #'f-descendant-of-p))
+      (when (cl-find (cons file-name major-mode) language-support-enabled-directories
+                     :test #'language-support-file-mode-descendant-of-p)
         (call-interactively #'language-support-enable)))))
 
 ;;;;;;;;;;;;;;;
