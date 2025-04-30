@@ -1,5 +1,8 @@
 ;; -*- lexical-binding: t; -*-
 
+(require 'cl-lib)
+(require 'cl-generic)
+
 (defcustom language-support
   (unless (boundp 'language-support)
     (intern (completing-read "Select language support: " '("lsp-mode" "eglot" "citre" "nil") nil t)))
@@ -15,11 +18,10 @@
   (or (when-let ((proj (project-current))) (project-root proj))
       (when-let ((file (buffer-file-name))) (file-name-directory file))))
 
-(defun language-support--enable ()
-  (cl-ecase language-support
-    (lsp-mode (lsp))
-    (eglot (eglot-ensure))
-    (citre (citre-mode))))
+(cl-defgeneric language-support--enable ()
+  (:method (&context (major-mode prog-mode) (language-support (eql 'lsp-mode))) (lsp))
+  (:method (&context (major-mode prog-mode) (language-support (eql 'eglot))) (eglot-ensure))
+  (:method (&context (major-mode prog-mode) (language-support (eql 'citre))) (citre-mode)))
 
 (defun language-support-disjoin (&rest predicates)
   (lambda (&rest args) (cl-loop for predicate in predicates thereis (apply predicate args))))
@@ -48,6 +50,11 @@
                do (with-current-buffer buffer (language-support--enable))
                finally (push directory-mode language-support-enabled-directories)))))
 
+(cl-defgeneric language-support--disable ()
+  (:method (&context (major-mode prog-mode) (language-support (eql 'lsp-mode))) (ignore-errors (lsp-workspace-shutdown (lsp--read-workspace))))
+  (:method (&context (major-mode prog-mode) (language-support (eql 'eglot))) (ignore-errors (eglot-shutdown (eglot--current-server-or-lose))))
+  (:method (&context (major-mode prog-mode) (language-support (eql 'citre)))))
+
 (defun language-support-disable (arg)
   (interactive "p")
   (let ((directory-mode (cond
@@ -69,12 +76,7 @@
              when file-name
              when (language-support-file-mode-descendant-of-p (cons file-name file-mode) directory-mode)
              do (with-current-buffer buffer
-                  (cl-ecase language-support
-                    (lsp-mode
-                     (ignore-errors (lsp-workspace-shutdown (lsp--read-workspace))))
-                    (eglot
-                     (ignore-errors (eglot-shutdown (eglot--current-server-or-lose))))
-                    (citre))
+                  (language-support--disable)
                   (flymake-mode -1)))))
 
 (defun language-support-auto-enable ()
@@ -340,6 +342,64 @@
   :defer t
   :mode ("\\.\\(fs\\|vs\\)\\'" . glsl-mode)
   :hook (glsl-mode . language-support-auto-enable))
+
+(use-package nim-mode
+  :when (member 'nim language-support-languages)
+  :ensure t
+  :defer t
+  :init
+  (cl-defmethod language-support--enable (&context (major-mode (eql 'nim-mode)) (language-support t))
+    (nimsuggest-mode +1))
+  (cl-defmethod language-support--disable (&context (major-mode (eql 'nim-mode)) (language-support t))
+    (nimsuggest-mode -1)
+    (epc:stop-epc (cl-shiftf (alist-get (buffer-file-name (current-buffer)) nimsuggest--epc-processes-alist nil t #'equal) nil)))
+  (defun nim-stop-buffer-nimsuggest ()
+    (when-let ((epc (when (eq major-mode 'nim-mode) (cl-shiftf (alist-get (buffer-file-name (current-buffer)) nimsuggest--epc-processes-alist nil t #'equal) nil))))
+      (epc:stop-epc epc)))
+  :custom (nimsuggest-options nil)
+  :hook
+  (nim-mode . language-support-auto-enable)
+  (kill-buffer . nim-stop-buffer-nimsuggest)
+  :config
+  (defvar nim-indent-repeat-map
+    (let ((map (make-sparse-keymap)))
+      (define-key map (kbd "<") #'nim-indent-shift-left)
+      (define-key map (kbd ">") #'nim-indent-shift-right)
+      (dolist (it '(nim-indent-shift-left nim-indent-shift-right)) (put it 'repeat-map 'nim-indent-repeat-map))
+      map)
+    "Keymap to repeat Nim indentation key sequences.  Used in `repeat-mode'.")
+  (when (eq system-type 'windows-nt)
+    (define-advice nimsuggest--get-temp-file-name (:override () language-support)
+      "Get temp file name."
+      (mapconcat 'directory-file-name
+                 `(,(nimsuggest--get-dirty-dir)
+                   ,(cl-case system-type
+                      ((ms-dos windows-nt cygwin)
+                       ;; For bug #119, convert ":" to "꞉" (U+A789)
+                       (concat "/"
+                               (replace-regexp-in-string
+                                ":" "s";;(char-to-string #xA789)
+                                buffer-file-name)))
+                      (t ; for *nix system
+                       buffer-file-name)))
+                 "")))
+  (define-advice nim-capf--nimsuggest-complete (:override (prefix) language-support)
+    ;; Note this function is not async function
+    "Completion symbol of PREFIX at point using nimsuggest."
+    (unless (or (nim-inside-pragma-p)
+                (nim-syntax-comment-or-string-p))
+      (nimsuggest--call-sync
+       'sug (lambda (args) (nim-capf--format-candidates prefix args)))))
+  (define-advice nimsuggest-flymake-setup (:before () language-support)
+    (flymake-mode +1))
+  (defun nim-toggle-corfu-company ()
+    (interactive)
+    (cl-assert (xor (bound-and-true-p company-mode) (bound-and-true-p corfu-mode)))
+    (if (bound-and-true-p company-mode)
+        (progn (company-mode -1) (call-interactively 'corfu-mode))
+      (progn (corfu-mode -1) (call-interactively 'company-mode)))
+    (nim-capf-setup))
+  :commands (nim-toggle-corfu-company))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Completion/Goto ;;
