@@ -1267,6 +1267,10 @@
   :load-path "modules"
   :demand t)
 
+(use-package ai-support
+  :load-path "modules"
+  :demand t)
+
 (use-package magit
   :defer t
   :ensure t
@@ -1744,6 +1748,7 @@
      ("" "svg" nil nil)))
   (org-latex-image-default-width nil)
   (org-latex-image-default-height ".2\\linewidth")
+  :config
   (defun org-create-formula-image-with-auto-processing-type (fun &rest args)
     (when (string-match "[^[:ascii:]]" (car args))
       (setf (nth 4 args) 'imagemagick-xelatex))
