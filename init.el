@@ -493,7 +493,18 @@
   (use-package recentf
     :ensure nil
     :defer t
-    :config (cl-pushnew tramp-file-name-regexp recentf-exclude :test #'string=)))
+    :config (cl-pushnew tramp-file-name-regexp recentf-exclude :test #'string=))
+  (define-advice tramp-open-shell (:around (fun &rest args) termux-support)
+    (defvar tramp-open-shell-wait-for-output-count)
+    (let ((tramp-open-shell-wait-for-output-count 0))
+      (apply fun args)))
+  (define-advice tramp-wait-for-output (:around (fun &rest args) termux-support)
+    (if (not (boundp 'tramp-open-shell-wait-for-output-count))
+        (apply fun args)
+      (defvar tramp-open-shell-wait-for-output-count)
+      (unless (= (cl-incf tramp-open-shell-wait-for-output-count) 1)
+        (apply fun args))))
+  (setf (cdr (last tramp-remote-path)) (list "/data/data/com.termux/files/usr/bin")))
 
 (use-package repeat
   :when (<= 28 emacs-major-version)
