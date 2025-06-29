@@ -166,7 +166,10 @@
 (use-package files
   :ensure nil
   :defer t
-  :custom (make-backup-files nil)
+  :custom
+  (make-backup-files nil)
+  (remote-file-name-inhibit-locks t)
+  (remote-file-name-inhibit-auto-save-visited t)
   :hook (find-file . (lambda ()
                        (unless (file-exists-p (file-truename buffer-file-name))
                          (set-buffer-file-coding-system 'utf-8))))
@@ -489,6 +492,7 @@
 (use-package tramp
   :ensure nil
   :defer t
+  :custom (tramp-copy-size-limit (* 1 1024 1024))
   :config
   (use-package recentf
     :ensure nil
@@ -504,7 +508,22 @@
       (defvar tramp-open-shell-wait-for-output-count)
       (unless (= (cl-incf tramp-open-shell-wait-for-output-count) 1)
         (apply fun args))))
-  (setf (cdr (last tramp-remote-path)) (list "/data/data/com.termux/files/usr/bin")))
+  (define-advice tramp-get-method-parameter (:filter-args (args) termux-support)
+    (cl-destructuring-bind (vec param &optional default) args
+      (cl-case param
+        (tramp-tmpdir
+         (list vec param
+               (or (ignore-errors
+                     (let ((tmpdir (tramp-send-command-and-read vec "echo \"\\\"$TMPDIR\\\"\"")))
+                       (unless (string-empty-p tmpdir) tmpdir)))
+                   default)))
+        (t args))))
+  (cl-pushnew "/data/data/com.termux/files/usr/bin" tramp-remote-path :test #'equal)
+  (connection-local-set-profile-variables 'remote-direct-async-process '((tramp-direct-async-process . t)))
+  (cl-loop for protocol in '("scp" "ssh")
+           do (connection-local-set-profiles
+               `(:application tramp :protocol ,protocol)
+               'remote-direct-async-process)))
 
 (use-package repeat
   :when (<= 28 emacs-major-version)
@@ -1288,6 +1307,7 @@
   :custom
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
   (magit-bury-buffer-function #'quit-window)
+  (magit-tramp-pipe-stty-settings 'pty)
   :bind (("C-x g" . magit)
          ("C-x G" . magit-dispatch)))
 
@@ -1974,23 +1994,24 @@
   :config
   (defun eshell-hist-write-after-command (&rest _)
     (when eshell-hist-mode
-      (eshell-read-history)
-      (let ((input (buffer-substring-no-properties
-                    eshell-last-input-start (1- eshell-last-input-end)))
-            index
-            earliest)
-        (while (when (and (setq index (ring-member eshell-history-ring input)) (eq eshell-hist-ignoredups 'erase))
-                 (ring-remove eshell-history-ring index)))
-        (when (>= (ring-length eshell-history-ring) (ring-size eshell-history-ring))
-          (setq earliest (ring-ref eshell-history-ring (1- (ring-length eshell-history-ring))))
-          (with-temp-buffer
-            (insert earliest)
-            (newline)
-            (write-region (point-min) (point-max) (print (concat eshell-history-file-name "_archive")) 'append)))
-        (unless (and index eshell-hist-ignoredups (not (eq eshell-hist-ignoredups 'erase)))
-          (let ((eshell-hist-ignoredups nil))
-            (eshell-add-input-to-history (string-trim input)))))
-      (eshell-write-history)))
+      (with-suppressed-message
+        (eshell-read-history)
+        (let ((input (buffer-substring-no-properties
+                      eshell-last-input-start (1- eshell-last-input-end)))
+              index
+              earliest)
+          (while (when (and (setq index (ring-member eshell-history-ring input)) (eq eshell-hist-ignoredups 'erase))
+                   (ring-remove eshell-history-ring index)))
+          (when (>= (ring-length eshell-history-ring) (ring-size eshell-history-ring))
+            (setq earliest (ring-ref eshell-history-ring (1- (ring-length eshell-history-ring))))
+            (with-temp-buffer
+              (insert earliest)
+              (newline)
+              (write-region (point-min) (point-max) (concat eshell-history-file-name "_archive") 'append)))
+          (unless (and index eshell-hist-ignoredups (not (eq eshell-hist-ignoredups 'erase)))
+            (let ((eshell-hist-ignoredups nil))
+              (eshell-add-input-to-history (string-trim input)))))
+        (eshell-write-history))))
   (add-hook 'eshell-input-filter-functions #'eshell-hist-write-after-command)
   (defun eshell-hist-initialize@after (&rest _)
     (remove-hook 'eshell-input-filter-functions #'eshell-add-to-history t)
