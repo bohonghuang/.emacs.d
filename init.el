@@ -1982,7 +1982,7 @@
   :ensure nil
   :defer t
   :config
-  (cl-pushnew #'eshell-truncate-buffer eshell-output-filter-functions))
+  (add-to-list 'eshell-output-filter-functions #'eshell-truncate-buffer t))
 
 (use-package em-hist
   :when (member 'eshell extra-features)
