@@ -428,7 +428,7 @@
             ("C-c l a a" . eglot-code-actions))
      :config
      (setq completion-category-defaults nil))
-   
+
    (use-package eldoc-box
      :when (display-graphic-p)
      :defer t
@@ -453,7 +453,29 @@
      :ensure t
      :demand t
      :after eglot
-     :config (eglot-tempel-mode +1)))
+     :config (eglot-tempel-mode +1))
+
+   (use-package eglot-inactive-regions
+     :ensure t
+     :demand t
+     :after eglot
+     :custom
+     (eglot-inactive-regions-style 'darken-foreground)
+     (eglot-inactive-regions-opacity 0.4)
+     :config
+     (eglot-inactive-regions-mode +1))
+
+   (use-package consult-eglot
+     :ensure t
+     :defer t
+     :after eglot
+     :bind (:map eglot-mode-map ("M-s s" . consult-eglot-symbols)))
+
+   (use-package consult-eglot-embark
+     :ensure t
+     :demand t
+     :after consult-eglot
+     :config (consult-eglot-embark-mode +1)))
   ('lsp-mode
    (use-package lsp-mode
      :ensure t
@@ -483,7 +505,7 @@
      :hook (lsp-mode . lsp-lens-mode)
      :bind (:map lsp-mode-map
             ("C-c l l" . lsp-avy-lens)))
-   
+
    (use-package dap-mode
      :after lsp-mode
      :ensure t

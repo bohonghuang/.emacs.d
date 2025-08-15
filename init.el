@@ -69,6 +69,11 @@
   :load-path "custom-lisp"
   :demand t)
 
+(use-package prog-mode
+  :ensure nil
+  :defer t
+  :hook (prog-mode . toggle-truncate-lines))
+
 (use-package elisp-mode
   :defer t
   :ensure nil)
@@ -1738,7 +1743,14 @@
   :ensure t
   :defer t
   :init
-  (defalias 'svgbob-mode 'artist-mode))
+  (defalias 'svgbob-mode 'artist-mode)
+  :config
+  (define-advice org-babel-execute:svgbob (:around (fun . (body params)) optional-file-param)
+    (prog1 (setf (alist-get :file params) (or (alist-get :file params)
+                                              (expand-file-name
+                                               (concat (make-temp-name "svgbob-") ".svg")
+                                               (org-babel-temp-directory))))
+      (funcall fun body params))))
 
 (use-package ox
   :ensure nil
