@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (require 'org-tree-slide)
 
 (defun org-tree-slide--set-slide-header@around (fun &rest args)

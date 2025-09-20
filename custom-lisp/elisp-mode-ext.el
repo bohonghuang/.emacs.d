@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (require 'cl-lib)
 
 (defun emacs-lisp-macroexpand-buffer-undo ()

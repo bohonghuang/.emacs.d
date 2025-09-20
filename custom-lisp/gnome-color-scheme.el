@@ -1,4 +1,5 @@
 ;;;  -*- lexical-binding: t; -*-
+
 (require 'dbus)
 
 (defcustom gnome-color-scheme-theme-light 'modus-operandi

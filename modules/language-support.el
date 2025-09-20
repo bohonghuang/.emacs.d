@@ -475,7 +475,12 @@
      :ensure t
      :demand t
      :after consult-eglot
-     :config (consult-eglot-embark-mode +1)))
+     :config (consult-eglot-embark-mode +1))
+
+   (use-package breadcrumb
+     :ensure t
+     :defer t
+     :hook (eglot-managed-mode . breadcrumb-local-mode)))
   ('lsp-mode
    (use-package lsp-mode
      :ensure t

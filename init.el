@@ -1290,7 +1290,10 @@
       (hs-hide-all))
     (setq-local hs-all-hidden-p (not hs-all-hidden-p)))
   (defconst hs-maybe-toggle-hideing-at-point '(menu-item "" hs-toggle-hiding-at-point :filter hs-togglable-p))
-  (define-key hs-minor-mode-map (kbd "TAB") hs-maybe-toggle-hideing-at-point))
+  (define-key hs-minor-mode-map (kbd "TAB") hs-maybe-toggle-hideing-at-point)
+  (define-advice hs-minor-mode (:around (fun &rest args) init.el)
+    (when (ignore-error error (hs-grok-mode-type))
+      (apply fun args))))
 
 (use-package language-support
   :load-path "modules"
@@ -1946,11 +1949,11 @@
   (when (boundp 'latex-mode-hook)
     (dolist (hook latex-mode-hook) (cl-pushnew hook LaTeX-mode-hook))))
 
-(use-package go-translate
+(use-package gt
   :when (<= 27 emacs-major-version)
   :ensure t
   :defer t
-  :bind (("C-c t t" . gt-do-translate))
+  :bind (("C-c t t" . gt-translate))
   :config
   (setf (alist-get 'direction (cdr gt-buffer-render-window-config)) 'bottom
         (alist-get 'window-height (cdr gt-buffer-render-window-config)) (/ 3.0))

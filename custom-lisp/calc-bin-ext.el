@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (require 'calc-bin)
 
 (defun calc-set-or-reset-bit-at-point ()
