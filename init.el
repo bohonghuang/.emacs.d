@@ -683,9 +683,9 @@
          (consult-completion-in-region beg end table pred))))))
 
 (use-package corfu-terminal
-  :when (<= 27 emacs-major-version)
-  :ensure t
+  :when (<= 27 emacs-major-version 30)
   :unless (display-graphic-p)
+  :ensure t
   :defer t
   :hook (corfu-mode . corfu-terminal-mode))
 
@@ -976,7 +976,7 @@
       (when (popper-display-control-p buffer)
         (popper-toggle-type buffer))))
   (advice-add #'delete-other-windows :before #'delete-other-windows@before)
-  
+
   (defun popper--fit-window-height (win)
       (fit-window-to-buffer
          win
@@ -987,7 +987,7 @@
     (unless (window-dedicated-p (selected-window))
       (switch-to-buffer buffer))
     (popper-lower-to-popup buffer))
-  
+
   (use-package project
     :when (<= 27 emacs-major-version)
     :ensure nil
@@ -996,7 +996,7 @@
     (defun project-eshell@around (fun &rest _)
       (popper-popup-buffer (funcall fun)))
     (advice-add #'project-eshell :around #'project-eshell@around))
-  
+
   (use-package eshell
     :ensure nil
     :defer t
@@ -1004,7 +1004,7 @@
     :config
     (cl-pushnew 'eshell-tramp eshell-modules-list)
     (defun eshell-popper-buffer-p (buffer)
-        (and (eq (with-current-buffer buffer major-mode) 'eshell-mode) (popper-display-control-p buffer) (string-match-p "\\*eshell-popper\\*\\(<[0-9]+>\\)\\{0,1\\}" (buffer-name buffer))))    
+        (and (eq (with-current-buffer buffer major-mode) 'eshell-mode) (popper-display-control-p buffer) (string-match-p "\\*eshell-popper\\*\\(<[0-9]+>\\)\\{0,1\\}" (buffer-name buffer))))
     (defun eshell-popper-request ()
       (interactive)
       (if (eshell-popper-buffer-p (current-buffer))
@@ -1246,7 +1246,7 @@
   :hook (emacs-lisp-mode . flymake-mode))
 
 (use-package flymake-popon
-  :when (<= 26 emacs-major-version)
+  :when (or (<= 31 emacs-major-version) (and (<= 26 emacs-major-version) (display-graphic-p)))
   :ensure t
   :defer t
   :hook (flymake-mode . flymake-popon-mode)
@@ -1502,7 +1502,7 @@
     (notifications-notify :timeout (* appt-display-interval 60000)
                           :title (format "You have a task in %s minutes" min-to-appt)
                           :body (string-trim (replace-regexp-in-string "\\([0-9]\\{1,2\\}:[0-9]\\{1,2\\}\\)\\(-[0-9]\\{1,2\\}:[0-9]\\{1,2\\}\\)\\{0,1\\}" "" (substring-no-properties appt-msg)))
-                          :sound-name "alarm-clock-elapsed")    
+                          :sound-name "alarm-clock-elapsed")
     (ignore-errors
       (appt-disp-window min-to-appt new-time appt-msg))))
 

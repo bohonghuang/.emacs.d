@@ -430,7 +430,7 @@
      (setq completion-category-defaults nil))
 
    (use-package eldoc-box
-     :when (display-graphic-p)
+     :when (or (<= 31 emacs-major-version) (display-graphic-p))
      :defer t
      :ensure t
      :hook (eglot-managed-mode . eldoc-box-hover-at-point-mode)
