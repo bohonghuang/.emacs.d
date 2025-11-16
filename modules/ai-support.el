@@ -7,6 +7,7 @@
   :bind (("C-c a c" . gptel-add)
          ("C-c a C" . gptel-context-remove-all)
          ("C-c a r" . gptel-rewrite)
+         ("C-c a RET" . gptel-menu)
          ("C-c a a" . gptel))
   :custom
   (gptel-display-buffer-action '(display-buffer-same-window))

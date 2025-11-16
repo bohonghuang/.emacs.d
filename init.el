@@ -880,8 +880,6 @@
   :when (<= 27 emacs-major-version)
   :ensure t
   :defer t
-  :custom
-  (tempel-trigger-prefix "<")
   :hook
   ((text-mode prog-mode minibuffer-setup) . tempel-setup-capf)
   ((text-mode prog-mode minibuffer-setup) . tempel-tab-mode)
@@ -891,7 +889,23 @@
   :config
   (defun tempel-setup-capf ()
     (setq-local completion-at-point-functions
-                (cons #'tempel-expand completion-at-point-functions)))
+                (cons (cape-capf-trigger #'tempel-complete ?<) completion-at-point-functions)))
+  (defconst tempel-tab-trigger-regexp (rx "<" (group (+ (or (char "_-") alnum)))))
+  (define-advice tempel--delete-word (:filter-args (args) init.el)
+    (cl-destructuring-bind (word) args
+      (if (bound-and-true-p tempel-expand@init.el)
+          (progn
+            (cl-assert (looking-back tempel-tab-trigger-regexp (pos-bol)))
+            (list (match-string-no-properties 0)))
+        args)))
+  (define-advice tempel-expand (:around (fun &rest args) init.el)
+    (cond
+     ((looking-back tempel-tab-trigger-regexp (pos-bol))
+      (defvar tempel-expand@init.el)
+      (let ((tempel-expand@init.el t)
+            (bounds-of-thing-at-point-provider-alist (cl-acons 'symbol (cl-constantly (cons (match-beginning 1) (match-end 1))) bounds-of-thing-at-point-provider-alist)))
+        (apply fun args)))
+     ((called-interactively-p 'any) (apply fun args))))
   (defconst tempel-maybe-expand `(menu-item "" ,(lambda () (interactive) (tempel-expand t)) :filter ,(lambda (cmd) (when (tempel-expand nil) cmd))))
   (defvar tempel-tab-mode-map
     (let ((map (make-sparse-keymap)))
