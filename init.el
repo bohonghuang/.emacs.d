@@ -1533,6 +1533,7 @@
   :defer t
   :custom
   (org-gtd-directory (expand-file-name "org-gtd" org-directory))
+  (org-todo-keywords '((sequence "TODO" "NEXT" "WAIT" "|" "DONE" "CNCL")))
   :bind
   (("C-c g c" . org-gtd-capture)
    ("C-c g e" . org-gtd-engage)
