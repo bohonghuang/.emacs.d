@@ -1779,27 +1779,6 @@
 (use-package ox-latex
   :ensure nil
   :defer t
-  :init
-  (use-package org
-    :defer t
-    :config
-    (cl-pushnew
-     `(imagemagick-xelatex
-       :programs ("xelatex" "convert")
-       :description "pdf > png"
-       :message "you need to install the programs: xelatex and imagemagick."
-       :image-input-type "pdf"
-       :image-output-type "png"
-       :image-size-adjust (1.0 . 1.0)
-       :latex-compiler ("xelatex -interaction nonstopmode -output-directory %o %f")
-       :latex-header ,(string-join '("\\documentclass[crop,varwidth=\\maxdimen]{standalone}"
-                                     "\\usepackage[usenames]{color}"
-                                     "\\usepackage{amsmath}"
-                                     "\\usepackage{amssymb}"
-                                     "\\usepackage{ctex}")
-                                   "\n")
-       :image-converter ("convert -density %D -trim -antialias %f -quality 100 %O"))
-     org-preview-latex-process-alist :key #'car))
   :custom
   (org-latex-compiler "xelatex")
   (org-latex-custom-lang-environments '((Chinese "")))
@@ -1810,15 +1789,33 @@
   (org-latex-image-default-width nil)
   (org-latex-image-default-height ".2\\linewidth")
   :config
-  (defun org-create-formula-image-with-auto-processing-type (fun &rest args)
-    (when (string-match "[^[:ascii:]]" (car args))
-      (setf (nth 4 args) 'imagemagick-xelatex))
-    (apply fun args))
-  (advice-add #'org-create-formula-image :around #'org-create-formula-image-with-auto-processing-type)
   (let ((article-class (cl-copy-list (assoc-string "article" (default-value 'org-latex-classes)))))
     (setf (car article-class) "article-ctex"
           (cadr article-class) "\\documentclass[11pt]{ctexart}")
-    (push article-class (default-value 'org-latex-classes))))
+    (push article-class (default-value 'org-latex-classes)))
+  (setf (alist-get 'xelatex-dvisvgm org-preview-latex-process-alist)
+        '(;; xelatex -> dvisvgm
+          :programs ("xelatex" "dvisvgm")
+          :description "xdv > svg"
+          :message "you need to install the programs: xelatex and dvisvgm."
+          :image-input-type "xdv"
+          :image-output-type "svg"
+          :image-size-adjust (1.7 . 1.5)
+          :latex-compiler ("xelatex -no-pdf -interaction nonstopmode -output-directory %o %f")
+          :latex-header "\\documentclass[crop,varwidth=\\maxdimen]{standalone}
+\\usepackage[usenames]{color}
+\\usepackage{amsmath}
+\\usepackage{amssymb}
+\\usepackage{ctex}"
+          :image-converter ("dvisvgm %f --no-fonts --exact-bbox --scale=%S --output=%O"))
+        org-preview-latex-default-process (if (and (executable-find "xelatex") (executable-find "dvisvgm"))
+                                              'xelatex-dvisvgm
+                                            org-preview-latex-default-process))
+  (define-advice org-format-latex (:around (fun &rest args) text-scale-mode)
+    (let ((org-format-latex-options (cl-copy-list org-format-latex-options)))
+      (when text-scale-mode
+        (setf (plist-get org-format-latex-options :scale) (+ 1.0 (/ text-scale-mode-amount 10.0))))
+      (apply fun args))))
 
 (use-package ox-md
   :ensure nil
