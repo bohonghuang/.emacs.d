@@ -2106,9 +2106,30 @@
          :map vterm-copy-mode-map
          ("C-x C-q" . vterm-copy-mode)))
 
+(use-package eshell-vterm
+  :when (and (<= 27 emacs-major-version) (member 'vterm extra-features))
+  :ensure t
+  :demand t
+  :after eshell
+  :config
+  (eshell-vterm-mode +1))
+
+(use-package ghostel
+  :when (member 'ghostel extra-features)
+  :ensure t
+  :defer t
+  :init
+  (use-package ghostel-eshell
+    :ensure ghostel
+    :demand t
+    :after eshell
+    :config
+    (ghostel-eshell-visual-command-mode +1))
+  :bind (:map ghostel-mode-map ("C-x C-q" . ghostel-emacs-mode)))
+
 (use-package eat
   :when (<= 28 emacs-major-version)
-  :unless (member 'vterm extra-features)
+  :unless (cl-intersection '(vterm ghostel) extra-features)
   :commands (eat-other-window)
   :ensure t
   :defer t
@@ -2127,14 +2148,6 @@
          (set (make-local-variable 'eat-kill-buffer-on-exit) t)
          (add-hook 'kill-buffer-hook #'quit-window nil t))
        buffer))))
-
-(use-package eshell-vterm
-  :when (and (<= 27 emacs-major-version) (member 'vterm extra-features))
-  :ensure t
-  :demand t
-  :after eshell
-  :config
-  (eshell-vterm-mode +1))
 
 (use-package quickrun
   :when (<= 26 emacs-major-version)
