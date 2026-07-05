@@ -160,7 +160,7 @@ the documentation of `org-diary'."
     (goto-char (point-min))
     (read-only-mode +1)
     (let ((map (copy-keymap org-mode-map)))
-      (define-key map (kbd "q") #'quit-window)
+      (define-key map (kbd "q") #'org-agenda-quarterly-review)
       (define-key map (kbd "d") #'org-agenda-daily-review)
       (define-key map (kbd "w") #'org-agenda-weekly-review)
       (define-key map (kbd "m") #'org-agenda-monthly-review)
@@ -244,6 +244,24 @@ the documentation of `org-diary'."
                                                                          (`4 (- it 1))
                                                                          (_ it))
                                                                        (decode-time time))))))))
+
+(defun org-agenda-quarterly-review (&optional time)
+  (interactive)
+  (let ((time (or time (current-time)))
+        (current-month (nth 4 (decode-time time)))
+        (year (nth 5 (decode-time time))))
+    (let* ((quarter-start-month (1+ (* (/ (1- current-month) 3) 3)))
+           (quarter-end-month (+ quarter-start-month 3))
+           (quarter-end-year year))
+      (when (> quarter-end-month 12)
+        (setq quarter-end-month (- quarter-end-month 12))
+        (setq quarter-end-year (1+ year)))
+      (org-agenda-review (encode-time 0 0 0 1 quarter-start-month year)
+                         (encode-time 0 0 0 1 quarter-end-month quarter-end-year))
+      (local-set-key (kbd "f") (lambda () (interactive) (org-agenda-quarterly-review
+                                                         (encode-time 0 0 0 1 (+ quarter-end-month 3) year))))
+      (local-set-key (kbd "b") (lambda () (interactive) (org-agenda-quarterly-review
+                                                         (encode-time 0 0 0 1 (- quarter-start-month 3) year)))))))
 
 (defun org-agenda-yearly-review (&optional time)
   (interactive)
